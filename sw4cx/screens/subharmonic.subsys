@@ -1,0 +1,24 @@
+winname   main subharmonic
+winclass  main SubHarmonic
+winopts   main notoolbar,nostatusline
+wintitle  main "Subharmonic control"
+defserver linac1:19.subharmonic
+
+# 1:id(0/1)
+define(`SUBH_COL', `
+    knob rough$1 "" text dpyfmt:%8.0f r:line$1.rough step:5
+    knob phase$1 "" text              r:line$1.phase
+    disp mes_a$1 "" text              r:line$1.mes_a units:\xb0
+    knob u_res$1 "" text              r:line$1.u_res
+    disp mes_b$1 "" text              r:line$1.mes_b units:\xb0
+')
+
+grouping main SubHarmonic "Subharmonic control" \
+        grid "noshadow,notitle,transposed" \
+        rowtitles:"1\t2" coltitles:"Rough (5\xb0)\tPhase\t1111\tU resonator\t2222" \
+        ncols:6 content:12 {
+    SUBH_COL(1)
+    noop leds "" leds layinfo:horz=right
+    SUBH_COL(2)
+    noop
+}

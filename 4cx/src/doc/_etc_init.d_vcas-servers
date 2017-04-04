@@ -1,0 +1,34 @@
+#!/bin/bash
+#
+#	/etc/rc.d/init.d/vcas-servers
+#
+# Starts/stops VCAS-servers
+#
+# chkconfig: 345 90 10
+# description: starts VCAS servers on boot and stops them upon shutdown
+
+# Source function library.
+. /etc/init.d/functions
+
+#
+#	See how we were called.
+#
+
+case "$1" in
+start)
+	su -c '~/bin/can_serv_qt -can0 -d' work
+	touch /var/lock/subsys/vcas-servers
+	;;
+stop)
+	echo -n $"Shutting down VCAS servers: "
+	success
+	echo
+	killall -9 can_serv_qt
+	rm -f /var/lock/subsys/vcas-servers
+	;;
+*)
+	echo $"Usage: $0 stop"
+	exit 1
+esac
+
+exit 0

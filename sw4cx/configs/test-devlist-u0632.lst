@@ -1,0 +1,5 @@
+include(`u0632.devtype')
+include(`ipp_devlist_macros.m4')
+
+#dev ipp1  u0632/remdrv ~ 19 b:ppc-ipp:8002
+dev ipp2  u0632/remdrv ~ 9  b:ppc-ippspectre:8002

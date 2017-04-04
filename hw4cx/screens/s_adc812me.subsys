@@ -1,0 +1,93 @@
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+     define(`fordown',
+            `pushdef(`$1', `$2')_fordown(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_fordown',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', decr($1))_fordown(`$1', `$2', `$3', `$4')')')
+#---------------------------------------------------------------------
+
+define(`ADCLINE', `
+    knob range$1    "" selector r:eval(24+$1) \
+            items:"8.192V\t4.096V\t2.048V\t1.024V"
+    disp is_on$1    "" onoff    r:eval(60+$1)
+    disp currange$1 "" selector r:eval(48+$1) \
+            items:"8.192V\t4.096V\t2.048V\t1.024V"
+    disp curmin$i   "" text     r:eval(68+$1)    dpyfmt:"%8.0f"
+    disp curmax$i   "" text     r:eval(76+$1)    dpyfmt:"%8.0f"
+    disp totalmin$i "" text     r:eval(132+$1)   dpyfmt:"%8.0f"
+    disp totalmax$i "" text     r:eval(140+$1)   dpyfmt:"%8.0f"
+    disp calcmin$i  "" text     r:eval(100+$1)   dpyfmt:"%8.0f"
+    disp calcmax$i  "" text     r:eval(108+$1)   dpyfmt:"%8.0f"
+    disp calcavg$i  "" text     r:eval(116+$1)   dpyfmt:"%8.0f"
+    disp calcint$i  "" text     r:eval(124+$1)   dpyfmt:"%8.0f"
+    disp clbofs$i   "" text     r:eval(84+$1)    dpyfmt:"%5.0f"
+    disp clbcor$i   "" text     r:eval(92+$1)    dpyfmt:"%5.0f"
+')
+
+grouping main ADC200ME "ADC200ME" \
+        grid "nodecor" param1:3 content:3 {
+    container "" "Controls" grid "nodecor" 1 content:7 {
+        disp elapsed "Time since start" text "withlabel" "s" \
+                                                 dpyfmt:"%8.1f" r:40
+        container "" "" grid "nodecor" 2 content:8 {
+            noop - "Numpoints" hlabel
+            container "" "" grid "nodecor" 2 content:2 {
+                knob numpts ""  text ""          dpyfmt:"%6.0f" r:21 step:100
+                knob ptsofs "@" text "withlabel" dpyfmt:"%6.0f" r:20 step:100
+            }
+            noop - "Timing"    hlabel
+            container "" "" grid "nodecor" 2 content:2 {
+                knob timing "" selector                    r:22 \
+                        items:"Int 4MHz\tExt \"TIMER\""
+                knob frqdiv "" selector                    r:23 \
+                        items:"/1 (4MHz)\t/2 (2MHz)\t/4 (1MHz)\t/8 (0.5MHz)"
+            }
+            disp serial "#" text     "withlabel" dpyfmt:"%-6.0f" r:41
+            container "" "" grid "nodecor" 3 content:3 {
+                knob istart "Int. Start" onoff \
+                        "panel color=green" \
+                        dpyfmt:"%6.0f" r:12
+                knob shot "Shot!" button r:10
+                knob shot "Stop"  button r:11
+            }
+            noop - "Wait time" hlabel
+            knob waittime "" text dpyfmt:"%7.0f" r:13 \
+                    units:ms alwdrange:0-1000000000
+        }
+        noop - - hseparator layinfo:horz=fill
+        container "" "" grid "nodecor" 3 content:3 {
+            disp CUR_NUMPTS ""  text dpyfmt:"%6.0f" r:45
+            disp CUR_PTSOFS "@" text dpyfmt:"%-6.0f" r:44 options:withlabel
+            disp CUR_XS_PPT ""  text dpyfmt:"%6.0f" r:43 units:"ns/pt"
+        }
+        container "" "" grid "nodecor" 2 content:2 {
+            disp cur_timing "" selector                    r:46 \
+                    items:"Int 4MHz\tExt \"TIMER\""
+            disp cur_frqdiv "" selector                    r:47 \
+                    items:"/1 (4MHz)\t/2 (2MHz)\t/4 (1MHz)\t/8 (0.5MHz)"
+        }
+        container "" "" grid "nodecor" 4 content:4 {
+            knob calibrate   "Calibrate" button r:14
+            knob fgt_clb     "Reset C"   button r:15
+            knob visible_clb "Visible"   onoff  r:16 options:"color=blue"
+            knob clb_state   "Active"    led    r:42
+        }
+        knob CALC_STATS "Calc stats" onoff r:17
+    }
+    noop - - vseparator layinfo:vert=fill
+    container "" "Matrix" grid "notitle,noshadow" \
+            str1:"Range\t?\t\tCurMin\tCurMax\tTotMin\tTotMax\tMin\tMax\tAvg\tInt\td0\tCor" \
+            str2:"0A\t0B\t1A\t1B\t2A\t2B\t3A\t3B" \
+            param1:13 content:eval(13*8) {
+        forloop(`N', 0, 7, `ADCLINE(N)')
+    }
+}
+
+wintitle main "ADC200ME"
+winname  main adc200me
+winclass main ADC200ME
+winopts  main ""

@@ -1,0 +1,60 @@
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+     define(`fordown',
+            `pushdef(`$1', `$2')_fordown(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_fordown',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', decr($1))_fordown(`$1', `$2', `$3', `$4')')')
+#---------------------------------------------------------------------
+
+define(`CANADC40_CHAN_ADC_n_COUNT', 40)
+
+define(`CANADC40_ADC_LINE', `
+    disp adc$1 dpyfmt:"%9.6f" r:adc$1 disprange:-10.0-+10.0
+')
+define(`CANADC40_OUTB_LINE', `
+    knob outrb$1 "" onoff   r:outrb$1 disprange:-2-+2
+')
+define(`CANADC40_INPB_LINE', `
+    disp inprb$1 "" led  "shape=circle" r:inprb$1 disprange:-2-+2
+')
+
+grouping main CANADC40 "CANADC40" \
+         lrtb "" content:2 {
+
+    container "" "ADC" grid "" \
+              1 8 4 \
+              "U, V" \
+              "forloop(`N', 0, eval(CANADC40_CHAN_ADC_n_COUNT-1), `N\t')" \
+              content:eval(4+CANADC40_CHAN_ADC_n_COUNT) {
+        selector adc_time "" selector r:adc_timecode \
+                 items:"1ms\t2ms\t5ms\t10ms\t20ms\t40ms\t80ms\t160ms"
+        selector adc_gain "" selector r:adc_gain \
+                 items:"x1\tx10\t\nx100\t\nx1000"
+        knob     adc_beg "Ch" text "withlabel" dpyfmt:"%2.0f" r:adc_beg
+        knob     adc_end "-"  text "withlabel" dpyfmt:"%2.0f" r:adc_end
+        forloop(`N', 0, eval(CANADC40_CHAN_ADC_n_COUNT-1), `CANADC40_ADC_LINE(N)')
+    }
+
+    container "" "I/O" grid "" \
+              9 0 3 \
+              "8b`'fordown(`N', 7, 0, `\t`'N')" \
+              "OutR\tInpR" \
+              layinfo:newline content:eval(3+18) {
+        disp   hw_ver HW    text   "withlabel" dpyfmt:"%-2.0f" r:hw_ver
+        disp   sw_ver SW    text   "withlabel" dpyfmt:"%-2.0f" r:sw_ver
+        button reset  Reset button                             r:do_reset
+        knob "outr8b" "8b" text "noincdec" dpyfmt:"%3.0f" r:outr8b
+        fordown(`N', 7, 0, `CANADC40_OUTB_LINE(N)')
+        disp "inpr8b" "8b" text            dpyfmt:"%3.0f" r:inpr8b
+        fordown(`N', 7, 0, `CANADC40_INPB_LINE(N)')
+    }
+}
+
+wintitle main "CANADC40"
+winname  main canadc40
+winclass main CANADC40
+winopts  main ""

@@ -1,0 +1,1 @@
+extern dataknob_cont_vmt_t motifknobs_split_vmt;

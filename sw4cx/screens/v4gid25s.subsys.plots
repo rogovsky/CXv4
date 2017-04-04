@@ -1,0 +1,68 @@
+
+# From m4-1.4.1-7.src.rpm::m4-1.4.1.tar.gz#utar/m4-1.4.1/examples/foreach.m4
+# foreach(x, (item_1, item_2, ..., item_n), stmt)
+define(`foreach', `pushdef(`$1', `')_foreach(`$1', `$2', `$3')popdef(`$1')')
+define(`_arg1', `$1')
+define(`_foreach',
+        `ifelse(`$2', `()', ,
+                `define(`$1', _arg1$2)$3`'_foreach(`$1', (shift$2), `$3')')')
+#---------------------------------------------------------------------
+
+include(`gid25_subsys_macros.m4')
+
+define(`THE_LINE', `
+    GID25_MAIN_LINE(`$1_', `$1.', `$1')
+    container $1osc "..." subwin "resizable,compact,noclsbtn" \
+            subwintitle:"$1 oscillogram" content:1 {
+        pzframe adc "" vsdc2_1 "width=400" $1.osc
+    }
+')
+define(`CTL_COLM', `
+    GID25_CEAC124_BUTTON(g$1_ceac, "CEAC \x23`'eval($1+1)", "CEAC124 \x23`'eval($1+1)", gid25_group$1.ceac)
+    GID25_CGVI8_BUTTON(g$1_cgvi, "GVI \x23`'eval($1+1)", "CGVI8 \x23`'eval($1+1)", gid25_group$1.gvi)
+    button/unsavable g0_progstart "Tyk!" button r:gid25_group$1.gvi.progstart
+#    container/unsavable "" "~~" subwin "resizable,compact,noclsbtn" \
+#            str3:"Plots $2" content:1 {
+#        noop plot "" histplot \
+#                "width=500 height=300 fixed \
+#                add=.matrix.L21_Imes"
+#    }
+noop
+')
+
+define(`GIDS_G0', `L21,L22,L23,L24')
+define(`GIDS_G1', `L25,L26,L27,L28')
+define(`GIDS_G2', `L29,L30,KZ15,KX16')
+define(`GIDS_G3', `KX17,KL25X,rs4_3,rs4_4')
+define(`GIDS_LIST', `GIDS_G0,GIDS_G1,GIDS_G2,GIDS_G3')
+
+grouping main gid25x4 "IST@CDAC20 test app" lrtb "" content:3 {
+
+    container matrix "Settings and measurements" grid "noshadow,notitle" \
+            10 0 0 \
+            "Uset, V\tUVH, V\tImes, A\tCharge\t \t \tStart, us\t \tVsDC start,us\t " \
+            content:eval(10*16) {
+        foreach(`x', `(GIDS_LIST)', `THE_LINE(x)')
+    }
+
+    container devices "Common devs" grid "noshadow,notitle,norowtitles" \
+            1 str1:" " content:16 {
+        CTL_COLM(0, GIDS_G0)
+        CTL_COLM(1, GIDS_G1)
+        CTL_COLM(2, GIDS_G2)
+        CTL_COLM(3, GIDS_G3)
+    }
+
+    noop plot "" histplot \
+            "width=400 height=400 \
+             foreach(`x', `(GIDS_LIST)', ` add=matrix.x`'_Imes')" \
+            layinfo:newline
+}
+
+
+sysname       v4gid25s
+defserver     vepp4-pult6:2
+wintitle main "VEPP-4 GID25s"
+winname  main v4gid25s
+winclass main V4GID25s
+winopts  main "maxitoolbar,with_save_btn,with_load_btn,with_freeze_btn"

@@ -1,0 +1,9 @@
+include(`ottcam.devtype')
+
+dev ccd_triplet ottcam ~ - 192.168.6.20
+dev ccd_mishen  ottcam ~ - 192.168.6.23
+dev ccd_s6      ottcam ~ - 192.168.6.22
+dev ccd_s7      ottcam ~ - 192.168.6.24
+dev ccd_s8      ottcam ~ - 192.168.6.21
+dev ccd_pi      ottcam ~ - 192.168.6.25
+dev ccd_synr1	ottcam ~ - 192.168.6.26

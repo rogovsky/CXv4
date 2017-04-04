@@ -1,0 +1,5 @@
+# Intended to be run as :9,
+# referencing devlist-mirror-test-target-8.lst running on :8
+
+#dev	m	mirror		r1x	-	@x:linac1:11.fedcor.n45.Imes
+dev	m	mirror		r1x	-	@.x:localhost:8.a

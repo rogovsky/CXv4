@@ -1,0 +1,37 @@
+# 1:id/r 2:label 3:tip 4/opt:options_and_other
+define(`CAM_LINE', `
+    knob c_$1 $2          radiobtn r:$1_in             tip:$3 $4
+')
+
+# 1:N/r 2:tip
+define(`SNS_LINE', `
+    knob s_$1 "Sensor $1" onoff    r:sensor$1.in_state tip:$2 options:color=green
+    disp time "" text dpyfmt:%2.0f r:sensor$1.time_left
+')
+
+winname   main lincamsel
+winclass  main LinCamSel
+winopts   main nostatusline
+wintitle  main "Camera Selector"
+defserver linac1:16
+
+grouping  main LinCamSel "Camera Selector" lrtb content:2 {
+    container cameras "Cameras" grid nocoltitles,norowtitles \
+            base:camsel content:6 {
+        CAM_LINE(camera_none, "-none-",      "", colz:dim options:color=red)
+        CAM_LINE(camera_gun,  "Gun",         "")
+        CAM_LINE(camera_turn, "Turn",        "")
+        CAM_LINE(camera_far,  "Faraday Cup", "")
+        CAM_LINE(camera_last, "Last",        "")
+        disp time "" text dpyfmt:%2.0f r:time_left
+    }
+    container sensors "Sensors" grid nocoltitles,norowtitles \
+            ncols:2 content:eval(2*6) {
+        SNS_LINE(1, "")
+        SNS_LINE(2, "")
+        SNS_LINE(3, "")
+        SNS_LINE(4, "")
+        SNS_LINE(5, "")
+        SNS_LINE(6, "")
+    }
+}

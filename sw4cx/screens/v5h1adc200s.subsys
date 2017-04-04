@@ -1,0 +1,31 @@
+
+define(`ADC200ME_LINE', `
+    container c$1 $2 grid \
+            titleatleft,nocoltitles,norowtitles,fold_h,one,$3 \
+            layinfo:$4 \
+            content:1 {
+        pzframe adc "" adc200me "width=700,height=200,maxfrq=10" a200_$1
+    }
+')
+
+grouping main v5h1adc200s "VEPP-5 Hall-1 ADC200MEs" split content:3 {
+##grouping main v5h1adc200s "VEPP-5 Hall-1 ADC200MEs" lrtb content:1 {
+##    container splitter "" split layinfo:hfill content:3 {
+#    container splitter "" grid nodecor content:3 {
+        ADC200ME_LINE(0, `"ADC #1"')
+        ADC200ME_LINE(1, `"ADC #2"')
+        ADC200ME_LINE(2, `"ADC #3"')
+
+#        container last "" scroll "width=500 height=200" content:1 {
+#            ADC200ME_LINE(3, `"ADC #4"')
+#        }
+##    }
+}
+
+sysname   v5h1adc200s
+defserver foxy-eth3:20
+wintitle  main "VEPP-5 Hall-1 ADC200MEs"
+winname   main v5h1adc200s
+winclass  main v5h1adc200s
+winopts   main resizable,compact,notoolbar
+#winopts   main compact,notoolbar

@@ -1,0 +1,9 @@
+devtype frolov_bl700 r20i,w10i {
+	min_ilk<0-7>	0
+	max_ilk<0-7>	8
+	min_ilk8b	16
+	max_ilk8b	17
+	out_ilk_state	18
+	ext_ilk_state	19
+	reset_ilks	20
+}

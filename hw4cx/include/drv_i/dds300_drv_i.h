@@ -1,0 +1,35 @@
+#ifndef __DDS300_DRV_I_H
+#define __DDS300_DRV_I_H
+
+
+// w4i,w2i,w3i,r1i
+enum
+{
+    DDS300_CHAN_AMP1,
+    DDS300_CHAN_AMP2,
+    DDS300_CHAN_PHS1,
+    DDS300_CHAN_PHS2,
+    DDS300_CHAN_FRQ1,
+    DDS300_CHAN_FRQ2,
+
+    DDS300_CHAN_REF_SEL,
+    DDS300_CHAN_OUT_SEL,
+
+    DDS300_CHAN_RESET_TO_DEFAULTS,
+    
+    DDS300_CHAN_SERIAL,
+};
+
+enum
+{
+    DDS300_V_REF_INT = 0,
+    DDS300_V_REF_EXT = 1,
+
+    DDS300_V_OUT_REFGEN = 0,
+    DDS300_V_OUT_CMPRTR = 1,
+
+    DDS300_V_RESET_TO_DEFAULTS_KEYVAL = 'R' + ('s' << 8) + ('e' << 16) + ('t' << 24),
+};
+
+
+#endif /* __DDS300_DRV_I_H */

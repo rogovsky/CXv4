@@ -1,0 +1,46 @@
+
+define(`SUKH_LINE', `
+    container p$1 $2 grid nocoltitles,norowtitles,$3 1 1 2 content:3 {
+        knob    ch0 Ch0 choicebs items:"0\t1\t2\t3\tOff" r:comm24_phs$1.comm0
+        knob    ch1 Ch1 choicebs items:"0\t1\t2\t3\tOff" r:comm24_phs$1.comm1
+        pzframe adc "" adc200 "width=700,height=200,maxfrq=10" adc200_phs$1
+    } layinfo:newline
+')
+
+define(`C0642_SET', `knob set$1 $1 text dpyfmt:%6.3f r:dac_phs.out$1')
+
+grouping main sukhpanel "SukhPanel" lrtb content:3 {
+    SUKH_LINE(1, "One",titleatbottom)
+    container ctl "Settings, measurements" grid nodecor \
+            3 content:3 {
+        disp mes Mes text units:V dpyfmt:%9.6f r:adc_phs.adc0 layinfo:vert=center
+        noop - - vseparator layinfo:vert=fill
+        container dac DAC grid noshadow,notitle,nocoltitles \
+                8 content:16 {
+            C0642_SET(0)
+            C0642_SET(1)
+            C0642_SET(2)
+            C0642_SET(3)
+            C0642_SET(4)
+            C0642_SET(5)
+            C0642_SET(6)
+            C0642_SET(7)
+            C0642_SET(8)
+            C0642_SET(9)
+            C0642_SET(10)
+            C0642_SET(11)
+            C0642_SET(12)
+            C0642_SET(13)
+            C0642_SET(14)
+            C0642_SET(15)
+        }
+    } layinfo:newline
+    SUKH_LINE(2, "Two")
+}
+
+sysname   sukhpanel
+defserver linac1:15
+wintitle  main "Sukhanov\x27s Phase Measurements - direct access panel"
+winname   main sukhpanel
+winclass  main sukhpanel
+winopts   main compact,notoolbar

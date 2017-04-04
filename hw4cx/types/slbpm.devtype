@@ -1,0 +1,24 @@
+devtype slbpm r4i,r1i4,r5i,r4i32,r1i128,r4i64,r1i256,w20i,r10i {
+	mmx<0-3>	0
+	mmxa		4
+
+	osc<0-3>	10
+	osca		14
+
+	buf<0-3>	15
+	bufa		19
+
+	_reset		20
+
+	delaya		29
+	delay<0-3>	30
+	eminus		34
+	AmplOn		35
+	Nav		36
+	border		37
+	shot		38
+	calb_0		39
+
+	const32		40
+	cur_Nav		41
+}

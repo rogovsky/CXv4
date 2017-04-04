@@ -1,0 +1,16 @@
+include(`subsys_magx_macros.m4')
+
+sysname ringrf
+defserver ring1:12
+wintitle main "ВЧ-система накопителя"
+winname  main ringrf
+winclass main RingRF
+
+grouping main RINGRF_grouping "ВЧ-система" grid "noshadow,notitle" \
+        str1:"Задано, A\tИзм., A\td/dT\t\t" \
+        param1:6 content:eval(6*4) {
+    MAGX_MPS20_CEAC124_LINE(ic_ring_kls_sol_c5, `"Катушка 5"',   "ВЧ-блок",   25,   1, vch_mps5, 1, 1)
+    MAGX_MPS20_CEAC124_LINE(ic_ring_kls_sol_c4, `"Катушка 4"',   "ВЧ-блок",   16,   1, vch_mps4, 1)
+    MAGX_MPS20_CEAC124_LINE(ic_ring_kls_sol_c3, `"Катушки 3,2"', "ВЧ-блок",   12.5, 1, vch_mps3, 1)
+    MAGX_MPS20_CEAC124_LINE(ic_ring_kls_sol_c1, `"Катушка 1"',   "ВЧ-блок",   9.5,  1, vch_mps1, 1)
+}

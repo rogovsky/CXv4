@@ -1,0 +1,36 @@
+devtype adc4 r1i131044,r4i32761,r5i,w20i,r70i {
+	data		0
+	line<0-3>	1
+	marker		9
+
+	shot		10
+	stop		11
+	istart		12
+	waittime	13
+	calc_stats	14
+
+	ptsofs		20
+	numpts		21
+	zero<0-3>	22
+
+	elapsed		30
+	xs_per_point	31
+	xs_divisor	32
+	xs_factor	33
+	cur_ptsofs	34
+	cur_numpts	35
+	cur_zero<0-3>	36
+
+	line<0-3>on	50
+	line<0-3>rangemin 54
+	line<0-3>rangemax 58
+
+	min<0-3>	70,
+	max<0-3>	74
+	avg<0-3>	78
+	int<0-3>	82
+
+	line<0-3>totalmin 86
+	line<0-3>totalmax 90
+	num_lines	94
+}

@@ -1,0 +1,28 @@
+devtype mps20_ceac124 w50i,r50i {
+	iset		0
+	iset_rate	1
+	switch_on	2
+	switch_off	3
+	#
+	reset_state	5
+	#
+	reset_c_ilks	10
+	disable		11
+
+	imes		50
+	umes		51
+	#
+
+	iset_cur	66
+
+	ilk		67
+	opr_s1		68
+	opr_s2		69
+	inprb3		70
+
+	is_on		71
+
+	c_ilk		72
+
+	mps20_state	99
+}

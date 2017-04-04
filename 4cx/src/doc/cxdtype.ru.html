@@ -1,0 +1,170 @@
+<HTML>
+<HEAD>
+<TITLE>cxdtype -- что это такое</TITLE>
+<LINK REL="stylesheet" TYPE="text/css" HREF="style.css">
+</HEAD>
+<BODY>
+
+<H1>cxdtype -- что это такое</H1>
+
+	<H2>Введение</H2>
+
+<P>cxdtype (CX Data TYPE) -- число-дескриптор, описывающее конкретный тип
+данных.  Также используется сокращенное именование "dtype".
+
+<P>Для представления dtype служит тип <CODE>cxdtype_t</CODE>, являющийся
+8-битным целым без знака (<CODE>uint8</CODE>).
+
+<P>Сам тип, возможные значения, а также функции для манипуляций с dtype
+определяются в файле <TT>cx.h</TT>.
+
+
+	<H2>Возможные значения</H2>
+
+<P>Возможные значения dtype определяются константами с префиксом
+<CODE>CXDTYPE_</CODE>.
+
+<TABLE BORDER=1 CELLSPACING=0 ALIGN=center>
+
+<TR><TH>Имя</TH><TH>Описание</TH><TH>Тип</TH><TH>?</TH></TR>
+
+<TR><TH COLSPAN=4>Специальные</TH></TR>
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_UNKNOWN</CODE></TD><TD>"Неизвестный" тип (код 0, удобно для инициализации) либо вариант</TD><TD></TD><TD><TT>x</TT></TD></TR>
+
+
+<TR><TH COLSPAN=4>Целочисленные</TH></TR>
+
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_INT8</CODE></TD><TD>Байт со знаком</TD><TD><CODE>int8</CODE></TD><TD><TT>b</TT></TD></TR>
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_INT16</CODE></TD><TD>Короткое целое со знаком</TD><TD><CODE>int16</CODE></TD><TD><TT>h</TT></TD></TR>
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_INT32</CODE></TD><TD>Целое со знаком</TD><TD><CODE>int32</CODE></TD><TD><TT>i</TT></TD></TR>
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_INT64</CODE></TD><TD>Длинное целое со знаком</TD><TD><CODE>int64</CODE></TD><TD><TT>q</TT></TD></TR>
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_UINT8</CODE></TD><TD>Байт без знака</TD><TD><CODE>uint8</CODE></TD><TD><TT>b</TT></TD></TR>
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_UINT16</CODE></TD><TD>Короткое целое без знака</TD><TD><CODE>uint16</CODE></TD><TD><TT>h</TT></TD></TR>
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_UINT32</CODE></TD><TD>Целое без знака</TD><TD><CODE>uint32</CODE></TD><TD><TT>i</TT></TD></TR>
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_UINT64</CODE></TD><TD>Длинное целое без знака</TD><TD><CODE>uint64</CODE></TD><TD><TT>q</TT></TD></TR>
+
+
+<TR><TH COLSPAN=4>Вещественные</TH></TR>
+
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_SINGLE</CODE></TD><TD>Вещественное
+одинарной точности</TD><TD><CODE>float32</CODE>, <CODE>float</CODE></TD><TD><TT>s</TT></TD></TR>
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_DOUBLE</CODE></TD><TD>Вещественные двойной
+точности</TD><TD><CODE>float64</CODE>, <CODE>double</CODE></TD><TD><TT>d</TT></TD></TR>
+
+
+<TR><TH COLSPAN=4>Строковые</TH></TR>
+
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_TEXT</CODE></TD><TD>Однобайтовые
+символы</TD>
+
+<TD><CODE>char</CODE>, <CODE>uint8</CODE></TD><TD><TT>t</TT></TD></TR>
+
+
+<TR VALIGN=baseline><TD><CODE>CXDTYPE_UCTEXT</CODE></TD><TD>UNICODE-символы</TD>
+
+<TD><CODE>uint32</CODE></TD><TD><TT>u</TT></TD></TR>
+
+</TABLE>
+
+<P>В колонке "?" указана буква-спецификатор для
+
+<A HREF="cxsd-devlist.ru.html">devlist-файлов</A>.
+
+
+<H1>Приложение: внутренний формат и функции-манипуляторы</H1>
+
+	<H2>Внутренний формат</H2>
+
+<P>Значение dtype формируется как набор 3 битовых полей: размер,
+представление, беззнаковость.
+
+  <TABLE BORDER=1 CELLSPACING=0 ALIGN=center>
+
+  <TR>
+  <TD><CODE>&nbsp;7&nbsp;</CODE></TD>
+  <TD><CODE>&nbsp;6&nbsp;</CODE></TD>
+  <TD><CODE>&nbsp;5&nbsp;</CODE></TD>
+  <TD><CODE>&nbsp;4&nbsp;</CODE></TD>
+  <TD><CODE>&nbsp;3&nbsp;</CODE></TD>
+  <TD><CODE>&nbsp;2&nbsp;</CODE></TD>
+  <TD><CODE>&nbsp;1&nbsp;</CODE></TD>
+  <TD><CODE>&nbsp;0&nbsp;</CODE></TD>
+  </TR>
+
+  <TR>
+  <TD COLSPAN=1 ALIGN=center>Sgn</TD>
+  <TD COLSPAN=4 ALIGN=center>Repr</TD>
+  <TD COLSPAN=3 ALIGN=center>Size</TD>
+  </TR>
+
+  </TABLE>
+
+  <TABLE>
+
+  <TR VALIGN=top><TH>Sgn</TH><TD>0 -- число со знаком, 1 -- число без знака.
+Относится только к целочисленным типам.</TD></TR>
+
+  <TR VALIGN=top><TH>Repr</TH><TD>Представление -- одна из констант
+<CODE>CXDTYPE_REPR_nnn</CODE>:
+
+    <TABLE BORDER=1 CELLSPACING=0>
+
+    <TR><TD><CODE>CXDTYPE_REPR_UNKNOWN</CODE></TD><TD>Неизвестный тип</TD></TR>
+
+    <TR><TD><CODE>CXDTYPE_REPR_INT</CODE></TD><TD>Целочисленный тип</TD></TR>
+
+    <TR><TD><CODE>CXDTYPE_REPR_FLOAT</CODE></TD><TD>Вещественный тип</TD></TR>
+
+    <TR><TD><CODE>CXDTYPE_REPR_TEXT</CODE></TD><TD>Символьный тип</TD></TR>
+
+    </TABLE>
+
+  </TD>
+  </TR>
+
+<TR VALIGN=top><TH>Size</TH><TD>Размер.  Записывается показатель степени
+двойки, т.е., размер в байтах равен 2 в степени Size.
+
+<P>(0: 1 байт, 1: 2 байта, 2: 4 байта, 3: 8 байт; максимум 7 -- 128 байт,
+сейчас не используется.)</TD></TR>
+
+</TABLE>
+
+
+	<H2>Функции и макросы для манипулирования <CODE>cxdtype_t</CODE></H2>
+
+<DL>
+
+<DT><CODE>cxdtype_t ENCODE_DTYPE(bytesize, repr, usgn)</CODE></DT>
+
+<DD>(макрос)<P>Возвращает значение dtype для указанного размера (в байтах),
+представления и знаковости.</DD>
+
+
+<DT><CODE>size_t sizeof_cxdtype(cxdtype_t t)</CODE></DT>
+
+<DD>(inline-функция)<P>Возвращает размер в байтах для типа, описываемого
+указанным dtype.</DD>
+
+
+<DT><CODE>int    reprof_cxdtype(cxdtype_t t)</CODE></DT>
+
+<DD>(inline-функция)<P>Возвращает код представления для указанного dtype.</DD>
+
+</DL>
+
+
+</BODY>
+</HTML>

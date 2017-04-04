@@ -1,0 +1,39 @@
+sysname       vepp34info
+defserver     vepp4-pult6:0
+wintitle main "VEPP-3/VEPP-4 info"
+winname  main vepp34info
+winclass main VEPP34Info
+winopts  main "nostatusline"
+
+#define(`ONE', `disp $1 $1 text "" "" %8.3f r:$1')
+define(`ONE', `disp $1 $1 text "" "" %$2f  r:$1 layinfo:horz=right')
+define(`MSG', `mesg $1 $1 text ""          r:$1 layinfo:horz=right')
+
+grouping main vepp34info "VEPP-3/VEPP-4 info" lrtb "" content:2 {
+    container vepp3 "VEPP-3" grid "nocoltitles" base:vepp3 content:11 {
+        ONE(Ibeam,  6.2)
+        ONE(Isep1,  6.2)
+        ONE(Isep2,  6.2)
+        noop "" " " hlabel
+        noop "" " " hlabel
+        ONE(Emag,   7.1)
+        ONE(status, 1.0)
+        MSG(statust)
+        MSG(mode)
+        ONE(polarity, 1.0)
+        MSG(polarityt)
+    }
+    container vepp4 "VEPP-4" grid "nocoltitles" base:vepp4 content:11 {
+        ONE(Ibeam,  6.2)
+        ONE(Ieleb1, 5.2)
+        ONE(Ieleb2, 5.2)
+        ONE(Iposb1, 5.2)
+        ONE(Iposb2, 5.2)
+        ONE(Emag,   6.1)
+        ONE(status, 1.0)
+        MSG(statust)
+        MSG(mode)
+        ONE(polarity, 1.0)
+        MSG(polarityt)
+    }
+}

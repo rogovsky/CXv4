@@ -1,0 +1,42 @@
+devtype adc200 r1i256000,r2i128000,r7i,w20i,r50i {
+	data		0
+	line<1-2>	1
+	marker		9
+
+	shot		10
+	stop		11
+	istart		12
+	waittime	13
+	calc_stats	14
+
+	ptsofs		20
+	numpts		21
+	timing		22
+	frqdiv		23
+	range<1-2>	24
+	zero<1-2>	26
+
+	elapsed		30
+	xs_per_point	31
+	xs_divisor	32
+	xs_factor	33
+	cur_ptsofs	34
+	cur_numpts	35
+	cur_timing	36
+	cur_frqdiv	37
+	cur_range<1-2>	38
+	cur_zero<1-2>	40
+
+	line<1-2>on	50
+	line<1-2>rangemin 52
+	line<1-2>rangemax 54
+
+	min<1-2>	60
+	max<1-2>	62
+	avg<1-2>	64
+	int<1-2>	66
+
+	line<1-2>totalmin 70
+	line<1-2>totalmax 72
+	num_lines	74
+}

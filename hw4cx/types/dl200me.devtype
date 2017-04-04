@@ -1,0 +1,26 @@
+devtype dl200me w64i,r16i,w10i,r10i {
+	t<0-15>		0
+	off<0-15>	16
+	iinh<0-15>	32
+	ilas<0-15>	48
+	ailk<0-15>	64
+
+	off16		80
+	iinh16		81
+	ilas16		82
+	do_shot		83
+	run_mode	84
+	alloff		85
+	auto_shot	86
+	auto_msec	87
+	# 88
+	soft_lock	89
+
+	ailk_16		90
+	was_shot	91
+	was_fin		92
+	was_ilk		93
+	auto_left	94
+
+	serial		99
+}

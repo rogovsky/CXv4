@@ -1,0 +1,120 @@
+# rack0:24 LIU "main" crate functions
+
+include(`dl200me.devtype')
+include(`tvac320.devtype')
+include(`cac208.devtype')
+include(`canadc40.devtype')
+include(`cgvi8.devtype')
+include(`ceac124.devtype')
+include(`senkov_ebc.devtype')
+include(`kshd485.devtype')
+include(`curvv.devtype')
+include(`liu_doorilks.devtype')
+
+# Note: 'lkmsk' is now in OCTAL (see leading '0');
+#       02313=>1,2,4,7,8=>Zar1,Zar2,Razmagn,TBGI,StartSekts,Razmagn2
+dev dl200s	dl200me@Zpci4624	~	0	slow lkmsk=02313 ilas16=-1
+
+dev tvac_1	tvac320@sktcankoz ~	1,1
+dev tvac_2	tvac320@sktcankoz ~	1,2
+
+dev degauss	cac208@sktcankoz  ~	1,31	beg=0 end=3
+dev tbgi_a40	canadc40@sktcankoz ~	1,3	beg=0 end=1
+# fatcalc
+
+# ==== Pureskin+Dovzhenko+Tokarev
+
+# Senkov/Pureskin
+dev ebc		senkov_ebc@sktcankoz ~	0,10
+
+# Tokarev
+dev gvi		cgvi8@sktcankoz   ~	0,61
+dev tokarev124	ceac124@sktcankoz ~	0,62
+
+# Belikov/Yaminov correctors
+dev bellens	cac208@sktcankoz  ~	0,63	beg=0 end=11 adc_timecode=3
+
+# Wheel
+dev wheel	kshd485@Zcompiv485 ~	0,1
+
+# Panov quasi-CURVV
+dev movement	curvv@sktcankoz   ~	0,1
+dev camsel	curvv@sktcankoz   ~	0,2
+
+# Vacuum
+dev vacuum	ceac124@sktcankoz ~	0,56
+
+# Door interlocks
+dev doors	liu_doorilks      ~	-	vacuum
+
+######################################################################
+#    Virtual hardware                                                #
+######################################################################
+
+# ---- TVAC320s' degaussers
+cpoint tvac_1.dgs.Iset	degauss.out0	0.4 #!!!FLOAT: 10/25.0
+cpoint tvac_1.dgs.Imes	degauss.adc0	0.4 #!!!FLOAT: 10/25.0
+cpoint tvac_1.dgs.Uload	degauss.adc1	0.1 #!!!FLOAT: 10/100.0
+
+cpoint tvac_2.dgs.Iset	degauss.out1	0.4 #!!!FLOAT: 10/25.0
+cpoint tvac_2.dgs.Imes	degauss.adc2	0.4 #!!!FLOAT: 10/25.0
+cpoint tvac_2.dgs.Uload	degauss.adc3	0.1 #!!!FLOAT: 10/100.0
+
+# ---- TBGI
+cpoint tbgi.offon	tbgi_a40.outrb0
+cpoint tbgi.is_on	tbgi_a40.inprb0
+cpoint tbgi.u1		tbgi_a40.adc0	0.1 #!!!FLOAT: 1/10.0
+cpoint tbgi.u2		tbgi_a40.adc1	0.1 #!!!FLOAT: 1/10.0
+
+# ---- Vacuum
+cpoint vacuum.vmb	vacuum.adc0
+cpoint vacuum.bp1	vacuum.adc1	0.001
+cpoint vacuum.bp2	vacuum.adc2	0.001
+
+# ---- Lenses
+
+# 1:L(1,2,3,4) 2:N(3,2,1,0)
+define(`TOKAREV_LENS_LINE', `
+    cpoint lenses.L$1.onoff tokarev124.outrb$2
+    cpoint lenses.L$1.is_on tokarev124.inprb$2
+    cpoint lenses.L$1.set   tokarev124.out$2             0.01 #!!!FLOAT: 10/1000.0
+    cpoint lenses.L$1.uvh   tokarev124.adc`'eval($2*3+0) 0.01 #!!!FLOAT: 10/1000.0
+    cpoint lenses.L$1.dac   tokarev124.adc`'eval($2*3+1) 0.01 #!!!FLOAT: 10/1000.0
+    cpoint lenses.L$1.cap   tokarev124.adc`'eval($2*3+2) 0.01 #!!!FLOAT: 10/1000.0
+    cpoint lenses.L$1.ena   gvi.mask_bit_`'eval($1-1)
+    cpoint lenses.L$1.beg   gvi.quant`'eval($1-1)
+')
+
+# Note: lenses are wired "reversely": #1 is served by supply3, #2:2 #3:1, #4:0
+TOKAREV_LENS_LINE(1, 3)
+TOKAREV_LENS_LINE(2, 2)
+TOKAREV_LENS_LINE(3, 1)
+TOKAREV_LENS_LINE(4, 0)
+
+# ---- Correctors
+
+# 1:N(0-5) 2:ID(1X,2X,3X,1Y,2Y,3Y)
+define(`CORRECTOR_LINE', `
+    cpoint corr.C$2.Iset  bellens.out$1             1.66666 #!!!FLOAT: 10/6.
+    cpoint corr.C$2.Imes  bellens.adc`'eval($1*2+0) 1.66666 #!!!FLOAT: 10/6.
+    cpoint corr.C$2.ULoad bellens.adc`'eval($1*2+1) 0.1     #!!!FLOAT: 10/100
+')
+
+CORRECTOR_LINE(0, 1X)
+CORRECTOR_LINE(2, 2X)
+CORRECTOR_LINE(4, 3X)
+CORRECTOR_LINE(1, 1Y)
+CORRECTOR_LINE(3, 2Y)
+CORRECTOR_LINE(5, 3Y)
+
+# ---- Target
+
+cpoint target.collimator.close		movement.outrb0
+cpoint target.collimator.state_bit0	movement.inprb0
+cpoint target.collimator.state_bit1	movement.inprb1
+
+cpoint target.farcup.go			movement.outrb1
+cpoint target.farcup.state_bit0		movement.inprb2
+cpoint target.farcup.state_bit1		movement.inprb3
+
+cpoint target.camera_choice		camsel.pwr_b0

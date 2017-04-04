@@ -1,0 +1,105 @@
+include(`ceac124.devtype')
+include(`cgvi8.devtype')
+include(`vsdc2.devtype')
+include(`cdac20.devtype')
+include(`cac208.devtype')
+include(`cpks8.devtype')
+include(`ist_cdac20.devtype')
+include(`vepp4_gimn.devtype')
+include(`devlist_magx_macros.m4')
+
+layerinfo	cangw_gimn25:0	0
+
+define(`RAW2VOLTS', 0.01)
+#define(`RAW2AMPS',  0.000000752305) #!!!FLOAT: 278353/370./1e9
+define(`RAW2AMPS',  0.000000845286) #!!!FLOAT: 278353/370./1e9/0.89
+# GID25X4_CPLINE(group_name, n) n=[0-3]
+define(`GID25X4_CPLINE', `
+    row$2.onoff		$1_ceac.outrb$2
+    row$2.err		$1_ceac.inprb$2
+    row$2.ena_gid	$1_gvi.mask_bit_`'eval(4+$2)
+    row$2.ena_vsdc	$1_gvi.mask_bit_`'eval(0+$2)
+    row$2.Uset		$1_ceac.out$2           RAW2VOLTS
+    row$2.Umes		$1_t_uizm$2.0           RAW2VOLTS
+    row$2.Umes_raw	$1_ceac.adc`'eval(0+$2) RAW2VOLTS
+    row$2.Uuvh		$1_t_uuvh$2.0           RAW2VOLTS
+    row$2.Uuvh_raw	$1_ceac.adc`'eval(4+$2) RAW2VOLTS
+    row$2.Imes		$1_biip_`'substr(`ab', eval($2/2), 1).int`'eval($2%2) RAW2AMPS
+    row$2.Dly_gid	$1_gvi.quant`'eval(4+$2)
+    row$2.Dly_vsdc	$1_gvi.quant`'eval(0+$2)
+
+    row$2.osc.gain	$1_biip_`'substr(`ab', eval($2/2), 1).gain`'eval($2%2)
+    row$2.osc.int	$1_biip_`'substr(`ab', eval($2/2), 1).int`'eval($2%2)
+    row$2.osc.data	$1_biip_`'substr(`ab', eval($2/2), 1).line`'eval($2%2)
+    row$2.osc.get	$1_biip_`'substr(`ab', eval($2/2), 1).get_osc`'eval($2%2)
+    row$2.osc.ptsofs	$1_biip_`'substr(`ab', eval($2/2), 1).ptsofs`'eval($2%2)
+    row$2.osc.cur_ptsofs $1_biip_`'substr(`ab', eval($2/2), 1).cur_ptsofs`'eval($2%2)
+    row$2.osc.cur_numpts $1_biip_`'substr(`ab', eval($2/2), 1).cur_numpts`'eval($2%2)
+    row$2.osc.write_addr $1_biip_`'substr(`ab', eval($2/2), 1).write_addr`'eval($2%2)
+')
+# GID25X4_LINE(group_name, ceac124_kid, gvi8_kid, biip_a_kid, biip_b_kid)
+define(`GID25X4_LINE', `
+    dev	$1_ceac		ceac124/remdrv		~ 0,$2	b:cangw-gimn25:8002 beg=0 end=7 adc_timecode=3
+    dev	$1_gvi		cgvi8/remdrv		~ 0,$3	b:cangw-gimn25:8002
+    dev $1_biip_a	vsdc2/remdrv		~ 0,$4	b:cangw-gimn25:8002 #ch0start=stop0 ch0stop=start0 ch1start=stop1 ch1stop=start1
+    dev $1_biip_b	vsdc2/remdrv		~ 0,$5	b:cangw-gimn25:8002 #ch0start=stop0 ch0stop=start0 ch1start=stop1 ch1stop=start1
+
+    dev $1_t_uizm0	trig_read		r1i -	$1_biip_a.int0//$1_ceac.adc0
+    dev $1_t_uizm1	trig_read		r1i -	$1_biip_a.int1//$1_ceac.adc1
+    dev $1_t_uizm2	trig_read		r1i -	$1_biip_b.int0//$1_ceac.adc2
+    dev $1_t_uizm3	trig_read		r1i -	$1_biip_b.int1//$1_ceac.adc3
+    dev $1_t_uuvh0	trig_read		r1i -	$1_biip_a.int0//$1_ceac.adc4
+    dev $1_t_uuvh1	trig_read		r1i -	$1_biip_a.int1//$1_ceac.adc5
+    dev $1_t_uuvh2	trig_read		r1i -	$1_biip_b.int0//$1_ceac.adc6
+    dev $1_t_uuvh3	trig_read		r1i -	$1_biip_b.int1//$1_ceac.adc7
+
+    cpoint $1 {
+        ceac	$1_ceac
+        gvi	$1_gvi
+        biip0	$1_biip_a
+        biip1	$1_biip_b
+
+        GID25X4_CPLINE($1, 0)
+        GID25X4_CPLINE($1, 1)
+        GID25X4_CPLINE($1, 2)
+        GID25X4_CPLINE($1, 3)
+    }
+')
+
+GID25X4_LINE(gid25_group0, 63, 61, 1,  2)
+GID25X4_LINE(gid25_group1, 62, 60, 3,  4)
+GID25X4_LINE(gid25_group2, 59, 57, 17, 18)
+GID25X4_LINE(gid25_group3, 58, 56, 19, 20)
+
+cpoint L21   gid25_group0.row0
+cpoint L22   gid25_group0.row1
+cpoint L23   gid25_group0.row2
+cpoint L24   gid25_group0.row3
+cpoint L25   gid25_group1.row0
+cpoint L26   gid25_group1.row1
+cpoint L27   gid25_group1.row2
+cpoint L28   gid25_group1.row3
+cpoint L29   gid25_group2.row0
+cpoint L30   gid25_group2.row1
+cpoint KZ15  gid25_group2.row2
+cpoint KX16  gid25_group2.row3
+cpoint KX17  gid25_group3.row0
+cpoint KL25X gid25_group3.row1
+cpoint rs4_3 gid25_group3.row2
+cpoint rs4_4 gid25_group3.row3
+
+#dev icd_m5	cdac20/remdrv		~ 0,31	b:cangw-gimn25 spd=-400000
+dev icd_m5	cdac20/remdrv		~ 0,31	b:cangw-gimn25 spd=400000
+MAGX_IST_CDAC20_DEV(m5, -icd_m5, 0.004) #!!!FLOAT: 1./250
+
+##dev corr_dev	cac208/remdrv		~ 0,30	b:cangw-gimn25 spd=-1666666
+dev corr_dev	cac208/remdrv		~ 0,30	b:cangw-gimn25 spd=-833333
+MAGX_COR208E_DEV(corr_dev, corr,
+                 kz13,kx14,km5,km6,x1_4,x1_5,x1_6,x1_7)
+
+dev gimn_pks	cpks8/remdrv		~ 0,29	b:cangw-gimn25
+dev gimn_gvi	cgvi8/remdrv		~ 0,28	b:cangw-gimn25
+cpoint gimn_ctl.pks	gimn_pks
+cpoint gimn_ctl.gvi	gimn_gvi
+cpoint gimn_ctl.vsdc	gid25_group3.biip1
+dev the_gimn	vepp4_gimn		~ -	gimn_ctl

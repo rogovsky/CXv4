@@ -1,0 +1,24 @@
+devtype	v3h_a40d16 w7i,r13i {
+	iset		0
+	iset_rate	1
+	switch_on	2
+	switch_off	3
+	reset_state	4
+	reset_c_ilks	5
+	rsrvd_wr6	6
+
+	dac_mes		7
+	dcct2		8
+	dcct1		9
+	u1mes		10
+	u2mes		11
+
+	iset_cur	12
+	opr		13
+	ilk		14
+	is_on		15
+	c_ilk		16
+	rsrvd_rd10	17
+	rsrvd_rd11	18
+	v3h_state	19
+}

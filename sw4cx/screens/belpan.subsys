@@ -1,0 +1,45 @@
+
+define(`BELIKOV',
+    `
+     knob $1_set $2 text \
+             r:"_all_code; getchan $1.out0; mul 2; ret;" \
+             w:"_all_code; qryval; div 2; putchan $1.out0; ret;" \
+             dpyfmt:%8.3f alwdrange:-13-+13
+     disp $1_mes "" text \
+             r:"_all_code; getchan $1.adc0; mul 2; ret;"
+     disp $1_vlt "" text \
+             r:"_all_code; getchan $1.adc1; mul 10; ret;"
+     button $1_sw_on "SwOn" button \
+             r:"_all_code; ret 0;" \
+             w:"_all_code;
+                push 0; putchan $1.outrb2;
+                push 1; putchan $1.outrb1;
+                sleep 1;
+                push 0; putchan $1.outrb1;
+                ret;"
+     button $1_sw_off "SwOff" button \
+             r:"_all_code; ret 0;" \
+             w:"_all_code;
+                push 0; putchan $1.outrb1;
+                push 1; putchan $1.outrb2;
+                sleep 1;
+                push 0; putchan $1.outrb2;
+                ret;"
+     disp $1_on1 "\n1" led r:"_all_code; push 1; getchan $1.inprb1; sub; ret;"
+     disp $1_on1 "\n2" led r:"_all_code; push 1; getchan $1.inprb2; sub; ret;"
+     disp $1_err "\ne" led r:$1.inprb0 options:color=red
+    ')
+
+grouping main belpan "Belikovs MPS-20 panel" grid "" \
+            str1:"Iset, A\tImes, A\tUmes, V\t \t \tS1\tS2\tErr" \
+            param1:8 content:eval(2*8) {
+    BELIKOV(rst5_mps1, `"6M5,6"')
+    BELIKOV(rst5_mps2, `"6M7,8"')
+}
+
+sysname   belpan
+defserver ring1:12
+wintitle main "Belikovs MPS-20 panel"
+winname  main belpan
+winclass main BelPan
+winopts  main ""

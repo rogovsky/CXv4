@@ -1,0 +1,33 @@
+
+# 1:N
+define(`VVI_LINE', `
+    disp plrty$1 "" selector items:"#T-\t+" r:plrty$1
+    knob volts$1 "" text     dpyfmt:"%4.0f" r:volts$1
+    knob/ign_otherop \
+         swtch$1 "" choicebs nolabel        r:is_on$1         \
+            w:"_all_code; qryval;   putchan   sw_on$1;        \
+               push 1; qryval; sub; putchan   sw_off$1; ret;" \
+            items:"#T0\b\blit=red\t1\b\blit=green"
+    disp ovl_u$1 "" led     "color=red"     r:ovl_u$1
+    disp ovl_i$1 "" led     "color=red"     r:ovl_i$1
+    button rst$1 "Reset" button             r:reset$1
+')
+
+grouping main ionchamber "Ion Chamber Monitor" \
+        canvas "notitle,noshadow" content:2 {
+    pzframe adc "" adc200 "width=700,height=200,maxfrq=10" adc200_ionc \
+            layinfo:"left=0,right=0,top=0,bottom=0@vvi"
+    container vvi "" grid noshadow,notitle 6 1 \
+            str1:"-/+\bPolarity (-/+)\tU, V\t \tU!\tI!" str2:"Ch A\tCh B" \
+            base:v0308_ionc layinfo:left=0,bottom=0 content:12 {
+        VVI_LINE(0)
+        VVI_LINE(1)
+    }
+}
+
+sysname   ionchamber
+defserver linac1:15
+wintitle  main "Ion Chamber Monitor"
+winname   main ionchamber
+winclass  main ionchamber
+winopts   main resizable,compact,notoolbar

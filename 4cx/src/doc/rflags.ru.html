@@ -1,0 +1,185 @@
+<HTML>
+<HEAD>
+<TITLE>rflags -- что это такое</TITLE>
+<LINK REL="stylesheet" TYPE="text/css" HREF="style.css">
+</HEAD>
+<BODY>
+
+<H1>rflags -- что это такое</H1>
+
+	<H2>Введение</H2>
+
+<P>Кроме собственно значения канала важно также КАК это значение было
+измерено -- т.е., требуется сигнализация о разнообразных нештатных
+ситуациях: перегрузка на входе АЦП, таймауты при В/В, ошибки связи с
+устройством, и т.д.  Для этого и служит rflags.
+
+<P>Rflags (Result FLAGS) -- это 32-битное целое число, содержащее набор
+битовых флагов, описывающих состояние канала.
+
+<P>Для представления rflags служит тип <CODE>rflags_t</CODE>, являющийся
+32-битовым целым без знака (<CODE>uint32</CODE>).
+
+<P>Сам тип и флаги определяются в файле <TT>cx.h</TT>.
+
+
+	<H2>Подробности</H2>
+
+<P>Разные части 32-битового числа заполняются разными уровнями ПО: младшие
+16 бит отданы серверу, а старшие 16 распределены между библиотеками cda, Cdr
+и datatree.  Таким образом, прикладная программа получает единый параметр, в
+котором собирается описание состояния канала от всех уровней.  Поскольку
+флаги являются набором битов, то можно легко получить общее состояние группы
+каналов, просто сложив флаги всех каналов при помощи операции ИЛИ.
+
+<P>Библиотеки пользовательского интерфейса используют флаги для сигнализации
+о нештатных ситуациях изменением цвета фона отображаемого значения.
+
+
+<TABLE BORDER=1 CELLSPACING=0 ALIGN=center>
+
+<TR><TH>?</TH><TH></TH><TH>#</TH><TH>Имя</TH><TH>Комментарий</TH></TR>
+
+<TR VALIGN=baseline>
+
+<TH ROWSPAN=16 VALIGN=middle>С<BR>е<BR>р<BR>в<BR>е<BR>р</TH>
+
+<TD ROWSPAN=6  VALIGN=middle BGCOLOR="#b03060">H<BR>W<BR>E<BR>R<BR>R</TD>
+
+<TD>0</TD><TD><CODE>CAMAC_NO_X</CODE></TD><TD>CAMAC: нет X от устройства</TD>
+
+</TR>
+
+
+<TR VALIGN=baseline><TD>1</TD><TD><CODE>CAMAC_NO_Q</CODE></TD><TD>CAMAC: нет Q от устройства</TD></TR>
+
+
+<TR VALIGN=baseline><TD>2</TD><TD><CODE>IO_TIMEOUT</CODE></TD><TD>Истёк таймаут
+ввода/вывода</TD></TR>
+
+
+<TR VALIGN=baseline><TD>3</TD><TD><CODE>REM_C_BROBL</CODE></TD><TD>Проблема с
+удалённым контроллером</TD></TR>
+
+
+<TR VALIGN=baseline><TD>4</TD><TD><CODE>OVERLOAD</CODE></TD><TD>Перегрузка по
+входу</TD></TR>
+
+
+<TR VALIGN=baseline><TD>5</TD><TD><CODE>UNSUPPORTED</CODE></TD><TD>Неподдерживаемый канал</TD></TR>
+
+
+<TR VALIGN=baseline>
+<TD ROWSPAN=4 BGCOLOR="#a0a0a0"></TD>
+<TD>5</TD><TD ROWSPAN=4 COLSPAN=2 ALIGN=center VALIGN=middle>Зарезервированы</TD>
+
+
+<TR VALIGN=baseline><TD>7</TD></TR>
+
+
+<TR VALIGN=baseline><TD>8</TD></TR>
+
+
+<TR VALIGN=baseline><TD>9</TD></TR>
+
+
+<TR VALIGN=baseline>
+<TD ROWSPAN=6 VALIGN=middle BGCOLOR="#8b8b00">S<BR>F<BR>E<BR>R<BR>R</TD>
+
+<TD>10</TD><TD><CODE>INVAL</CODE></TD><TD>Неверный параметр</TD></TR>
+
+
+<TR VALIGN=baseline><TD>11</TD><TD><CODE>WRONG_DEV</CODE></TD><TD>Неправильное
+устройство</TD></TR>
+
+
+<TR VALIGN=baseline><TD>12</TD><TD><CODE>CFG_PROBL</CODE></TD><TD>Ошибка в
+конфигурации</TD></TR>
+
+
+<TR VALIGN=baseline><TD>13</TD><TD><CODE>DRV_PROBL</CODE></TD><TD>Внутренняя
+проблема драйвера</TD></TR>
+
+
+<TR VALIGN=baseline><TD>14</TD><TD><CODE>NO_DRV</CODE></TD><TD>Ошибка загрузки
+драйвера</TD></TR>
+
+
+<TR VALIGN=baseline><TD>15</TD><TD><CODE>OFFLINE</CODE></TD><TD>Устройство в
+оффлайне</TD></TR>
+
+
+<TR VALIGN=baseline><TH ROWSPAN=16 VALIGN=middle>К<BR>л<BR>и<BR>е<BR>н<BR>т</TH>
+
+<TD BGCOLOR="#8b8b00"></TD><TD>16</TD><TD><CODE>CALC_ERR</CODE></TD><TD>Ошибка
+вычисления формулы</TD></TR>
+
+
+<TR VALIGN=baseline><TD BGCOLOR="#4682b4"></TD><TD>17</TD>
+<TD><CODE>DEFUNCT</CODE></TD><TD>Значение давно не обновляется</TD></TR>
+
+
+<TR VALIGN=baseline><TD BGCOLOR="#ffa500"></TD><TD>18</TD>
+<TD><CODE>OTHEROP</CODE></TD><TD>Значение меняется другим оператором</TD></TR>
+
+
+<TR VALIGN=baseline><TD BGCOLOR="#d8e3d5"></TD><TD>19</TD>
+<TD><CODE>PRGLYCHG</CODE></TD><TD>Значение менялось программой</TD></TR>
+
+
+<TR VALIGN=baseline><TD BGCOLOR="#404040"></TD><TD>20</TD>
+<TD><CODE>NOTFOUND</CODE></TD><TD>Канал не найден</TD></TR>
+
+
+<TR VALIGN=baseline><TD BGCOLOR="#0000FF"></TD><TD>21</TD>
+<TD><CODE>COLOR_WEIRD</CODE></TD><TD>Значение странно</TD></TR>
+
+
+<TR VALIGN=baseline>
+<TD ROWSPAN=6 BGCOLOR="#a0a0a0"></TD>
+<TD>22</TD><TD ROWSPAN=6 COLSPAN=2 ALIGN=center VALIGN=middle>Зарезервированы</TD></TR>
+
+
+<TR VALIGN=baseline><TD>23</TD></TR>
+
+
+<TR VALIGN=baseline><TD>24</TD></TR>
+
+
+<TR VALIGN=baseline><TD>25</TD></TR>
+
+
+<TR VALIGN=baseline><TD>26</TD></TR>
+
+
+<TR VALIGN=baseline><TD>27</TD></TR>
+
+
+<TR VALIGN=baseline><TD BGCOLOR="#FFFF00"></TD><TD>28</TD>
+<TD><CODE>COLOR_YELLOW</CODE></TD><TD>Значение в "желтой" области (вне
+нормального диапазона)</TD></TR>
+
+
+<TR VALIGN=baseline><TD BGCOLOR="#FF0000"></TD><TD>29</TD>
+<TD><CODE>COLOR_RED</CODE></TD><TD>Значение в "красной" области (вне
+безопасного диапазона)</TD></TR>
+
+
+<TR VALIGN=baseline><TD BGCOLOR="#00FF00"></TD><TD>30</TD>
+<TD><CODE>ALARM_RELAX</CODE></TD><TD>Была тревога (только что погасла
+лампочка сигнализации)</TD></TR>
+
+
+<TR VALIGN=baseline><TD BGCOLOR="#FF0000"></TD><TD>31</TD>
+<TD><CODE>ALARM_ALARM</CODE></TD><TD>Тревога!</TD></TR>
+
+
+</TABLE>
+
+<P>Названия первых 16 флагов (серверных) имеют префикс
+<CODE>CXRF_FLAG_</CODE> ("RF" -- RFlags), вторых 16 флагов (клиентских) --
+<CODE>CXCF_FLAG_</CODE> ("CF" -- Client Flags).
+
+
+</BODY>
+</HTML>

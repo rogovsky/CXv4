@@ -1,0 +1,53 @@
+
+define(`D16_OUT_LINE', `
+    knob   a$1 "A" text  "withlabel"   ""    "%5.0f" r:a$1
+    knob   b$1 "B" text  "withlabel"   ""    "%3.0f" r:b$1
+    knob   b$1 "=" text  "withlabel"   "ns" "%10.1f" r:v$1
+    knob off$1 "-" onoff "color=black" ""         "" r:off$1
+')
+
+grouping main D16 "Frolov's D16" \
+         grid "noshadow,notitle,nocoltitles,norowtitles" \
+	 1 0 0 "" "" "" 3 {
+    
+    container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+              3 content:3 {
+        container "" "" grid "noshadow,notitle,nocoltitles" \
+                str2:"Fclk\tFin\tKclk" content:3 {
+            selector fclk    "Fclk" selector "nolabel,align=left" r:fclk_sel \
+                     items:"#TFin\tQuartz 25MHz\tImpact~25MHz"
+            knob     fin_qns "Fin"  text "" "ns" "%7.1f"          r:f_in_ns
+            selector kclk    "/" selector "align=right"           r:kclk_n   \
+                     items:"#T1\t2\t4\t8" layinfo:horz=right
+        }
+        noop - - vseparator layinfo:vert=fill
+        container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+                content:4 {
+            selector start   "Start"   selector ""                 r:start_sel \
+                     items:"#TSTART\tCAMAC Y1\t50Hz"  layinfo:horz=right
+            knob     kstart  "/Kstart" text "withlabel" "" "%3.0f" r:kstart  \
+                                                      layinfo:horz=right
+            selector mode    "Mode"    selector                    r:mode    \
+                     items:"#TContinuous\tOneshot"    layinfo:horz=right
+            container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" 3 \
+                    content:3 {
+                button tyk     "Tyk!"    button               r:do_shot
+                noop   -       "    "    hlabel
+                knob   disable "Disable" onoff  "color=black" r:alloff
+            }                                         layinfo:horz=right
+        }
+    }
+    noop - - hseparator layinfo:horz=fill
+    container "" "" grid "noshadow,notitle,nocoltitles" 4 \
+            str2:"1\t2\t3\t4" content:16 {
+        D16_OUT_LINE(0)
+        D16_OUT_LINE(1)
+        D16_OUT_LINE(2)
+        D16_OUT_LINE(3)
+    }
+}
+
+wintitle main "Frolov's D16 diagnostic app"
+winname  main frolov_d16
+winclass main Frolov_D16
+winopts  main compact

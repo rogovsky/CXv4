@@ -1,0 +1,15 @@
+dev	d_i32	noop		w1i	-
+dev	d_f64	noop		w1d	-
+dev	d_i32v	noop		w1i10	-
+dev	d_f64v	noop		w1d10	-
+dev	d_t1	noop		w1t	-
+dev	d_t1v	noop		w1t10	-
+
+dev	trgr	noop		w1i	-
+
+dev	t_i32	trig_read	r1i	-	trgr.0/d_i32.0
+dev	t_f64	trig_read	r1d	-	trgr.0/d_f64.0
+dev	t_i32v	trig_read	r1i10	-	trgr.0/d_i32v.0
+dev	t_f64v	trig_read	r1d10	-	trgr.0/@d0:d_f64v.0
+dev	t_t1	trig_read	r1t	-	trgr.0/d_t1.0
+dev	t_t1v	trig_read	r1t10	-	trgr.0/d_t1v.0

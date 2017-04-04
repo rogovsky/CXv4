@@ -1,0 +1,7 @@
+devtype iset_walker w1i20,w2i,r2i {
+	list		0
+	start		1
+	stop		2
+	cur_step	3
+	walker_state	4
+}

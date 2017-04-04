@@ -1,0 +1,8 @@
+devtype cpks8 w16i,r8i,r2i {
+	out<0-7>	0
+	out_rate<0-7>	8
+	out_cur<0-7>	16
+
+        hw_ver		24
+	sw_ver		25
+}

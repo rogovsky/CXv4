@@ -1,0 +1,12 @@
+devtype vepp4_gimn w5i,r5i {
+	code_set	0
+	switch		1
+
+	reset_state     4
+
+	pks_val		5
+	gvi_outrb0	6
+	gvi_outrb1	7
+
+	gimn_state	9
+}

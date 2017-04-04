@@ -1,0 +1,22 @@
+devtype frolov_bfp2 w20i,r10i {
+	kmax		0
+	kmin		1
+	ktime		2
+
+	loopmode	8
+	numperiods	9
+
+	mod_enable	10
+	mod_disable	11
+	reset_ctrs	12
+	wrk_enable	13
+	wrk_disable	14
+	loop_start	15
+	loop_stop	16
+
+	stat_ubs	20
+	stat_wkalwd	21
+	stat_mod	22
+	stat_loop	23
+	stat_curprd	24
+}

@@ -1,0 +1,121 @@
+
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+
+# From m4-1.4.1-7.src.rpm::m4-1.4.1.tar.gz#utar/m4-1.4.1/examples/foreach.m4
+# foreach(x, (item_1, item_2, ..., item_n), stmt)
+define(`foreach', `pushdef(`$1', `')_foreach(`$1', `$2', `$3')popdef(`$1')')
+define(`_arg1', `$1')
+define(`_foreach',
+        `ifelse(`$2', `()', ,
+                `define(`$1', _arg1$2)$3`'_foreach(`$1', (shift$2), `$3')')')
+
+#---------------------------------------------------------------------
+
+sysname linthermcan
+defserver linac1:14
+wintitle main "Система термостабилизации - CAN"
+winname  main linthermcan
+winclass main LinThermCAN
+
+# 1:r-suffix 2:label
+define(`THERMLINE',
+       `disp $1_in  $2     text ""        "╟C" "%5.2f" $1.Tin  disprange:+20-+40
+        knob/fixedranges \
+             $1_set $2_set text "nounits" "╟C" "%5.2f" $1.Tset disprange:+20-+40 alwdrange:+20-+40
+        disp $1_out $2_out text ""        "╟C" "%5.2f" $1.Tavg disprange:+20-+40 \
+                normrange:-1-+1 yelwrange:-2-+2 \
+                c:"_all_code; getchan $1.Tavg; getchan $1.Tset; sub; ret"
+        disp $1_alm "<->" alarm "" \
+                r:"_all_code;
+                   getchan $1.Tgrn; push 20.0; cmp_if_le; ret 2;
+                   getchan $1.Tgrn; getchan $1.Tavg; sub; abs;
+                                    push 0.4;  cmp_if_ge; ret 1;
+                   ret 0;"
+        disp $1_grn "" text "" "╟C" "%5.2f" r:$1.Tgrn
+        ')
+
+define(`USED_LIST', `group,sled1,sled2,sled3,sled4,s1,s2,s3,s4,s5,s6,s7,s8,s9,s10,s11,s12,s13,s14')
+# 1:suffix(_in,_set,_out)
+define(`CALC_AN_AVG', `push 0; foreach(`x', `(USED_LIST)', `getchan x`'.T$1; add;') div 19;')
+define(`OUT_TO_GOOD', `        foreach(`x', `(USED_LIST)', `getchan x`'.Tavg; putchan x`'.Tgrn;')')
+
+#define(`AVGCELL',
+#       `disp $1    $2 text     ""        "╟C" "%5.2f" r:"_all_code
+#                push 0;
+#                forloop(`N', 0, 18, `getchan $3`'N; add;')
+#                div 19; ret'" disprange:+20-+40)
+define(`AVGCELL',
+       `disp $1    $2 text     ""        "╟C" "%5.2f" \
+                r:"_all_code; CALC_AN_AVG($3) ret';" disprange:+20-+40)
+
+grouping main LINTHERMCAN_grouping "Термостабилизация" grid \
+        str1:"Вход\tЗадано, ╟C\tВыход\tAlarm\tGoodVal" \
+        param1:5 param3:4 content:eval(4+5*19+5) {
+
+    container -plot1 "~1" subwin "resizable,compact,noclsbtn" \
+        str3:"Термостабилизацийные самописцы 1" content:1 {
+        noop plot "" histplot \
+                "width=500 height=400 \
+                 foreach(`x', `(group,sled1,sled2,sled3,sled4,s1,s2,s3,s4,s5)', ` add=.x`'_out') \
+                 fixed"
+    }
+    container -plot2 "~2" subwin "resizable,compact,noclsbtn" \
+        str3:"Термостабилизацийные самописцы 2" content:1 {
+        noop plot "" histplot \
+                "width=500 height=400 \
+                 foreach(`x', `(s6,s7,s8,s9,s10,s11,s12,s13,s14)', ` add=.x`'_out') add=.inA \
+                 fixed"
+    }
+
+    container -setlim "..." subwin str3:"Tвход_max" content:1 {
+        knob -limit "Tвход_max" text "withlabel" "╟C" "%5.2f" -setlim.-limit \
+                r:t_in_lim \
+                alwdrange:25-40
+    }
+
+    button out2grn "Out->Good" button r:"_all_code; ret 0;" \
+            w:"_all_code;
+               qryval; push 1; cmp_if_lt; ret;
+               OUT_TO_GOOD;
+               ret;"
+
+    THERMLINE(group, "GROUP")
+    THERMLINE(sled1, "SLED_1")
+    THERMLINE(sled2, "SLED_2")
+    THERMLINE(sled3, "SLED_3")
+    THERMLINE(sled4, "SLED_4")
+    THERMLINE(s1,    "SEC_01")
+    THERMLINE(s2,    "SEC_02")
+    THERMLINE(s3,    "SEC_03")
+    THERMLINE(s4,    "SEC_04")
+    THERMLINE(s5,    "SEC_05")
+    THERMLINE(s6,    "SEC_06")
+    THERMLINE(s7,    "SEC_07")
+    THERMLINE(s8,    "SEC_08")
+    THERMLINE(s9,    "SEC_09")
+    THERMLINE(s10,   "SEC_10")
+    THERMLINE(s11,   "SEC_11")
+    THERMLINE(s12,   "SEC_12")
+    THERMLINE(s13,   "SEC_13")
+    THERMLINE(s14,   "SEC_14")
+    AVGCELL(inA,  AVG,    in)  \
+            c:"_all_code;
+            getchan t_in_lim; push 0;           cmp_if_le; ret 0;
+            CALC_AN_AVG(in);  getchan t_in_lim; cmp_if_gt; ret 1;
+            ret 0;" \
+            yelwrange:0-0.1
+    AVGCELL(setA, setAVG, set)
+    AVGCELL(outA, outAVG, out)
+    alarm -ovralm "" alarm "" \
+            r:"_all_code;
+            getchan t_in_lim; push 0;           cmp_if_le; ret 0;
+            CALC_AN_AVG(in);  getchan t_in_lim; cmp_if_gt; ret 1;
+            ret 0;"
+    disp -limit "Tвход_max" text ""        "╟C" "%5.2f" -limit \
+            r:t_in_lim \
+            tip:"При передудонивании Tвход_cредн>Tвход_max бокр штеко трямкает"
+}

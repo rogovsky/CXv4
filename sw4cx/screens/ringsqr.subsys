@@ -1,0 +1,63 @@
+include(`subsys_magx_macros.m4')
+
+sysname ringsqr
+defserver ring1:12
+wintitle main "Магнитная система накопителя"
+winname  main ringsqr
+winclass main RingSqr
+winopts  main nostatusline,compact
+
+define(`RINGMAG_SECTION',
+       `
+        noop - " " hlabel
+        noop - $1  hlabel
+        noop - " " hlabel
+        noop - " " hlabel
+        noop - " " hlabel
+        noop - " " hlabel
+       ')
+
+grouping main RINGMAG_grouping "Магнитная система" lrtb "" content:2 {
+    container first "Input" grid "noshadow,notitle" \
+        str1:"Задано, A\tИзм., A\td/dT\t\t" \
+        param1:6 content:eval(6*16) {
+        RINGMAG_SECTION("Впуск-П")
+        MAGX_V1K_CDAC20_LINE(q1l0,   `"1L0"',    "ИП2: В-1000",   1000, 1, vcd_1l0)
+        MAGX_V1K_CDAC20_LINE(q1l1,   `"1L1"',    "ИП2: В-1000",   1000, 1, vcd_1l1)
+        MAGX_V1K_CDAC20_LINE(q1l2n6, `"1L2,6"',  "ИП2: В-1000",   1000, 1, vcd_1l2)
+        MAGX_V1K_CDAC20_LINE(q1l3n5, `"1L3,5"',  "ИП2: В-1000",   1000, 1, vcd_1l3)
+        MAGX_V1K_CDAC20_LINE(q1l4n8, `"1L4,8"',  "ИП2: В-1000",   1000, 1, vcd_1l4)
+        MAGX_IST_CDAC20_LINE(q1l7n9, `"1l7,9"',  "ИП1: И-В-1000", 1000, 1, icd_1l7, 0, 0)
+        MAGX_VCH300_LINE(    q1l10,   "1L10",    "ИП1: ВЧ-400",   1000, 1, v4h, 0)
+        MAGX_VCH300_LINE(    q1l11,   "1L11",    "ИП1: ВЧ-400",   1000, 1, v4h, 1)
+        RINGMAG_SECTION("Впуск-Э")
+        MAGX_IST_CDAC20_LINE(d1m567, `"1M5-7"',  "ИП1: ИСТ",      1000, 1, icd_1m5, 0, 0)
+        MAGX_VCH300_LINE(    q2l1,    "2L1",     "ИП1: ВЧ-400",   1000, 1, v4h, 2)
+        MAGX_VCH300_LINE(    q2l2,    "2L2",     "ИП1: ВЧ-400",   1000, 1, v4h, 3)
+        MAGX_VCH300_LINE(    q2l3,    "2L3",     "ИП1: ВЧ-400",   1000, 1, v4h, 4)
+        MAGX_VCH300_LINE(    q2l4,    "2L4",     "ИП1: ВЧ-400",   1000, 1, v4h, 5)
+        MAGX_VCH300_LINE(    q2l5,    "2L5",     "ИП1: ВЧ-400",   1000, 1, v4h, 6)
+    }
+    container first "Input" grid "noshadow,notitle" \
+        str1:"Задано, A\tИзм., A\td/dT\t\t" \
+        param1:6 content:eval(6*18) {
+        RINGMAG_SECTION("Кольцо")
+        MAGX_IST_CDAC20_LINE(drm,    `"RM"',     "ИП1: ИСТ",      1000, 1, icd_rm, 0, 0)
+        MAGX_IST_CDAC20_LINE(dsm,    `"SM"',     "ИП1: И-В-1000", 1000, 1, icd_sm, 0, 0)
+        MAGX_IST_CDAC20_LINE(qd1,    `"D1"',     "ИП1: И-В-1000", 1000, 1, icd_d1,  0, 0)
+        MAGX_IST_CDAC20_LINE(qf1n2,  `"F1,2"',   "ИП1: ИСТ",      1000, 1, icd_f1,  0, 0)
+        MAGX_IST_CDAC20_LINE(qf4,    `"F4"',     "ИП1: ИСТ",      1000, 1, icd_f4,  0, 0)
+        MAGX_IST_CDAC20_LINE(qd2,    `"D2"',     "ИП1: ИСТ",      1000, 1, icd_d2,  0, 0)
+        MAGX_IST_CDAC20_LINE(qd3,    `"D3"',     "ИП1: ИСТ",      1000, 1, icd_d3,  0, 0)
+        MAGX_IST_CDAC20_LINE(qf3,    `"F3"',     "ИП1: ИСТ",      1000, 1, icd_f3,  0, 0)
+        RINGMAG_SECTION("Выпуск")
+        MAGX_IST_CDAC20_LINE(d3m4n5, `"3M4,5"',  "ИП1: И-В-1000", 1000, 1, icd_3m4, 0, 0)
+        MAGX_IST_CDAC20_LINE(d4m4n5, `"4M4,5"',  "ИП1: И-В-1000", 1000, 1, icd_4m4, 0, 0)
+        MAGX_IST_CDAC20_LINE(d3m1n3, `"3M1,3"',  "ИП1: И-В-1000", 1000, 1, icd_3m1, 0, 0)
+        MAGX_IST_CDAC20_LINE(d4m1n3, `"4M1,3"',  "ИП1: И-В-1000", 1000, 1, icd_4m1, 0, 0)
+        MAGX_IST_CDAC20_LINE(d5m,    `"5M"',     "ИП1: ИСТ",      1000, 1, icd_i13, 0, 1) # rev
+        MAGX_IST_CDAC20_LINE(d6m,    `"6M"',     "ИП1: ИСТ",      1000, 1, icd_i14, 0, 1) # rev
+        MAGX_MPS20_CEAC124_LINE(d6m5n6, `"6M5,6"', "ИП1: РСТ5",   13,   1, rst5_mps1)
+        MAGX_MPS20_CEAC124_LINE(d6m7n8, `"6M7,8"', "ИП1: РСТ5",   13,   1, rst5_mps2)
+    }
+}

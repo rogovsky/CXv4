@@ -1,0 +1,13 @@
+i	ic.linac.magsys.mode
+i	ic.ring.magsys.mode
+i	ic.status
+i	ic.ring.status
+i	ic.linac.status
+i	ic.linac.magsys.status
+i	ic.ring.magsys.status
+d	ic.linac.energy1		units:MeV
+d	ic.linac.energy2		units:MeV
+d	ic.linac.energy3		units:MeV
+d	ic.linac.energy4		units:MeV
+d	ic.linac.energyout		units:MeV
+d	ic.ring.energy			units:MeV

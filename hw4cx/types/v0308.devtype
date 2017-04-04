@@ -1,0 +1,10 @@
+devtype v0308 w10i,r10i {
+	volts<0-1>	0
+	reset<0-1>	2
+	sw_on<0-1>	4
+	sw_off<0-1>	6
+	is_on<0-1>	10
+	ovl_u<0-1>	12
+	ovl_i<0-1>	14
+	plrty<0-1>	16
+}

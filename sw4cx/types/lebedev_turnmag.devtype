@@ -1,0 +1,21 @@
+devtype lebedev_turnmag w10i,r10i {
+	i_lim		0
+	i_lim_time	1
+	go_bury_max	2
+	go_ring_max	3
+	go_bury_100ms	4
+	go_ring_100ms	5
+	go_bury_n_s	6
+	go_ring_n_s	7
+	n_s		8
+	stop		9
+
+	cur_direction	10
+	lim_sw_bury	11
+	lim_sw_ring	12
+	i_motor		13
+	i_exc_time	14
+	go_time_left	15
+	going_dir	16
+	vdev_state	19
+}

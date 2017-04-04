@@ -1,0 +1,4 @@
+devtype lebedev_linsenctl w1i,r1i {
+	in_state	0
+	time_left	1
+}

@@ -1,0 +1,45 @@
+
+# 1:N
+define(`VVI_LINE', `
+    disp plrty$1 "" selector items:"#T-\t+" r:plrty$1
+    knob volts$1 "" text     dpyfmt:"%4.0f" r:volts$1
+    knob/ign_otherop \
+         swtch$1 "" choicebs nolabel        r:is_on$1         \
+            w:"_all_code; qryval;   putchan   sw_on$1;        \
+               push 1; qryval; sub; putchan   sw_off$1; ret;" \
+            items:"#T0\b\blit=red\t1\b\blit=green"
+    disp ovl_u$1 "" led     "color=red"     r:ovl_u$1
+    disp ovl_i$1 "" led     "color=red"     r:ovl_i$1
+    button rst$1 "Reset" button             r:reset$1
+')
+
+grouping main blm "Beam Loss Monitor" \
+        canvas "notitle,noshadow" content:4 {
+    pzframe adc1 "" adc200 \
+            "width=700,height=200,maxfrq=10,save_button,subsys=blm-adc-1" \
+            adc200_blm1 \
+            layinfo:"left=0,right=0,top=0,bottom=0@vvi1"
+    container vvi1 "" grid noshadow,notitle,nocoltitles 6 1 \
+            str1:"-/+\bPolarity (-/+)\tU, V\t \tU!\tI!\t " str2:"Ch A\tCh B" \
+            base:v0308_blm1 layinfo:left=0,bottom=0@vvi2 content:12 {
+        VVI_LINE(0)
+        VVI_LINE(1)
+    }
+    container vvi2 "" grid noshadow,notitle 6 1 \
+            str1:"-/+\bPolarity (-/+)\tU, V\t \tU!\tI!\t " str2:"Ch A\tCh B" \
+            base:v0308_blm2 layinfo:left=0,bottom=0@adc2 content:12 {
+        VVI_LINE(0)
+        VVI_LINE(1)
+    }
+    pzframe adc2 "" adc200 \
+            "width=700,height=200,maxfrq=10,save_button,subsys=blm-adc-2" \
+            adc200_blm2 \
+            layinfo:"left=0,right=0,bottom=0"
+}
+
+sysname   blm
+defserver linac1:18
+wintitle  main "Beam Loss Monitor"
+winname   main blm
+winclass  main blm
+winopts   main resizable,compact,notoolbar

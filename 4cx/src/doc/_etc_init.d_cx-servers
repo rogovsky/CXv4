@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+#	/etc/rc.d/init.d/cx-servers
+#
+# Stops CX-servers
+#
+# chkconfig: 345 90 10
+# description: stops CX-servers before shutdown/restart
+
+# Source function library.
+. /etc/init.d/functions
+
+#
+#	See how we were called.
+#
+
+START_SERVERS=~oper/4pult/bin/start-all-servers
+
+case "$1" in
+start)
+	if [ -f "$START_SERVERS" -a -x "$START_SERVERS" ]
+	then
+		su -l oper -c $START_SERVERS
+	fi
+	touch /var/lock/subsys/cx-servers
+	;;
+stop)
+	echo -n $"Shutting down CX-servers: "
+	success
+	echo
+	kill $(cat /var/tmp/cxd-*.pid /var/tmp/cxsd-*.pid)
+	rm -f /var/lock/subsys/cx-servers
+	;;
+*)
+	echo $"Usage: $0 stop"
+	exit 1
+esac
+
+exit 0

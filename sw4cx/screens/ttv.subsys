@@ -1,0 +1,48 @@
+defserver ring1:24
+
+define(`TTV_LINE', `
+    disp proto_ver "" text - -  "%2.0f" um$1.proto_ver
+    disp um_type   "" text - -  "%2.0f" um$1.um_type
+    disp um_number "" text - -  "%2.0f" um$1.um_number
+    disp serial    "" text - -  "%5.0f" um$1.serial
+    disp p_out     "" text - -  "%5.0f" um$1.p_out
+    disp p_in      "" text - -  "%5.0f" um$1.p_in
+    disp p_refl    "" text - -  "%5.0f" um$1.p_refl
+    disp t1        "" text - C  "%3.0f" um$1.t1
+    disp t2        "" text - C  "%3.0f" um$1.t2
+    disp kp        "" text - %  "%4.1f" um$1.kp
+    disp phase     "" text - % "%+5.1f" um$1.phase
+
+    disp is_fault  "" led "color=red"  r:um$1.is_fault
+    disp fault_pn  "" text - -  "%-2.0f" um$1.fault_pn
+    disp d_proc    "" led "color=blue" r:um$1.disp_proc
+    disp d_state   "" led -            r:um$1.disp_state
+
+    disp s_fan1    "" led "color=red"  r:um$1.s_fan1
+    disp s_fan2    "" led "color=red"  r:um$1.s_fan2
+    disp s_fan3    "" led "color=red"  r:um$1.s_fan3
+    disp s_ps      "" led "color=red"  r:um$1.s_power_supply
+    disp s_fp      "" led "color=red"  r:um$1.s_fast_prot
+    disp s_is      "" led "color=red"  r:um$1.s_input_signal
+    disp s_0213    "" led "color=blue" r:um$1.s_cmds_02_13
+
+    disp num_curs  "" text - -  "%2.0f" um$1.num_currents
+')
+
+grouping main ttv "TTV" grid \
+        rowtitles:"1\t2\t3\t4\t5\t6\t7\t8" \
+        coltitles:"ver\tType\t#\tSerial\tPout\tPin\tPrefl\tT1\tT2\tKp\tfi\t"\
+                  "F\bFault\t#\bFault param # (0:none)\t"\
+                  ":\bDisplacement is being processed\t?\bDisplacement state\t"\
+                  "1\bFan1\t2\bFan2\t3\bFan3\tP\bPowerSupply\tF\bFast prot. Pin/Prefl\tI\bInput signal missing\tx\bCommands 0x02-0x13 support\t"\
+                  "I#\bNumber of currents" \
+        ncols:23 content:eval(8*23) {
+    TTV_LINE(1)
+    TTV_LINE(2)
+    TTV_LINE(3)
+    TTV_LINE(4)
+    TTV_LINE(5)
+    TTV_LINE(6)
+    TTV_LINE(7)
+    TTV_LINE(8)
+}

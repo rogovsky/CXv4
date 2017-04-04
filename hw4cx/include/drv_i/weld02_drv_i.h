@@ -1,0 +1,75 @@
+#ifndef __WELD02_DRV_I_H
+#define __WELD02_DRV_I_H
+
+
+enum
+{
+    WELD02_SET_n_UH   = 0,
+    WELD02_SET_n_UL   = 1,
+    WELD02_SET_n_UN   = 2,
+    WELD02_SET_n_UP   = 3,
+    WELD02_SET_n_IH   = 4,
+    WELD02_SET_n_IL   = 5,
+    WELD02_SET_n_STAB = 6,
+    WELD02_SET_n_GAIN = 7,
+
+    WELD02_SET_n_count // =8
+};
+
+enum
+{
+    WELD02_MES_n_UH     = 0,
+    WELD02_MES_n_UL     = 1,
+    WELD02_MES_n_UN     = 2,
+    WELD02_MES_n_UP     = 3,
+    WELD02_MES_n_IH     = 4,
+    WELD02_MES_n_IL     = 5,
+    WELD02_MES_n_U_HIGH = 6,
+    WELD02_MES_n_U_POWR = 7,
+    WELD02_MES_n_U_HEAT = 8,
+    WELD02_MES_n_RSRVD  = 9,
+    
+    WELD02_MES_n_count // =10
+};
+
+// w8i,r10i
+enum
+{
+    WELD02_CHAN_SET_base = 0,
+    WELD02_CHAN_SET_UH     = WELD02_CHAN_SET_base + WELD02_SET_n_UH,
+    WELD02_CHAN_SET_UL     = WELD02_CHAN_SET_base + WELD02_SET_n_UL,
+    WELD02_CHAN_SET_UN     = WELD02_CHAN_SET_base + WELD02_SET_n_UN,
+    WELD02_CHAN_SET_UP     = WELD02_CHAN_SET_base + WELD02_SET_n_UP,
+    WELD02_CHAN_SET_IH     = WELD02_CHAN_SET_base + WELD02_SET_n_IH,
+    WELD02_CHAN_SET_IL     = WELD02_CHAN_SET_base + WELD02_SET_n_IL,
+    WELD02_CHAN_SET_STAB   = WELD02_CHAN_SET_base + WELD02_SET_n_STAB,
+    WELD02_CHAN_SET_GAIN   = WELD02_CHAN_SET_base + WELD02_SET_n_GAIN,
+
+    WELD02_CHAN_MES_base,
+    WELD02_CHAN_MES_UH     = WELD02_CHAN_MES_base + WELD02_MES_n_UH,
+    WELD02_CHAN_MES_UL     = WELD02_CHAN_MES_base + WELD02_MES_n_UL,
+    WELD02_CHAN_MES_UN     = WELD02_CHAN_MES_base + WELD02_MES_n_UN,
+    WELD02_CHAN_MES_UP     = WELD02_CHAN_MES_base + WELD02_MES_n_UP,
+    WELD02_CHAN_MES_IH     = WELD02_CHAN_MES_base + WELD02_MES_n_IH,
+    WELD02_CHAN_MES_IL     = WELD02_CHAN_MES_base + WELD02_MES_n_IL,
+    WELD02_CHAN_MES_U_HIGH = WELD02_CHAN_MES_base + WELD02_MES_n_U_HIGH,
+    WELD02_CHAN_MES_U_POWR = WELD02_CHAN_MES_base + WELD02_MES_n_U_POWR,
+    WELD02_CHAN_MES_U_HEAT = WELD02_CHAN_MES_base + WELD02_MES_n_U_HEAT,
+    WELD02_CHAN_MES_RSRVD  = WELD02_CHAN_MES_base + WELD02_MES_n_RSRVD,
+    
+    WELD02_NUMCHANS     // = 18
+};
+
+enum
+{
+    WELD02_V_STAB_GRID   = 0,
+    WELD02_V_STAB_I1KHZ  = 1,
+    WELD02_V_STAB_I300HZ = 2,
+    WELD02_V_STAB_I30HZ  = 3,
+
+    WELD02_V_GAIN_1      = 0,
+    WELD02_V_GAIN_10     = 1,
+};
+
+
+#endif /* __WELD02_DRV_I_H */

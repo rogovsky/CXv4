@@ -1,0 +1,14 @@
+devtype curvv w8i,r24i,w24i,w1i,r1i,w1i,r1i,w8i,r16i,w1i,r2i,w13i,r10i {
+	pwr_b<0-7>	0
+	ttl_b<0-23>	8
+	pwr_8b		56
+	ttl_24b		57
+
+	outrb<0-7>	60
+	inprb<0-7>	68
+	outr8b		84
+	inpr8b		85
+
+	hw_ver		100
+	sw_ver		101
+}

@@ -1,0 +1,18 @@
+# rack0:26 LIU "fast" ADCs in master crate
+
+include(`adc200me.devtype')
+include(`adc812me.devtype')
+
+dev r0_adc200_0	adc200me@pci4624	~	0
+dev r0_adc200_1	adc200me@pci4624	~	1
+dev r0_adc200_2	adc200me@pci4624	~	2
+dev r0_adc200_3	adc200me@pci4624	~	3
+dev r0_adc812	adc812me@pci4624	~	0	numpts=1600 frqdiv=8
+
+# ----
+
+cpoint r0_adc200_2.line1	r0_adc200_2.line1 2.1186 #!!!FLOAT: 1/0.472
+cpoint r0_adc200_2.line2	r0_adc200_2.line2 0.3577 #!!!FLOAT: 1/2.796
+
+cpoint r0_adc200_3.line1	r0_adc200_3.line1 2.3095 #!!!FLOAT: 1/0.433
+cpoint r0_adc200_3.line2	r0_adc200_3.line2 1.7153 #!!!FLOAT: 1/0.583

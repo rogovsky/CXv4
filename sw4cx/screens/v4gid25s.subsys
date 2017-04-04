@@ -1,0 +1,203 @@
+
+# From m4-1.4.1-7.src.rpm::m4-1.4.1.tar.gz#utar/m4-1.4.1/examples/foreach.m4
+# foreach(x, (item_1, item_2, ..., item_n), stmt)
+define(`foreach', `pushdef(`$1', `')_foreach(`$1', `$2', `$3')popdef(`$1')')
+define(`_arg1', `$1')
+define(`_foreach',
+        `ifelse(`$2', `()', ,
+                `define(`$1', _arg1$2)$3`'_foreach(`$1', (shift$2), `$3')')')
+#---------------------------------------------------------------------
+
+include(`gid25_subsys_macros.m4')
+include(`subsys_magx_macros.m4')
+
+define(`THE_LINE', `
+    GID25_MAIN_LINE(`$1_', `$1.', `$1')
+    container $1osc "..." subwin "resizable,compact,noclsbtn" \
+            subwintitle:"$1 oscillogram" content:1 {
+        pzframe adc "" vsdc2_1 "width=400" $1.osc
+    }
+')
+define(`CTL_COLM', `
+    GID25_CEAC124_BUTTON(g$1_ceac, "CEAC \x23`'eval($1+1)", "CEAC124 \x23`'eval($1+1)", gid25_group$1.ceac)
+    GID25_CGVI8_BUTTON(g$1_cgvi, "GVI \x23`'eval($1+1)", "CGVI8 \x23`'eval($1+1)", gid25_group$1.gvi)
+    button/unsavable g0_progstart "Tyk!" button r:gid25_group$1.gvi.progstart
+    container/unsavable - "~~" subwin "resizable,compact,noclsbtn" \
+            str3:"Plots:foreach(`x', `(GIDS_G$1)',` x')" content:1 {
+        noop plot "" histplot \
+                "width=500 height=300 \
+                 foreach(`x', `(GIDS_G$1)', ` add=.matrix.x`'_Imes') \
+                 fixed"
+    }
+')
+
+define(`M5_MES_LINE', `
+    noop - "\n$2" hlabel 
+    disp m5_$1 "" text "" $3 "%9.1f" m5.$1
+    noop - " "    hlabel
+    noop - " "    hlabel
+    noop - " "    hlabel
+    noop - " "    hlabel
+')
+
+define(`GIDS_G0', `L21,L22,L23,L24')
+define(`GIDS_G1', `L25,L26,L27,L28')
+define(`GIDS_G2', `L29,L30,KZ15,KX16')
+#define(`GIDS_G3', `KX17,KL25X,rs4_3,rs4_4')
+define(`GIDS_G3', `KX17,KL25X')
+define(`GIDS_LIST', `GIDS_G0,GIDS_G1,GIDS_G2,GIDS_G3')
+
+grouping main gid25x4 "IST@CDAC20 test app" lrtb "" content:4 {
+
+    container matrix "Settings and measurements" grid "noshadow,notitle" \
+            10 0 0 \
+            "Uset, V\tUVH, V\tImes, A\tCharge\t \t \tStart, us\t \tVsDC start,us\t " \
+            content:eval(10*14+10+10+10+10+10) {
+        foreach(`x', `(GIDS_LIST)', `THE_LINE(x)')
+
+        noop - " " hlabel
+        noop
+        noop
+#        noop
+        container/unsavable - "\n..." subwin "" subwintitle:"GIMN: controls" \
+                content:1 {
+            container - "" grid "noshadow,notitle" \
+                    rowtitles:"GIMN\tHW" coltitles:"Code\t \tSt#" \
+                    ncols:4 content:6 {
+                knob   GIMN_set "" text "" ""  %5.0f   r:the_gimn.code_set
+                knob   GIMN_onoff "" choicebs r:the_gimn.switch \
+                        items:"#TOff\b\blit=red\tOn\b\blit=green"
+                disp   GIMN_state "" text "" "" %3.0f  r:the_gimn.gimn_state
+                button reset "R" button                r:the_gimn.reset_state
+
+                knob   PKS_set  "" text "" ""  %5.0f   r:gimn_pks.out0
+                container - "" grid "nodecor" ncols:2 content:2 {
+                    disp b0 "b0" led r:gimn_gvi.outrb0
+                    disp b0 "b1" led r:gimn_gvi.outrb1
+                }
+            }
+        } layinfo:horz=center
+        noop - "BL" hlabel layinfo:horz=center
+        noop
+        noop
+        noop
+        noop
+        noop
+
+        knob M7_Uset     "M7" text  "" "" %5.0f   r:the_gimn.code_set \
+                layinfo:horz=right
+        disp M7_Uuvh     ""   text  "" "" %7.2f   r:rs4_3.Uuvh
+        disp M7_Imes     ""   text  "" "" %7.2f   r:rs4_3.Imes
+##        noop - "Off|On" hlabel
+        knob GIMN_onoff "" choicebs r:the_gimn.switch \
+                items:"#TOff\b\blit=red\tOn\b\blit=green"
+#        disp M7_err      "BL" onoff "color=green,offcol=red" \
+#                                                  r:gimn_gvi.outrb2
+        knob M7_bl       ""   choicebs            r:gimn_gvi.outrb2 \
+                items:"#TOff\b\blit=green\tOn\b\blit=red"
+        knob M7_ena_gid  ""   onoff "color=green" r:rs4_3.ena_gid \
+                w:"_all_code;
+                   qryval; putchan rs4_3.ena_gid;
+                   qryval; putchan rs4_3.onoff;
+                   ret;"
+        knob M7_Dly_gid  ""   text  "" "" %6.1f   r:rs4_3.Dly_gid
+        knob M7_ena_vsdc ""   onoff "color=green" r:rs4_3.ena_vsdc
+        knob M7_Dly_vsdc ""   text  "" "" %6.1f   r:rs4_3.Dly_vsdc
+        container M7_osc "..." subwin "resizable,compact,noclsbtn" \
+                subwintitle:"M7 oscillogram" content:1 {
+            pzframe adc "" vsdc2_1 "width=400" rs4_3.osc
+        }
+        
+        noop - "\nIV3" hlabel
+        disp IV3_Uuvh    "" text  ""  ""  %7.2f   :rs4_4.Uuvh
+        noop
+        knob IV3_onoff   "" choicebs              r:gimn_gvi.outrb3 \
+                items:"#TOff\b\blit=red\tOn\b\blit=green"
+        knob IV3_em_ep   ""   choicebs            r:gimn_gvi.outrb4 \
+                items:"#Te-\b\blit=default\te+\b\blit=amber"
+        knob IV3_ena_gid ""   onoff "color=green" r:rs4_4.ena_gid \
+                w:"_all_code;
+                   qryval; putchan rs4_4.ena_gid;
+                   qryval; putchan rs4_4.onoff;
+                   ret;"
+        knob IV3_Dly_gid ""   text  "" "" %6.1f   r:rs4_4.Dly_gid
+        noop
+        noop - "VsDC stop,us" hlabel
+        noop
+
+        noop
+##        knob GIMN_Uset "GIMN" text "" "" %5.0f r:the_gimn.code_set
+        noop
+        noop
+        noop
+##        knob GIMN_onoff "" choicebs r:the_gimn.switch \
+                items:"#TOff\b\blit=red\tOn\b\blit=green"
+        noop
+##        disp GIMN_state "" text "" "" %3.0f r:the_gimn.gimn_state
+        noop
+        noop - "All GIDs" hlabel layinfo:horz=right
+        knob ALL_ena_gid ""   onoff "color=green" r:gimn_gvi.mask_bit_0
+        knob ALL_Dly_gid ""   text  "" "" %6.1f   r:gimn_gvi.quant0
+        noop
+
+        container - "FC" grid nodecor content:1 {
+            noop - "beam" hlabel
+        } layinfo:horz=right
+        noop - "current"  hlabel
+        disp FC_Imes     ""   text  "" "" %7.2f   r:rs4_4.Imes
+        noop - "mA"       hlabel
+        noop
+        noop
+        noop - "FC"       hlabel layinfo:horz=right
+        knob FC_ena_vsdc ""   onoff "color=green" r:rs4_4.ena_vsdc
+        knob FC_Dly_vsdc ""   text  "" "" %6.1f   r:rs4_4.Dly_vsdc # style:V2STYLE:size=large,bold,color=red,bg=armed
+        container FC_osc "..." subwin "resizable,compact,noclsbtn" \
+                subwintitle:"FC oscillogram" content:1 {
+            pzframe adc "" vsdc2_1 "width=400" rs4_4.osc
+        }
+    }
+
+    container devices "Common devs" grid "noshadow,notitle,norowtitles" \
+            1 str1:" " content:eval(16+2) {
+        CTL_COLM(0)
+        CTL_COLM(1)
+        CTL_COLM(2)
+        CTL_COLM(3)
+        noop - " " hlabel
+        GID25_CGVI8_BUTTON(gimn_gvi, "GVI", "GIMN CGVI8", gimn_gvi)
+    }
+
+    container magsys "ISTR M5" grid "" \
+            str1:"Set, A\tMes, A\td/dT\t \t \t " \
+            param1:6 nattl:2 content:eval(2+6*5) {
+        container - "" loggia content:1 {
+#            disp - "" text r:cx::vepp4-pult6:0.vepp3.polarity
+             disp - "" selector r:gimn_gvi.outrb4 \
+                     items:"#TElectrons\b\bV2STYLE:bold,size=huge,bg=armed\t"\
+                             "Positrons\b\bV2STYLE:bold,size=huge,bg=amber"
+        }
+        button rst "Reset" button r:m5.rst_ilks
+        MAGX_IST_CDAC20_LINE(m5, "M5",  "", 1000, 1, icd_m5, 0, 1) # rev
+        M5_MES_LINE(dcct2,   "Idcct2", "A")
+        M5_MES_LINE(dac_mes, "Idac",   "A")
+        M5_MES_LINE(u2,      "Uload",  "V")
+        M5_MES_LINE(adc4,    "Upol",   "V")
+    } layinfo:newline
+
+    container podiem "Dovzhenko" grid "" \
+            str1:"Iset, mA\tImes\tUmes, V" \
+            base:corr param1:3 content:eval(4*3) {
+        MAGX_COR208_LINE(kz13, "KZ13")
+        MAGX_COR208_LINE(kx14, "KX14")
+        MAGX_COR208_LINE(km5,  "KM5")
+        MAGX_COR208_LINE(km6,  "KM6")
+    }
+}
+
+
+sysname       v4gid25s
+defserver     vepp4-pult6:2
+wintitle main "VEPP-4 GID25s"
+winname  main v4gid25s
+winclass main V4GID25s
+winopts  main "maxitoolbar,with_save_btn,with_load_btn,with_freeze_btn,with_tbar_loggia"

@@ -1,0 +1,17 @@
+sysname v5ringcurmon4v4
+#defserver linac3:1.dcct
+defserver ichw1-2:0.dcct
+wintitle main "Ring current monitor"
+winname  main v5ringcurmon4v4
+winclass main V5RingCurMon4V4
+winopts  main resizable,compact,nostatusline,hist_period=0.1
+
+grouping main RINGMAG_grouping "RingCurMon" canvas "nodecor" param1:1 content:2 {
+    container params Params grid notitle,nocoltitles,noshadow content:2 {
+        disp beamcurrent       beamcurrent       text "" mA   %7.3f r:beamcurrent disprange:0-25
+        disp storagerate       storagerate       text "" mA/s %7.3f r:storagerate #disprange:-25-25
+    }
+    noop      plot "Plot" histplot \
+            "width=700,height=400,add=params.beamcurrent,add=params.storagerate" \
+            layinfo:"left=0,right=0,top=0,bottom=0"
+}

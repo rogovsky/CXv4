@@ -1,0 +1,91 @@
+grouping main ADC200ME "ADC200ME" \
+        lrtb "" content:2 {
+    container "" "Controls" grid "nodecor" 1 content:4 {
+        disp elapsed "Time since start" text "withlabel" "s" \
+                                                 dpyfmt:"%8.1f" r:30
+        container "" "" grid "nodecor" 2 content:8 {
+            noop - "Numpoints" hlabel
+            container "" "" grid "nodecor" 2 content:2 {
+                knob numpts ""  text ""          dpyfmt:"%6.0f" r:21 step:100
+                knob ptsofs "@" text "withlabel" dpyfmt:"%6.0f" r:20 step:100
+            }
+            noop - "Timing"    hlabel
+            knob timing "" selector                    r:22 \
+                    items:"Quartz 200MHz\tExt \"TIMER\""
+            disp serial "#" text     "withlabel" dpyfmt:"%-6.0f" r:31
+            container "" "" grid "nodecor" 3 content:3 {
+                knob istart "Int. Start" onoff \
+                        "panel color=green" \
+                        dpyfmt:"%6.0f" r:12
+                knob shot "Shot!" button r:10
+                knob shot "Stop"  button r:11
+            }
+            noop - "Wait time" hlabel
+            knob waittime "" text dpyfmt:"%7.0f" r:13 \
+                    units:ms alwdrange:0-1000000000
+        }
+        noop - - hseparator layinfo:horz=fill
+        container "" "" grid "nodecor" 3 content:6 {
+                container "" "Calibr..." subwin content:1 {
+                    container "" "" grid "nodecor" content:5 {
+                        knob calibrate   "Calibrate"           button r:14
+                        knob fgt_clb     "Reset calibration"   button r:15
+                        knob visible_clb "Visible calibration" onoff  r:16 \
+                                options:"color=blue"
+                        knob clb_state   "Active"              led    r:32
+                        container "" "" grid "noshadow,notitle" 2 \
+                                str1:"Ch A\tCh B" str2:"d0\tCor" \
+                                content:4 {
+                            disp - "" text r:46
+                            disp - "" text r:47
+                            disp - "" text r:48
+                            disp - "" text r:49
+                        }
+                    }
+                }
+                noop - "Ch A" hlabel
+                noop - "Ch B" hlabel
+                noop - "Scale, V" hlabel
+                knob range1 "" selector r:23 \
+                        items:"4.096\t2.048\t1.024\t0.512"
+                knob range1 "" selector r:24 \
+                        items:"4.096\t2.048\t1.024\t0.512"
+            }
+    }
+    container "" "CurState" grid "notitle,noshadow,nocoltitles" 1 content:29 {
+        disp XS_PER_POINT   XS_PER_POINT  text  r:33
+        disp CUR_PTSOFS     CUR_PTSOFS    text  r:34
+        disp CUR_NUMPTS     CUR_NUMPTS    text  r:35
+        disp CUR_TIMING     CUR_TIMING    text  r:36
+        disp CUR_RANGE1     CUR_RANGE1    selector r:37 items:"4.096\t2.048\t1.024\t0.512" options:nolabel
+        disp CUR_RANGE2     CUR_RANGE2    selector r:38 items:"4.096\t2.048\t1.024\t0.512" options:nolabel
+        noop - "" hseparator layinfo:horz=fill
+        disp LINE1ON        \nLINE1ON       onoff r:40
+        disp LINE2ON        \nLINE2ON       onoff r:41
+        disp LINE1RANGEMIN  LINE1RANGEMIN text  r:42 dpyfmt:"%8.0f"
+        disp LINE2RANGEMIN  LINE2RANGEMIN text  r:43 dpyfmt:"%8.0f"
+        disp LINE1RANGEMAX  LINE1RANGEMAX text  r:44 dpyfmt:"%8.0f"
+        disp LINE2RANGEMAX  LINE2RANGEMAX text  r:45 dpyfmt:"%8.0f"
+        noop - "" hseparator layinfo:horz=fill
+        knob calcstats "Calc" onoff r:17
+        disp MIN1           MIN1          text  r:50 dpyfmt:"%8.0f"
+        disp MIN2           MIN2          text  r:51 dpyfmt:"%8.0f"
+        disp MAX1           MAX1          text  r:52 dpyfmt:"%8.0f"
+        disp MAX2           MAX2          text  r:53 dpyfmt:"%8.0f"
+        disp AVG1           AVG1          text  r:54 dpyfmt:"%8.0f"
+        disp AVG2           AVG2          text  r:55 dpyfmt:"%8.0f"
+        disp INT1           INT1          text  r:56 dpyfmt:"%8.0f"
+        disp INT2           INT2          text  r:57 dpyfmt:"%8.0f"
+        noop - "" hseparator layinfo:horz=fill
+        disp LINE1TOTALMIN  LINE1TOTALMIN text  r:60 dpyfmt:"%8.0f"
+        disp LINE2TOTALMIN  LINE2TOTALMIN text  r:61 dpyfmt:"%8.0f"
+        disp LINE1TOTALMAX  LINE1TOTALMAX text  r:62 dpyfmt:"%8.0f"
+        disp LINE2TOTALMAX  LINE2TOTALMAX text  r:63 dpyfmt:"%8.0f"
+        disp NUM_LINES      NUM_LINES     text  r:64
+    }
+}
+
+wintitle main "ADC200ME"
+winname  main adc200me
+winclass main ADC200ME
+winopts  main ""

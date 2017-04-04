@@ -1,0 +1,36 @@
+
+grouping main v3h_a40d16 "VCh300@CANADC40+CANDAC16 test app" lrtb "" content:2 {
+
+    container ctl "Control" grid "norowtitles" 5 0 2 content:7 {
+        disp   v3h_state "I_S"         text    r:v3h_state   dpyfmt:%2.0f
+        button rst       "R"           button  r:reset_state
+        knob   dac       "Set, A"      text    r:Iset        dpyfmt:%7.1f
+        knob   dac_rate  "MaxSpd, A/s" text    r:Iset_rate   dpyfmt:%7.1f
+        disp   dac_cur   "Cur, A"      text    r:Iset_cur    dpyfmt:%7.1f
+        disp   opr       ""            led     r:opr
+        knob/ign_otherop onoff ""      choicebs \
+                items:"#TOff\b\blit=red\tOn\b\blit=green" \
+                r:is_on \
+                w:"_all_code; \
+                           qryval;      putchan switch_on;  \
+                   push 1; qryval; sub; putchan switch_off; \
+                   ret;"
+    }
+
+    container mes "Measurements" grid "nocoltitles" 0 0 1 \
+            layinfo:newline content:6 {
+        disp   ilk Interlock led color=red,shape=circle r:ilk
+        disp   dac_mes "DAC control"                 text "" A %9.1f dac_mes
+        disp   dcct2   "Stabilisation shunt (DCCT2)" text "" V %9.1f dcct2
+        disp   dcct1   "Measurement shunt (DCCT1)"   text "" A %9.1f dcct1
+        disp   u1mes   "U1"                          text "" A %9.1f u1mes
+        disp   u2mes   "U2"                          text "" A %9.6f u2mes
+    }
+
+}
+
+
+wintitle main "VCh300@CANADC40+CANDAC16 test app"
+winname  main v3h_a40d16
+winclass main V3H_A40D16
+winopts  main ""

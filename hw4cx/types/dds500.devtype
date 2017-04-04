@@ -1,0 +1,5 @@
+devtype dds500 w10i,r10i {
+	reset		9
+	serial		10
+	firmware	11
+}

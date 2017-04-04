@@ -1,0 +1,80 @@
+
+winname   main ringcamsel
+winclass  main RingCamSel
+winopts   main nostatusline
+wintitle  main "Ring Camera Selector"
+defserver ring1:21.ringcamsel
+
+#
+define(`ONE_LIMIT_SW', `
+    disp - "" onoff r:limit_sw_$1$2
+')
+
+# 1:up/dn 2:0/1/2(group#)
+define(`LIMIT_SW_LINE', `
+    noop - "ifelse($1,up,^,v)" hlabel
+    ONE_LIMIT_SW($1, eval($2*8+0))
+    ONE_LIMIT_SW($1, eval($2*8+1))
+    ONE_LIMIT_SW($1, eval($2*8+2))
+    ONE_LIMIT_SW($1, eval($2*8+3))
+    ONE_LIMIT_SW($1, eval($2*8+4))
+    ONE_LIMIT_SW($1, eval($2*8+5))
+    ONE_LIMIT_SW($1, eval($2*8+6))
+    ONE_LIMIT_SW($1, eval($2*8+7))
+')
+
+grouping  main RingCamSel "Ring Camera Selector" lrtb content:2 {
+    container control "Control" grid notitle,noshadow,nocoltitles \
+            content:5 {
+        selector - "Camera" selector "nolabel" r:choice \
+                items:"Electrons 1\b\blit=green\t"\
+                      "Electrons 2\b\blit=green\t"\
+                      "Electrons 3\b\blit=green\t"\
+                      "Electrons 4\b\blit=green\t"\
+                      "Electrons 5\b\blit=green\t"\
+                      "Electrons 6\b\blit=green\t"\
+                      "Electrons 7\b\blit=green\t"\
+                      "Electrons 8\b\blit=green\t"\
+                      "Ring 1\b\blit=yellow\t"\
+                      "Ring 2\b\blit=yellow\t"\
+                      "Ring 3\b\blit=yellow\t"\
+                      "Ring 4\b\blit=yellow\t"\
+                      "Ring 5\b\blit=yellow\t"\
+                      "Ring 6\b\blit=yellow\t"\
+                      "Ring 7\b\blit=yellow\t"\
+                      "Ring 8\b\blit=yellow\t"\
+                      "Positrons 1\b\blit=red\t"\
+                      "Positrons 2\b\blit=red\t"\
+                      "Positrons 3\b\blit=red\t"\
+                      "Positrons 4\b\blit=red\t"\
+                      "Positrons 5\b\blit=red\t"\
+                      "Positrons 6\b\blit=red\t"\
+                      "Positrons 7\b\blit=red\t"\
+                      "Positrons 8\b\blit=red"
+        disp - "State" selector "nolabel" r:state \
+                items:"Broken cable\t"\
+                      "?001?\t"\
+                      "?010?\t"\
+                      "?011?\t"\
+                      "Upper (in)\t"\
+                      "?101?\t"\
+                      "Between\t"\
+                      "Lower (out)"
+        knob - "\nInsertness" choicebs "nolabel" r:is_in \
+                items:"Out\tInsert\b\blit=green"
+        disp - "\nI motor" text r:i_motor dpyfmt:%5.3f units:A
+        disp - "Time left" text r:time_left dpyfmt:%-3.0f
+    }
+
+    container limit_sws "Limit switches" grid noshadow,fold_h \
+            coltitles:" \t1\t2\t3\t4\t5\t6\t7\t8" \
+            rowtitles:"Electrons\t \tRing\t \tPositrons\t " \
+            ncols:9 content:eval(6*9) {
+        LIMIT_SW_LINE(up, 0)
+        LIMIT_SW_LINE(dn, 0)
+        LIMIT_SW_LINE(up, 1)
+        LIMIT_SW_LINE(dn, 1)
+        LIMIT_SW_LINE(up, 2)
+        LIMIT_SW_LINE(dn, 2)
+    } layinfo:newline
+}

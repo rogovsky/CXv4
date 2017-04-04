@@ -1,0 +1,6 @@
+# Intended to be run as :8, serving as target for devlist-mirror-test.lst
+dev i noop w1i -
+dev d noop w1d -
+dev v noop w1d -
+dev t noop r1i -
+cpoint a d.0 10 0

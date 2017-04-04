@@ -1,0 +1,14 @@
+include(`adc333.devtype')
+include(`adc200.devtype')
+include(`v0308.devtype')
+
+# Dissector
+dev bal333_1 adc333/remdrv ~ 18 b:ppc-pbpm:8002
+dev bal333_2 adc333/remdrv ~ 19 b:ppc-pbpm:8002 range0=off range1=off range2=off range3=8192 timing=0.5 numpts=65535
+dev bal333_3 adc333/remdrv ~ 20 b:ppc-pbpm:8002
+
+# Beam Loss Monitor
+dev adc200_blm1 adc200/remdrv ~ 10 b:ppc-blm:8002
+dev adc200_blm2 adc200/remdrv ~ 12 b:ppc-blm:8002
+dev  v0308_blm1  v0308/remdrv ~ 2  b:ppc-blm:8002
+dev  v0308_blm2  v0308/remdrv ~ 5  b:ppc-blm:8002

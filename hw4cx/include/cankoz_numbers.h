@@ -1,0 +1,33 @@
+#ifndef __CANKOZ_NUMBERS_H
+#define __CANKOZ_NUMBERS_H
+
+
+/* CAN-Kozak protocol description */
+
+enum
+{
+    CANKOZ_PRIO_BROADCAST = 5,
+    CANKOZ_PRIO_UNICAST   = 6,
+    CANKOZ_PRIO_REPLY     = 7,
+};
+
+enum
+{
+    CANKOZ_DESC_READREGS    = 0xF8,
+    CANKOZ_DESC_WRITEOUTREG = 0xF9,
+    CANKOZ_DESC_GETDEVSTAT  = 0xFE,
+    CANKOZ_DESC_GETDEVATTRS = 0xFF
+};
+
+enum
+{
+    CANKOZ_IAMR_POWERON     = 0,
+    CANKOZ_IAMR_RESET       = 1,
+    CANKOZ_IAMR_GETDEVATTRS = 2,
+    CANKOZ_IAMR_WHOAREHERE  = 3,
+    CANKOZ_IAMR_WATCHDOG    = 4,
+    CANKOZ_IAMR_BUSOFF      = 5,
+};
+
+
+#endif /* __CANKOZ_NUMBERS_H */

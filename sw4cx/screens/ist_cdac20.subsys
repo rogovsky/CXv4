@@ -1,0 +1,64 @@
+
+grouping main ist_cdac20 "IST@CDAC20 test app" lrtb "" content:4 {
+
+    container ctl "Control" grid "norowtitles" 5 0 2 content:7 {
+        disp   ist_state "I_S"         text    r:ist_state   dpyfmt:%2.0f
+        button rst       "R"           button  r:reset_state
+        knob   dac       "Set, A"      text    r:Iset        dpyfmt:%7.1f
+        knob   dac_rate  "MaxSpd, A/s" text    r:Iset_rate   dpyfmt:%7.1f
+        disp   dac_cur   "Cur, A"      text    r:Iset_cur    dpyfmt:%7.1f
+        disp   opr       ""            led     r:opr
+        knob/ign_otherop onoff ""      choicebs \
+                items:"#TOff\b\blit=red\tOn\b\blit=green" \
+                r:is_on \
+                w:"_all_code; \
+                           qryval;      putchan switch_on;  \
+                   push 1; qryval; sub; putchan switch_off; \
+                   ret;"
+    }
+
+    container mes "Measurements" grid "nocoltitles" layinfo:newline content:8 {
+        disp   dcct1   "DCCT1"   text "" A %9.1f dcct1
+        disp   dcct2   "DCCT2"   text "" A %9.1f dcct2
+        disp   dac_mes "DAC"     text "" A %9.1f dac_mes
+        disp   u2      "U2"      text "" V %9.1f u2
+        disp   adc4    "ADC4"    text "" V %9.6f adc4
+        disp   adcdac  "DAC@ADC" text "" A %9.1f adc_dac
+        disp   0v      "0V"      text "" V %9.6f adc_0v
+        disp   10v     "10V"     text "" V %9.6f adc_p10v
+    }
+
+    container ilk "Interlocks" grid "nocoltitles,norowtitles" 2 content:16 {
+        button rst     "Reset" button r:rst_ilks
+        button rci     "R"     button r:reset_c_ilks
+
+define(`ILK_LINE', `
+    disp $1 $2 led shape=circle,color=red   r:ilk_$1
+    disp "" "" led shape=circle,color=amber r:c_ilk_$1
+')
+        ILK_LINE(out_prot, "Out Prot")
+        ILK_LINE(water,    "Water")
+        ILK_LINE(imax,     "Imax")
+        ILK_LINE(umax,     "Umax")
+        ILK_LINE(battery,  "Battery")
+        ILK_LINE(phase,    "Phase")
+        ILK_LINE(temp,     "Tempr")
+    }
+
+    container clb "Calibrate & Dig.corr" grid "nocoltitles,norowtitles" 6 \
+            layinfo:newline content:6 {
+        button calibrate "Calibrate" button r:do_calb_dac
+        knob   auto_calb "Auto"      onoff  r:autocalb_onoff
+        knob   auto_secs "@"         text   r:autocalb_secs \
+                units:s options:withlabel
+        noop   -         -           vseparator layinfo:vert=bottom
+        knob   dc_mode   "Dig.corr"  onoff  r:digcorr_mode
+        disp   dc_val    ""          text   r:digcorr_factor dpyfmt:%8.0f
+    }
+}
+
+
+wintitle main "IST@CDAC20 test app"
+winname  main ist_cdac20
+winclass main IST_CDAC20
+winopts  main ""

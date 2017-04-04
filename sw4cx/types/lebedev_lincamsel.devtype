@@ -1,0 +1,19 @@
+devtype lebedev_lincamsel w7i,r1i {
+	camera<0-6>_in	0
+
+	camera_gun_in	camera0_in
+	camera_turn_in	camera1_in
+	camera_far_in	camera2_in
+	camera_last_in	camera3_in
+	camera_none_in  camera4_in
+
+#	camera_1_in	0
+#	cone_in		1
+#	camera_2_in	2
+#	camera_3_in	3
+#	camera_4_in	4
+#	faraday_cup_in	5
+#	camera_f_in	6
+
+	time_left	7
+}

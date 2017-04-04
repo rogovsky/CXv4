@@ -1,0 +1,26 @@
+sysname ringcurmon
+#defserver linac3:1.dcct
+defserver ichw1-2:0.dcct
+wintitle main "Ring current monitor"
+winname  main ringcurmon
+winclass main RingCurMon
+winopts  main resizable,compact,hist_period=0.1
+
+grouping main RINGMAG_grouping "RingCurMon" grid "nodecor" param1:1 content:1 {
+#    noop      plot "Plot" histplot \
+#            "width=700,height=400,add=params.beamcurrent,add=params.storagerate"
+    container params Params grid notitle,nocoltitles,noshadow content:8 {
+        knob u2i               U2I               text "" mA/V %5.2f r:u2i
+        knob ADCzero           ADCzero           text "" V    %7.5f r:ADCzero
+        knob storage_fitlength storage_fitlength text "" ""   %4.0f r:storage_fitlength
+        knob life_fitlength    life_fitlength    text "" ""   %4.0f r:life_fitlength
+        disp beamcurrent       beamcurrent       text "" mA   %7.3f r:beamcurrent
+        disp storagerate       storagerate       text "" mA/s %7.3f r:storagerate
+        disp lifetime          lifetime          text "" s    %7.3f r:lifetime
+        container : "Source volts" grid nodecor ncols:2 content:2 {
+            disp source        "Source volts"    text "" V    %8.6f r:ring1:21.ring_current
+            button -copy       "->0"          button \
+                    w:"_all_code; getchan ring1:21.ring_current; putchan ADCzero; ret;"
+        }
+    }
+}

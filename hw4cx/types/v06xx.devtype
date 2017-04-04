@@ -1,0 +1,6 @@
+devtype v06xx w25i {
+	bit<0-23>	0
+	outrb<0-23>	0
+	wr1		24
+	outr24b		24
+}

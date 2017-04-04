@@ -1,0 +1,544 @@
+
+define(`RGSWCH',
+       `knob/ign_otherop $1 $2 choicebs nolabel items:"#T$3\b\blit=red\t$4\b\blit=green" r:$5 w:"_all_code; qryval; putchan $7; \
+                    push 1; qryval; sub; putchan $6;"')
+
+# 1:N(1-4)
+define(`TOKAREV_LINE',
+       `knob -L$1_onoff "" choicebs -             r:L$1.onoff \
+                items:"#TВыкл\b\blit=red\tВкл\b\blit=green"
+        disp  L$1_is_on "" led      -             r:L$1.is_on
+        knob  L$1_set   "" text     -             r:L$1.set dpyfmt:"%6.0f" \
+                alwdrange:0-1000
+        disp  L$1_uvh   "" text     -             r:L$1.uvh dpyfmt:"%6.0f"
+        disp  L$1_dac   "" text     -             r:L$1.dac dpyfmt:"%6.0f"
+        disp  L$1_cap   "" text     -             r:L$1.cap dpyfmt:"%6.0f"
+        knob  L$1_ena   "" onoff    "color=amber" r:L$1.ena \
+                tip:"Разрешение импульса каналу ГВИ"
+        knob  L$1_beg   "" text     -             r:L$1.beg dpyfmt:"%5.0f" \
+                alwdrange:0-65535
+       ')
+
+# 1:ID
+define(`CORRECTOR_LINE',
+       `knob  C$1_Iset  "" text r:C$1.Iset  dpyfmt:"%6.3f" alwdrange:-2-+2 step:0.1
+        disp  C$1_Imes  "" text r:C$1.Imes  dpyfmt:"%6.3f"
+        disp  C$1_Uload "" text r:C$1.Uload dpyfmt:"%6.2f"
+       ')
+
+# 1:N(0-7) 2:Label
+define(`TVAC320_STAT_LINE', `
+    disp s$1 "$1 "$2 led   "color=blue"  r:stat_$1
+')
+# 1:N(0-7) 2:Label
+define(`TVAC320_ILK_LINE', `
+    knob m$1 "$1 "$2 onoff "color=amber" r:lkm_$1
+    disp l$1 ""      led   "color=red"   r:ilk_$1
+')
+# 1:N(1,2)
+define(`CHARGER_LINE',
+       `container tvac_$1 "$1" grid nodecor base:tvac_$1 ncols:4 content:4 {
+            RGSWCH(-tvr, "", Выкл,Вкл,stat_charger_on,switch_tvr_off,switch_tvr_on)
+            knob set "" text "withunits" "V" "%5.1f" Uset
+            disp mes "" text -           "V" "%5.1f" Umes
+            container service "..." subwin \
+                    tip:"Зарядное $1: служебные каналы" \
+                    content:1 {
+                container content "" grid nodecor content:5 {
+                    container ranges "" grid nodecor ncols:2 content:2 {
+                        knob Umin "Диапазон:" text "withlabel" V "%5.1f" Umin alwdrange:0-300
+                        knob Umax "-"         text "withlabel" V "%5.1f" Umax alwdrange:0-300
+                    }
+                    noop - - hseparator layinfo:horz=fill
+                    container bits "" grid nodecor ncols:3 content:3 {
+
+                        container stat "Состояние" grid "noshadow,nocoltitles,norowtitles" \
+                                content:8 {
+                            TVAC320_STAT_LINE(0, "ЗУ вкл")
+                            TVAC320_STAT_LINE(1, "ТРН вкл")
+                            TVAC320_STAT_LINE(2, "стаб. фазы ТРН")
+                            TVAC320_STAT_LINE(3, "стаб. U ТРН")
+                            TVAC320_STAT_LINE(4, "разряд накоп.")
+                            TVAC320_STAT_LINE(5, "")
+                            TVAC320_STAT_LINE(6, "")
+                            TVAC320_STAT_LINE(7, "ЗУ неисправно")
+                        }
+
+                        noop - "" vseparator layinfo:vert=fill
+
+                        container ilks "Блокировки" grid "noshadow,nocoltitles,norowtitles" \
+                                ncols:2 nattl:1 content:eval(1+8*2) {
+
+                            button - "Сброс" button r:rst_ilks
+
+                            TVAC320_ILK_LINE(0, "превышение Iзар")
+                            TVAC320_ILK_LINE(1, "превышение Uраб")
+                            TVAC320_ILK_LINE(2, "полн.разряд накоп.")
+                            TVAC320_ILK_LINE(3, "")
+                            TVAC320_ILK_LINE(4, "")
+                            TVAC320_ILK_LINE(5, "")
+                            TVAC320_ILK_LINE(6, "")
+                            TVAC320_ILK_LINE(7, "ЗУ неисправно")
+                        }
+
+                    }
+                    noop - - hseparator layinfo:horz=fill
+                    container degauss "Размагничивание" \
+                            grid noshadow,nocoltitles,norowtitles \
+                            base:dgs ncols:3 content:3 {
+                        knob Iset  Iуст  text withlabel A "%6.3f" Iset \
+                                alwdrange:-25-+25 step:0.1
+                        disp Imes  Iизм  text withlabel A "%6.3f" Imes
+                        disp Uload Uнагр text withlabel V "%6.3f" Uload
+                    }
+                }
+            }
+        }
+       ')
+
+# 1:rack_n(1-8) 2:l/r 3:C/D 4:B/E 5:A/F
+define(`ADC812_SUBWIN',
+       `container ":" "812" subwin "resizable,compact,noclsbtn" \
+                        tip:"ADC812ME стойки $1 модуляторов $3,$4,$5" \
+                subwintitle:"ADC812ME стойки $1 модуляторов $3,$4,$5" \
+                style:"V2STYLE:size=tiny" \
+                content:1 {
+            pzframe adc812me-$3$4$5 "" adc812me "" adc812_$1$2
+        }')
+
+# 1:rack_n(1-8) 2:modulator_id(a,b,c,d,e,f)
+define(`ELEM_MOD',
+       `container ":" "" canvas nodecor base:ubs_$1`'$2 content:5 {
+            container ":subwin" " \n $2 \n " subwin \
+                    tip:"Модулятор $1-$2" subwintitle:"Модулятор $1-$2" \
+                    style:"V2STYLE:bold,size=normal" \
+                    content:1 {
+                define(`PANOV_UBS_IDENT', `$1-$2')
+                include(`panov_ubs.m4')
+            }
+            disp - "" led "nomargins,color=green,offcol=red" r:stat_st2_online layinfo:left=!3@:subwin,top=!3@:subwin
+            disp - "" led "nomargins,color=green,offcol=red" r:stat_st1_online layinfo:left=!3@:subwin,bottom=!3@:subwin
+            disp - "" led "nomargins,color=green,offcol=red" r:stat_dgs_online layinfo:right=!3@:subwin,bottom=!3@:subwin
+            container ":" "~~" subwin "resizable,compact,noclsbtn" \
+                            tip:"ADC200ME и ADC812ME модулятора $1-$2" \
+                    subwintitle:"ADC200ME и ADC812ME модулятора $1-$2" \
+                    content:1 {
+                pzframe adc "" adc200me "" :adc_$1$2
+            } layinfo:"top=@:subwin"
+        }')
+
+# 1:rack_n(1-8)
+define(`ELEM_RACK',
+       `container ":" "Ст.$1" grid nocoltitles,norowtitles \
+                base:rack$1:23 content:4 {
+#                base:table:23 content:4 {
+            container ":" "" grid nodecor param1:2 content:2 {
+                ADC812_SUBWIN($1, l, C, B, A)
+                ADC812_SUBWIN($1, l, D, E, F)
+            }
+            container ":" "" grid nodecor param1:2 content:2 {
+                ELEM_MOD($1, C)
+                ELEM_MOD($1, D)
+            }
+            container ":" "dl200..." subwin \
+                    tip:"Таймер стойки $1" subwintitle:"Таймер стойки $1" \
+                    base:dl200f_$1 content:1 {
+                define(`DL200ME_F_TITLE', `"Таймер стойки $1"')
+                define(`DL200ME_F_ROWTITLES',
+`"1  Запуск1 A\t"\
+"2  Запуск1 B\t"\
+"3  Запуск1 C\t"\
+"4  Запуск1 D\t"\
+"5  Запуск1 E\t"\
+"6  Запуск1 F\t"\
+"7  Триггер ABC\t"\
+"8  Предзапуск 1\t"\
+"9  Запуск2 A\t"\
+"10 Запуск2 B\t"\
+"11 Запуск2 C\t"\
+"12 Запуск2 D\t"\
+"13 Запуск2 E\t"\
+"14 Запуск2 F\t"\
+"15 Триггер DEF\t"\
+"16 Предзапуск 2"')
+                include(`dl200me_f.m4')
+            } layinfo:horz=center
+            container ":" "" grid nodecor param1:2 content:4 {
+                ELEM_MOD($1, B)
+                ELEM_MOD($1, E)
+                ELEM_MOD($1, A)
+                ELEM_MOD($1, F)
+            }
+        }')
+
+grouping main mainGrouping "Main screen" lrtb content:18 {
+
+    container beam "Пучок" grid nocoltitles,norowtitles content:3 {
+        container ebc "" grid noshadow,notitle \
+                base:ebc ncols:2 content:8 {
+            knob Uset  "Uвых"    text - V "%5.2f" Uset  alwdrange:0-60
+            disp Umes  "UвыхИзм" text - V "%5.2f" Umes  disprange:0-60
+            disp Iheat "Iнакала" text - A "%5.2f" Iheat disprange:0-60
+            disp state ""        selector \
+                    r:"_all_code; getchan inpr8b; mod 16; ret;" \
+                    items:"#T0000\t0001\t0010\t0011\t"\
+                          "0100\t0101\t0110\t0111\t"\
+                          "1000\t1001\t1010\t1011\t"\
+                          "1100\tOK\b\blit=green\tERR\b\blit=red\tWAIT\b\blit=yellow"
+            disp pwr   "P=U*I"   text - W "%5.0f" \
+                    "_all_code; getchan Umes; getchan Iheat; mul; ret;" \
+                    disprange:0-3600
+            noop
+            knob onoff ""        choicebs \
+                    items:"#TВыкл\b\blit=red\tВкл\b\blit=green" \
+                    r:"_all_code; push 1; getchan not_on_bit; sub; ret;" \
+                    w:"_all_code; push 1; qryval; sub; putchan not_on_bit; ret;"
+            button Reset "Сброс" button r:"_all_code; ret 0;" \
+                    w:"_all_code; push 1; putchan reset_bit; sleep 4;
+                                  push 0; putchan reset_bit; ret;"
+        }
+        noop - - hseparator layinfo:horz=fill
+        container vacuum "" grid nodecor \
+                base:vacuum ncols:3 content:6 {
+            container -alarm "" grid nodecor ncols:2 content:2 {
+                alarm - "Вакуум" alarm - \
+                        r:"_all_code;
+                          getchan %vacuum_limit; push 0;
+                          cmp_if_le; ret 0;
+                          getchan vmb; getchan %vacuum_limit;
+                          cmp_if_le; ret 0;
+                          ret 1;"
+                container - "..." subwin \
+                        tip:"Вакуумный предел" subwintitle:"Вакуумный предел" \
+                        content:1 {
+                    knob - "Предел по вакууму, выше которого бибикать (0=отключено)" \
+                            text "withlabel" V "%6.3f" %vacuum_limit
+                }
+            }
+            noop - "БП1" hlabel
+            noop - "БП2" hlabel
+            disp mes0 "Вакуум" text - V "%6.3f" vmb disprange:0-10
+            disp mes1 "БП1"   text - uA "%6.0f" bp1 disprange:-10000-+10000
+            disp mes2 "БП2"   text - uA "%6.0f" bp2 disprange:-10000-+10000
+        }
+    }
+
+    noop plot "" histplot "width=800,height=140,fixed,horz_ctls,"\
+            "add=beam.ebc.Uset,add=beam.ebc.Umes,add=beam.ebc.Iheat,"\
+            "add=beam.ebc.pwr,"\
+            "add=beam.vacuum.mes0,add=beam.vacuum.mes1,add=beam.vacuum.mes2"
+
+    container lenses "Линзы" grid titleatleft,nocoltitles,norowtitles \
+            ncols:2 content:2 {
+        container tokarev "" grid noshadow,notitle \
+                coltitles:" \t ?\tУст, V\tУВХ, V\tЦАП, V\tЁмк, V\t \tGVI, q" \
+                rowtitles:"L1\tL2\tL3\tL4" \
+                base:lenses ncols:8 content:eval(8*4) {
+            TOKAREV_LINE(1)
+            TOKAREV_LINE(2)
+            TOKAREV_LINE(3)
+            TOKAREV_LINE(4)
+        }
+        container gvi "Управление\nГВИ" grid noshadow,nocoltitles,norowtitles \
+                content:2 {
+            knob   scale  "q="                  selector "align=right" \
+                                                         r:gvi.prescaler \
+                    items:"#T100 ns\t200 ns\t400 ns\t800 ns\t1.60 us\t3.20 us\t6.40 us\t12.8 us\t25.6 us\t51.2 us\t102 us\t205 us\t410 us\t819 us\t1.64 ms\t3.28 ms"
+            button -start "Программный\nЗапуск" button   r:gvi.progstart
+        }
+    } layinfo:newline
+
+    container magcorr "Корректоры" grid titleattop,nohline \
+            coltitles:"Iуст\tIизм\tUнгр" \
+            rowtitles:"1X\t2X\t3X\t1Y\t2Y\t3Y" \
+            base:corr ncols:3 nflrs:3 content:eval(3*6) {
+        CORRECTOR_LINE(1X)
+        CORRECTOR_LINE(2X)
+        CORRECTOR_LINE(3X)
+        CORRECTOR_LINE(1Y)
+        CORRECTOR_LINE(2Y)
+        CORRECTOR_LINE(3Y)
+    }
+
+    container ignition "Зарядные" grid nocoltitles,norowtitles \
+            content:7 {
+        container chargers "Зарядные устройства" grid \
+                noshadow,notitle,nocoltitles \
+                content:2 {
+            CHARGER_LINE(1)
+            CHARGER_LINE(2)
+        }
+        noop - - hseparator layinfo:horz=fill
+        disp key_state "Ключ пульта" selector r:wolf:27.pult_key.state \
+                items:"#TНЕТУ\b\blit=violet\tВЫКЛ\b\blit=red\tВКЛ\b\blit=green"
+        noop - - hseparator layinfo:horz=fill
+        container tbgi "ТБГИ" grid noshadow,norowtitles,nocoltitles \
+                base:tbgi ncols:5 content:5 {
+            knob/ign_otherop offon     "" choicebs \
+                    items:"#TВыкл\b\blit=red\tВкл\b\blit=green" \
+                    r:"offon" \
+                    w:"_all_code;
+                       qryval; putchan offon;
+                       qryval; push 0.9; cmp_if_lt; goto reset;
+
+                       # Check if previous value is the same -- then do nothing
+                       getchan offon; push 0.9; cmp_if_gt; ret;
+                       # Okay, let|s start...
+                       gettime; putchan %tbgi_on_time;
+                       refresh; ret;
+
+                       label reset;
+                       push 0; putchan %tbgi_on_time;
+                       ret;"
+
+            disp time_left "" text - s "%3.0f"  \
+                    r:"_all_code;
+                       push 0; putchan %tbgi_r0;
+                       getchan %tbgi_on_time; push 1; cmp_if_lt; goto ret;
+
+                       # Calc time left
+                       getchan %tbgi_on_time; add 180;
+                       gettime; sub; putchan %tbgi_r0;
+
+                       # Had the time expired?
+                       getchan %tbgi_r0; push 0; cmp_if_gt; goto ret;
+                       # Yes...
+                       push 0; putchan %tbgi_r0;
+                       push 0; putchan %tbgi_on_time;
+                       push 0; allow_w; putchan offon;
+
+                       label ret; getchan %tbgi_r0; ret;"
+
+            disp status    "" led  "offcol=red" r:is_on
+            disp c1        C1 text - V "%5.2f"    u1
+            disp c2        C2 text - V "%5.2f"    u2
+        }
+        noop - - hseparator layinfo:horz=fill
+        container doors "Дверные блокировки" \
+                grid noshadow,norowtitles,nocoltitles \
+                base:doors ncols:8 content:8 {
+            knob mode "" choicebs r:mode \
+                    items:"#TТест\b\blit=red\tРабота\b\blit=green"
+            noop -  ": " hlabel
+            disp l0  " 0 "  led panel,offcol=red,color=green r:ilk0
+            disp l1  " 1 "  led panel,offcol=red,color=green r:ilk1
+            disp l2  " 2 "  led panel,offcol=red,color=green r:ilk2
+            disp l3  " 3 "  led panel,offcol=red,color=green r:ilk3
+            noop -   "=>"   hlabel
+            disp sum " OK " led panel,offcol=red,color=green \
+                    r:"_all_code;
+                       # Set DISABLED state
+                       push 1; getchan sum_state; sub; mul 2;
+                       putchan %tyk_disable_mask;
+                       # Switch off auto-shot if interlock
+                       push 0; # Value for writing
+                       push 1; getchan sum_state; sub; test;
+                       allow_w; putchan .dl200s.auto_shot;
+                       # Return value
+                       getchan sum_state; ret;"
+        }
+    } layinfo:newline
+
+    container control "Управление" grid nocoltitles,norowtitles \
+            content:5 {
+        noop 1 1
+        noop - - hseparator layinfo:horz=fill
+        noop 1 1
+        noop - - hseparator layinfo:horz=fill
+        noop 1 1
+    }
+
+    ELEM_RACK(1)
+    ELEM_RACK(2)
+    ELEM_RACK(3)
+    ELEM_RACK(4)
+    ELEM_RACK(5)
+    ELEM_RACK(6)
+    ELEM_RACK(7)
+    ELEM_RACK(8)
+
+    container -targ "Мишенный узел" grid nocoltitles,norowtitles \
+            content:7 {
+        container wheel "Колесо" grid \
+                noshadow,nohline,nocoltitles,norowtitles \
+                base:wheel nattl:3 ncols:4 content:eval(3+4) {
+
+            disp   ready "" led              r:status_ready tip:"Готов"
+            disp   going "" led "color=blue" r:status_ready tip:"Едем"
+            container "-kshd485" "..." subwin \
+                    tip:"Окно детального управления КШД485" \
+                    subwintitle:"КШД485 колеса мишени" \
+                    content:1 {
+                include(`kshd485.m4')
+            }
+
+            button go5000 "5000>" button r:go_n_steps \
+                    w:"_all_code; push 5000; putchan go_n_steps; ret;"
+            button stop   "Стоп"  button r:stop
+            button go30l  "<30"   button r:go_n_steps \
+                    w:"_all_code; push -30;  putchan go_n_steps; ret;"
+            button go30r  "30>"   button r:go_n_steps \
+                    w:"_all_code; push +30;  putchan go_n_steps; ret;"
+        }
+        noop - - hseparator layinfo:horz=fill
+        container collimator "Коллиматор" grid \
+                noshadow,nohline,nocoltitles,norowtitles \
+                base:target.collimator ncols:3 content:3 {
+            button - "Закр" button   r:"_all_code; ret 0;" \
+                    w:"_all_code; push 1; putchan close; ret;"
+            button - "Откр" button   r:"_all_code; ret 0;" \
+                    w:"_all_code; push 0; putchan close; ret;"
+            disp   - ""     selector \
+                    items:"#TКу-ку...\b\blit=red\t"\
+                            "Закрыто\b\blit=amber\t"\
+                            "Открыто\b\blit=green\t"\
+                            "Едем\b\blit=yellow" \
+                    r:"_all_code;
+                       getchan state_bit0;
+                       getchan state_bit1; mul 2;
+                       add; ret;"
+        }
+        noop - - hseparator layinfo:horz=fill
+        container farcup "Цилиндр Фарадея" grid \
+                noshadow,nohline,nocoltitles,norowtitles \
+                base:target.farcup ncols:3 content:3 {
+            button - "Ехать" button r:go
+            button - "Стоп"  button r:"_all_code; ret 0;" \
+                    w:"_all_code; push 0; putchan go; ret;"
+            disp   - "" selector items:"#TСтоим\tЕдем\tПолзём\tХбз" \
+                    r:"_all_code;
+                       getchan state_bit0;
+                       getchan state_bit1; mul 2;
+                       add; ret;"
+        }
+        noop - - hseparator layinfo:horz=fill
+        knob camsel "Камеры: " choicebs items:"#T 1 \t 2 " r:target.camera_choice
+    }
+
+# 1:N 2:label 3:adc_options 4:layinfo
+define(`LIUBPM_LINE',
+       `container "adc200-$1" $2 \
+                grid "titleatleft,nocoltitles,norowtitles,nofold,one" \
+                content:1 {
+            pzframe adc "" adc200me \
+                    "foldctls width=700 height=200 subsys=r0_adc200_$1 "$3 \
+                    r0_adc200_$1
+        } layinfo:$4
+       ')
+    container diagnostics "" grid nodecor base:rack0:26 content:2 {
+        container ":" "0-812" subwin "resizable,compact,noclsbtn" \
+                tip:"Центральный ADC812ME" subwintitle:"Центральный ADC812ME" \
+                style:"V2STYLE:size=large,bold" \
+                content:1 {
+            pzframe r0adc812 "" adc812me "cmpr=2" r0_adc812
+        }
+        container ":" " \n BPMы \n " subwin "resizable,compact,noclsbtn" \
+                subwintitle:"ЛИУ: BPMы" \
+                style:"V2STYLE:size=large,bold" \
+                content:1 {
+            container ":" "" canvas "nodecor" content:4 {
+                LIUBPM_LINE(0, "Сумма X; Сумма Y",
+                            "descrA=СумX  descrB=СумY",
+                            "left=0 right=0 top=0")
+                LIUBPM_LINE(1, "Разность X; Разность Y",
+                            "descrA=РазнX descrB=РазнY",
+                            "left=0 right=0 top=0@adc200-0")
+                LIUBPM_LINE(2, "Трансф. тока 1; Шарик",
+                            "descrA=ТрI1  descrB=Шарик unitsA=kA unitsB=MV",
+                            "left=0 right=0 top=0@adc200-1")
+                LIUBPM_LINE(3, "Трансф. тока 2; Цил. Фарадея",
+                            "descrA=ТрI2  descrB=Ц.Фар unitsA=kA unitsB=kA",
+                            "left=0 right=0 top=0@adc200-2 bottom=0")
+            }
+        }
+    }
+
+######################################################################
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+
+#---------------------------------------------------------------------
+define(`DL200ME_S_NUMOUTPUTS', 16)
+
+define(`DL200ME_S_T_LINE', `
+    knob off`'eval($1+1)  "" onoff "color=black" r:off$1
+    knob set`'eval($1+1)  "" text  ""            r:t$1    dpyfmt:"%8.2f"
+    knob ilas`'eval($1+1) "" onoff "color=blue"  r:ilas$1
+    disp ilk`'eval($1+1)  "" led   "color=red"   r:ailk$1
+')
+
+define(`DL200ME_S_I_LINE', `
+    knob iinh`'eval($1+1) "eval($1+1)" onoff "color=amber" r:iinh$1
+')
+
+
+    container dl200me_s "Основной DL200ME" grid "nocoltitles,norowtitles" \
+            base:dl200s content:3 {
+
+        container - "" grid nodecor ncols:3 content:3 {
+            container - "" grid nodecor content:2 {
+                knob mode ""  selector         r:run_mode items:"Off\tProg\t\nExt\tP+E"
+                disp -    "#" text "withlabel" r:serial   dpyfmt:"%-5.0f" tip:"Serial #"
+            }
+            knob tyk  ""       arrowrt "offcol=blue size=giant"  r:do_shot
+            container - "" grid nodecor content:2 {
+                container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+                        2 content:2 {
+                    knob -auto "каждые" onoff   "color=green" r:auto_shot
+                    knob secs  ""       text    ""            r:auto_msec \
+                            units:"s" dpyfmt:"%4.1f"
+                }
+                container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+                        4 content:4 {
+                    disp - "  !  " led   "panel"       r:was_shot
+                    disp - ""      led   "color=green" r:was_fin   tip:"Было срабатывание"
+                    disp - ""      led   "color=red"   r:was_ilk   tip:"Была блокировка"
+                    disp - ""      text  ""            r:auto_left dpyfmt:"%6.0f" \
+                                                                   tip:"Осталось до авто-тука"
+                }
+            }
+        }
+
+        noop - - hseparator layinfo:horz=fill
+
+        container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+                3 content:3 {
+
+            container "" "" grid "noshadow,notitle" \
+                    str1:"-\bОтключение\tT, us\t#\bНеблокирующесть\t?\bБлокировка?" \
+                    str2:"1 Заряд 1\t2 Заряд 2\t3 Старт линз\t4 Размагн.1\t"\
+                         "5 Откл. катода\t6 Поджиг дуги\t7 ТБГИ\t8 Старт секций\t"\
+                         "9 Триггер 1\t10 Триггер 2\t11 Размагн.2\t12 Пуск 0-812\t"\
+                         "13 Резерв 1\t14 Резерв 2\t15 Резерв 3\t16 Резерв 4"  \
+                    param1:4 content:eval(4*DL200ME_S_NUMOUTPUTS) {
+                forloop(`N', 0, eval(DL200ME_S_NUMOUTPUTS-1), `DL200ME_S_T_LINE(N)')
+            }
+
+            noop - - vseparator layinfo:vert=fill
+
+            container "" "" grid "noshadow,notitle,norowtitles" \
+                    str1:"зБлк\bЗапреты блокировок" \
+                    str2:"forloop(`N', 1, DL200ME_S_NUMOUTPUTS, `N\t')" \
+                    param1:1 content:eval(1*DL200ME_S_NUMOUTPUTS) {
+                forloop(`N', 0, eval(DL200ME_S_NUMOUTPUTS-1), `DL200ME_S_I_LINE(N)')
+            }
+        }
+
+    } layinfo:newline
+######################################################################
+
+    container oscillograms "Осциллограммы" grid "titleatleft,nodecor" content:1 {
+        pzframe r0adc812 "" adc812me "cmpr=2 height=200" r0_adc812
+    }
+
+}
+
+wintitle main "LIU control center"
+winname  main liu
+winclass main LIU
+winopts  main "hist_period=0.2,with_load_btn,with_save_btn"
+sysname  liu
+defserver rack0:24

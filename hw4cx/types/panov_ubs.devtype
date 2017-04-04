@@ -1,0 +1,210 @@
+devtype panov_ubs w30i,r10i,w30i,r64i,w64i,r2i {
+	# Settings
+	set_st1_iheat 0
+	set_st2_iheat 2
+	set_dgs_udgs  4
+	set_tht_time  5
+	set_mode      7
+	set_unused8   8
+	set_unused9   9
+
+	# Calibration
+	clb_st1_iheat 10
+	clb_st2_iheat 12
+	clb_dgs_udgs  14
+
+	# Limits/ranges
+	min_st1_iheat 20
+	min_st2_iheat 22
+	min_dgs_udgs  24
+	max_st1_iheat 25
+	max_st2_iheat 27
+	max_dgs_udgs  29
+
+	# Measurements
+	mes_st1_iheat 30
+	mes_st1_iarc  31
+	mes_st2_iheat 32
+	mes_st2_iarc  33
+	mes_dgs_udgs  34
+	cst_st1_iheat 35
+	cst_st2_iheat 37
+	cst_dgs_udgs  39
+
+	# Commands
+	power_on      40
+	power_off     41
+	st1_heat_on   42
+	st1_heat_off  43
+	st2_heat_on   44
+	st2_heat_off  45
+	dgs_udgs_on   46
+	dgs_udgs_off  47
+
+	reboot_all    50
+	reboot_st1    51
+	reboot_st2    52
+	reboot_dgs    53
+	reboot_ubs    54
+	reread_hwaddr 55
+	save_settings 56
+
+	rst_all_ilk   60
+	rst_st1_ilk   61
+	rst_st2_ilk   62
+	rst_dgs_ilk   63
+	rst_ubs_ilk   64
+	rst_accstat   65
+	poweron_ctr   66
+	watchdog_ctr  67
+
+	# Statuses
+	stat_st1_heatin    70
+	stat_st1_arcltd    71
+	stat_st1_res2      72
+	stat_st1_res3      73
+	stat_st1_reboot    74
+	stat_st1_res5      75
+	stat_st1_busoff    76
+	stat_st1_online    77
+
+	stat_st2_heatin    78
+	stat_st2_arcltd    79
+	stat_st2_res2      80
+	stat_st2_res3      81
+	stat_st2_reboot    82
+	stat_st2_res5      83
+	stat_st2_busoff    84
+	stat_st2_online    85
+
+	stat_dgs_is_on     86
+	stat_dgs_res1      87
+	stat_dgs_res2      88
+	stat_dgs_res3      89
+	stat_dgs_reboot    90
+	stat_dgs_res5      91
+	stat_dgs_busoff    92
+	stat_dgs_online    93
+
+	stat_ubs_power     94
+	stat_ubs_res1      95
+	stat_ubs_res2      96
+	stat_ubs_res3      97
+	stat_ubs_reboot    98
+	stat_ubs_extoff    99
+	stat_ubs_busoff    100
+	stat_ubs_online    101
+
+	# Interlocks
+	ilk_st1_connect    102
+	ilk_st1_heat_off   103
+	ilk_st1_heat_cold  104
+	ilk_st1_heat_range 105
+	ilk_st1_arc_range  106
+	ilk_st1_arc_fast   107
+	ilk_st1_high_fast  108
+	ilk_st1_res7       109
+
+	ilk_st2_connect    110
+	ilk_st2_heat_off   111
+	ilk_st2_heat_cold  112
+	ilk_st2_heat_range 113
+	ilk_st2_arc_range  114
+	ilk_st2_arc_fast   115
+	ilk_st2_high_fast  116
+	ilk_st2_res7       117
+
+	ilk_dgs_connect    118
+	ilk_dgs_udgs_off   119
+	ilk_dgs_res2       120
+	ilk_dgs_udgs_range 121
+	ilk_dgs_res4       122
+	ilk_dgs_dgs_fast   123
+	ilk_dgs_res6       124
+	ilk_dgs_res7       125
+
+	ilk_ubs_st1        126
+	ilk_ubs_st2        127
+	ilk_ubs_dgs        128
+	ilk_ubs_res3       129
+	ilk_ubs_res4       130
+	ilk_ubs_res5       131
+	ilk_ubs_res6       132
+	ilk_ubs_res7       133
+
+	# Interlock masking
+	lkm_st1_connect    134
+	lkm_st1_heat_off   135
+	lkm_st1_heat_cold  136
+	lkm_st1_heat_range 137
+	lkm_st1_arc_range  138
+	lkm_st1_arc_fast   139
+	lkm_st1_high_fast  140
+	lkm_st1_res7       141
+
+	lkm_st2_connect    142
+	lkm_st2_heat_off   143
+	lkm_st2_heat_cold  144
+	lkm_st2_heat_range 145
+	lkm_st2_arc_range  146
+	lkm_st2_arc_fast   147
+	lkm_st2_high_fast  148
+	lkm_st2_res7       149
+
+	lkm_dgs_connect    150
+	lkm_dgs_udgs_off   151
+	lkm_dgs_res2       152
+	lkm_dgs_udgs_range 153
+	lkm_dgs_res4       154
+	lkm_dgs_dgs_fast   155
+	lkm_dgs_res6       156
+	lkm_dgs_res7       157
+
+	lkm_ubs_st1        158
+	lkm_ubs_st2        159
+	lkm_ubs_dgs        160
+	lkm_ubs_res3       161
+	lkm_ubs_res4       162
+	lkm_ubs_res5       163
+	lkm_ubs_res6       164
+	lkm_ubs_res7       165
+
+	# "Crash" masking. NOTE: CRM channels MUST follow LKM channels
+	crm_st1_connect    166
+	crm_st1_heat_off   167
+	crm_st1_heat_cold  168
+	crm_st1_heat_range 169
+	crm_st1_arc_range  170
+	crm_st1_arc_fast   171
+	crm_st1_high_fast  172
+	crm_st1_res7       173
+
+	crm_st2_connect    174
+	crm_st2_heat_off   175
+	crm_st2_heat_cold  176
+	crm_st2_heat_range 177
+	crm_st2_arc_range  178
+	crm_st2_arc_fast   179
+	crm_st2_high_fast  180
+	crm_st2_res7       181
+
+	crm_dgs_connect    182
+	crm_dgs_udgs_off   183
+	crm_dgs_res2       184
+	crm_dgs_udgs_range 185
+	crm_dgs_res4       186
+	crm_dgs_dgs_fast   187
+	crm_dgs_res6       188
+	crm_dgs_res7       189
+
+	crm_ubs_st1        190
+	crm_ubs_st2        191
+	crm_ubs_dgs        192
+	crm_ubs_res3       193
+	crm_ubs_res4       194
+	crm_ubs_res5       195
+	crm_ubs_res6       196
+	crm_ubs_res7       197
+
+	hwaddr             198
+}

@@ -1,0 +1,46 @@
+devtype adc200me r1i2097150,r2i1048575,r7i,w20i,r50i {
+	data		0
+        line<1-2>	1
+	marker		9
+
+	shot		10
+        stop		11
+        istart		12
+        waittime	13
+        calibrate	14
+        fgt_clb		15
+        visible_clb	16
+        calc_stats	17
+
+	ptsofs		20
+        numpts		21
+        timing		22
+        range<1-2>	23
+
+	elapsed		30
+        serial		31
+        clb_state	32
+        xs_per_point	33
+	xs_divisor	34
+	xs_factor	35
+        cur_ptsofs	36
+        cur_numpts	37
+        cur_timing	38
+        cur_range<1-2>	39
+
+	line<1-2>on	50
+        line<1-2>rangemin 52
+        line<1-2>rangemax 54
+
+	clb_ofs<1-2>	56
+	clb_cor<1-2>	58
+
+	min<1-2>	60
+        max<1-2>	62
+        avg<1-2>	64
+        int<1-2>	66
+
+	line<1-2>totalmin 70
+	line<1-2>totalmax 72
+	num_lines	74
+}

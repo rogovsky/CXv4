@@ -1,0 +1,31 @@
+devtype triadatv_um w50i,r50i {
+	proto_ver	50
+	um_type		51
+	um_number	52
+	serial		53
+	p_out		54
+	p_in		55
+	p_refl		56
+	t1		57
+	t2		58
+	kp		59
+	phase		60
+
+	fault_pn	61
+	is_fault	62
+	disp_proc	63
+	disp_state	64
+
+	status12_<0-7>	65
+	s_fan1		status12_0
+	s_fan2		status12_1
+	s_fan3		status12_2
+	s_power_supply	status12_3
+	s_fast_prot	status12_4
+	s_input_signal	status12_5
+	s_cmds_02_13	status12_6
+	s_reserved7	status12_7
+
+	num_currents	73
+	i<1-19>		74
+}

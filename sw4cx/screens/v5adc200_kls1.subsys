@@ -1,0 +1,20 @@
+
+grouping main v5adc200_kls1 "Klystron 1 RF measurements" \
+        canvas "notitle,noshadow" content:2 {
+    pzframe adc "" adc200 "width=700,height=200,maxfrq=10" adc200_kls1 \
+            layinfo:"left=0,right=0,top=0,bottom=0@selector"
+    container selector "" grid nodecor 3 layinfo:left=0,bottom=0 content:3 {
+        knob ch1 "Ch A" choicebs r:l0403_kls1.out0 \
+                items:"#T7с пад\b\bcolor=blue\t8с пад\t9с пад\t10с пад"
+        noop - "    " hlabel
+        knob ch2 "Ch B" choicebs r:l0403_kls1.out1 \
+                items:"#T7с нагр\b\bcolor=red\t8с нагр\t9с нагр\t10с нагр"
+    }
+}
+
+sysname   v5adc200_kls1
+defserver linac1:15
+wintitle  main "Klystron 1 RF measurements"
+winname   main v5adc200_kls1
+winclass  main v5adc200_kls1
+winopts   main resizable,compact,notoolbar

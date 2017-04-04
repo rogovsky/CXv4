@@ -1,0 +1,125 @@
+#ifndef __ADC333_DRV_I_H
+#define __ADC333_DRV_I_H
+
+
+// r1i65536,r4i65536,r5i,w20i,r70i
+enum
+{
+    /* 0-9: data */
+    ADC333_CHAN_DATA          = 0,
+    ADC333_CHAN_LINE0         = 1,
+    ADC333_CHAN_LINE1         = 2,
+    ADC333_CHAN_LINE2         = 3,
+    ADC333_CHAN_LINE3         = 4,
+
+    ADC333_CHAN_MARKER        = 9,
+
+    /* 10-29: controls */
+    ADC333_CHAN_SHOT          = 10, 
+    ADC333_CHAN_STOP          = 11,
+    ADC333_CHAN_ISTART        = 12,
+    ADC333_CHAN_WAITTIME      = 13, 
+    ADC333_CHAN_CALC_STATS    = 14,
+
+    ADC333_CHAN_PTSOFS        = 20,
+    ADC333_CHAN_NUMPTS        = 21,
+    ADC333_CHAN_TIMING        = 22,
+    ADC333_CHAN_RANGE0        = 23,
+    ADC333_CHAN_RANGE1        = 24,
+    ADC333_CHAN_RANGE2        = 25,
+    ADC333_CHAN_RANGE3        = 26,
+
+    /* 30-69: status */
+    ADC333_CHAN_ELAPSED       = 30,
+    ADC333_CHAN_XS_PER_POINT  = 31,
+    ADC333_CHAN_XS_DIVISOR    = 32,
+    ADC333_CHAN_XS_FACTOR     = 33,
+    ADC333_CHAN_CUR_PTSOFS    = 34,
+    ADC333_CHAN_CUR_NUMPTS    = 35,
+    ADC333_CHAN_CUR_TIMING    = 36,
+    ADC333_CHAN_CUR_RANGE0    = 37,
+    ADC333_CHAN_CUR_RANGE1    = 38,
+    ADC333_CHAN_CUR_RANGE2    = 39,
+    ADC333_CHAN_CUR_RANGE3    = 40,
+
+    ADC333_CHAN_LINE0ON       = 50,
+    ADC333_CHAN_LINE1ON       = 51,
+    ADC333_CHAN_LINE2ON       = 52,
+    ADC333_CHAN_LINE3ON       = 53,
+    ADC333_CHAN_LINE0RANGEMIN = 54,
+    ADC333_CHAN_LINE1RANGEMIN = 55,
+    ADC333_CHAN_LINE2RANGEMIN = 56,
+    ADC333_CHAN_LINE3RANGEMIN = 57,
+    ADC333_CHAN_LINE0RANGEMAX = 58,
+    ADC333_CHAN_LINE1RANGEMAX = 59,
+    ADC333_CHAN_LINE2RANGEMAX = 60,
+    ADC333_CHAN_LINE3RANGEMAX = 61,
+
+    ADC333_CHAN_MIN0          = 70, ADC333_CHAN_STATS_first = ADC333_CHAN_MIN0,
+    ADC333_CHAN_MIN1          = 71,
+    ADC333_CHAN_MIN2          = 72,
+    ADC333_CHAN_MIN3          = 73,
+    ADC333_CHAN_MAX0          = 74,
+    ADC333_CHAN_MAX1          = 75,
+    ADC333_CHAN_MAX2          = 76,
+    ADC333_CHAN_MAX3          = 77,
+    ADC333_CHAN_AVG0          = 78,
+    ADC333_CHAN_AVG1          = 79,
+    ADC333_CHAN_AVG2          = 80,
+    ADC333_CHAN_AVG3          = 81,
+    ADC333_CHAN_INT0          = 82,
+    ADC333_CHAN_INT1          = 83,
+    ADC333_CHAN_INT2          = 84,
+    ADC333_CHAN_INT3          = 85, ADC333_CHAN_STATS_last = ADC333_CHAN_INT3,
+
+    ADC333_CHAN_LINE0TOTALMIN = 86,
+    ADC333_CHAN_LINE1TOTALMIN = 87,
+    ADC333_CHAN_LINE2TOTALMIN = 88,
+    ADC333_CHAN_LINE3TOTALMIN = 89,
+    ADC333_CHAN_LINE0TOTALMAX = 90,
+    ADC333_CHAN_LINE1TOTALMAX = 91,
+    ADC333_CHAN_LINE2TOTALMAX = 92,
+    ADC333_CHAN_LINE3TOTALMAX = 93,
+    ADC333_CHAN_NUM_LINES     = 94,
+
+    ADC333_NUMCHANS           = 100,
+};
+
+
+/* Timings */
+enum
+{
+    ADC333_T_500NS = 0,
+    ADC333_T_1US   = 1,
+    ADC333_T_2US   = 2,
+    ADC333_T_4US   = 3,
+    ADC333_T_8US   = 4,
+    ADC333_T_16US  = 5,
+    ADC333_T_32US  = 6,
+    ADC333_T_EXT   = 7,
+};
+
+/* Ranges */
+enum
+{
+    ADC333_R_8192  = 0,
+    ADC333_R_4096  = 1,
+    ADC333_R_2048  = 2,
+    ADC333_R_1024  = 3,
+    ADC333_R_OFF   = 4
+};
+
+/* General device specs */
+enum
+{
+    ADC333_NUM_LINES  = 4,
+    ADC333_MAX_NUMPTS = 65535,
+};
+enum
+{
+    ADC333_MIN_VALUE = -8192000, // (    0-2048) * (8192000/2048)
+    ADC333_MAX_VALUE = +8188000, // (0xFFF-2048) * (8192000/2048)
+};
+
+
+#endif /* __ADC333_DRV_I_H */

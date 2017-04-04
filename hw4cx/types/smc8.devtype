@@ -1,0 +1,24 @@
+devtype smc8 r64i,w136i {
+	going<0-7>		0
+	state<0-7>		8
+	km<0-7>			16
+	kp<0-7>			24
+	counter<0-7>		32
+
+	stop<0-7>		64
+	go<0-7>			72
+	go_n_steps<0-7>		80
+	rst_counter<0-7>	88
+	start_freq<0-7>		96
+	final_freq<0-7>		104
+	acceleration<0-7>	112
+	num_steps<0-7>		120
+	out_md<0-7>		128
+	mask_m<0-7>		136
+	mask_p<0-7>		144
+	type_m<0-7>		152
+	type_p<0-7>		160
+
+	hw_ver			198
+	sw_ver			199
+}

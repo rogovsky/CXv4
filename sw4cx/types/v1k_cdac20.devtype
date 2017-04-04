@@ -1,0 +1,40 @@
+devtype v1k_cdac20 w50i,r50i {
+	iset		0
+	iset_rate	1
+	switch_on	2
+	switch_off	3
+	rst_ilks	4
+	reset_state	5
+	do_calb_dac	6
+	autocalb_onoff	7
+	autocalb_secs	8
+	digcorr_mode	9
+	reset_c_ilks	10
+
+	current1m	50
+	voltage2m	51
+	current2m	52
+	outvoltage1m	53
+	outvoltage2m	54
+	adc_dac		55
+	adc_0v		56
+	adc_p10v	57
+
+	iset_cur	58
+	digcorr_factor	59
+	opr		60
+
+	ilk_overheat	61
+	ilk_emergsht	62
+	ilk_currprot	63
+	ilk_loadovrh	64
+
+	is_on		68
+
+	c_ilk_overheat	69
+	c_ilk_emergsht	70
+	c_ilk_currprot	71
+	c_ilk_loadovrh	72
+
+	v1k_state	99
+}

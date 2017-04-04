@@ -1,0 +1,38 @@
+#ifndef __CGVI8_DRV_I_H
+#define __CGVI8_DRV_I_H
+
+
+#include "drv_i/cankoz_common_drv_i.h"
+
+
+// w40i,r20i,w8i,r16i,w1i,r2i,w13i
+enum
+{
+    CGVI8_CHAN_RAW_V_n_base  = 0,   CGVI8_CHAN_OUT_count = 8,
+    CGVI8_CHAN_QUANT_n_base  = 8,   // Note: 1quant=100ns
+    CGVI8_CHAN_MASK1_n_base  = 16,
+    CGVI8_CHAN_MASK8         = 24,
+    CGVI8_CHAN_PROGSTART     = 25,
+    CGVI8_CHAN_PRESCALER     = 26,
+    CGVI8_CHAN_BASEBYTE      = 27,
+
+    CGVI8_CHAN_STD_RD_base     = 40,
+      CGVI8_CHAN_STD_RD_count  = 20,
+    CGVI8_CHAN_HW_VER          = CGVI8_CHAN_STD_RD_base + 0,
+    CGVI8_CHAN_SW_VER          = CGVI8_CHAN_STD_RD_base + 1,
+
+    CGVI8_CHAN_REGS_base       = 60,
+    CGVI8_CHAN_REGS_OUTRB_n_base = CGVI8_CHAN_REGS_base + CANKOZ_IOREGS_OFS_OUTRB0,
+    CGVI8_CHAN_REGS_INPRB_n_base = CGVI8_CHAN_REGS_base + CANKOZ_IOREGS_OFS_INPRB0,
+    CGVI8_CHAN_REGS_OUTR8B     = CGVI8_CHAN_REGS_base + CANKOZ_IOREGS_OFS_OUTR8B,
+    CGVI8_CHAN_REGS_INPR8B     = CGVI8_CHAN_REGS_base + CANKOZ_IOREGS_OFS_INPR8B,
+    CGVI8_CHAN_REGS_last       = CGVI8_CHAN_REGS_base + CANKOZ_IOREGS_CHANCOUNT -1,
+
+    CGVI8_CHAN_REGS_RSVD_B     = CGVI8_CHAN_REGS_base + CANKOZ_IOREGS_CHANCOUNT,
+    CGVI8_CHAN_REGS_RSVD_E     = 99,
+
+    CGVI8_NUMCHANS = 100
+};
+
+
+#endif /* __CGVI8_DRV_I_H */

@@ -1,0 +1,22 @@
+include(`canadc40.devtype')
+include(`candac16.devtype')
+include(`lebedev_subharmonic.devtype')
+
+dev subh_adc  canadc40/remdrv ~ 0,63 b:cangw-subh:8002 end=5 gain=0
+dev subh_dac  candac16/remdrv ~ 0,62 b:cangw-subh:8002
+
+dev rough1    lebedev_subharmonic ~ - subh_dac.outr8b
+dev rough2    lebedev_subharmonic ~ - subh_adc.outr8b
+
+define(`ONE_SUBH', `
+    cpoint subharmonic.line$1 {
+        rough rough$1.set
+        phase subh_dac.out`'eval(2+$1-1)
+        mes_a subh_adc.adc`'eval(3+$1-1)
+        u_res subh_dac.out`'eval(0+$1-1)
+        mes_b subh_adc.adc`'eval(1+$1-1)
+    }
+')
+
+ONE_SUBH(1)
+ONE_SUBH(2)

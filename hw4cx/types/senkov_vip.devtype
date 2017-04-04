@@ -1,0 +1,56 @@
+devtype senkov_vip w8i,w4i,r12i,r8i,r16i,r2i {
+	set_dac_reserved0	0
+	set_dac_uout		1
+	set_dac_corr		2
+	set_reserved3		3
+	set_uso_coeff		4
+	set_vip_invrt_frq	5
+	set_vip_iout_prot	6
+	set_brkdn_counter	7
+
+	cmd_vip_on		8
+	cmd_vip_off		9
+	cmd_hvl_on		10
+	cmd_hvl_off		11
+
+	mes_reserved0		12
+	mes_vip_uout		13
+	mes_vip_iout_full	14
+	mes_vip_iout_prec	15
+	mes_transf_iin		16
+	mes_vip_3furect		17
+	mes_vip_3fi		18
+	mes_vip_t_trrad		19
+	mes_tank_t		20
+	mes_reserved9		21
+	mes_vip_iout_auto	22
+	mes_vip_iout_avg	23
+
+	mode_power_on		24
+	mode_actuator_on	25
+	mode_vip_on		26
+	mode_operate		27
+	mode_reserved4		28
+	mode_reserved5		29
+	mode_manual		30
+	mode_vip_blocked	31
+
+	stat_reserved0		32
+	stat_feedback_break	33
+	stat_phase_break	34
+	stat_vip_iin_gt_250a	35
+	stat_vip_iout_gt_1100ma	36
+	stat_vip_uout_gt_70kv	37
+	stat_ext_block1_ubs	38
+	stat_constant_brkdn	39
+	stat_no_water		40
+	stat_tank_t_gt_60c	41
+	stat_ttemp_gt_45c	42
+	stat_igbt_protection	43
+	stat_ext_block2_ubs	44
+	stat_transf_iin_gt_300a	45
+	stat_reserved14		46
+	stat_reserved15		47
+
+	cur_brkdn_count		48
+}

@@ -1,0 +1,86 @@
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+     define(`fordown',
+            `pushdef(`$1', `$2')_fordown(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_fordown',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', decr($1))_fordown(`$1', `$2', `$3', `$4')')')
+#---------------------------------------------------------------------
+
+wintitle main "Senkov EBC (Electron Beam Controller) test panel"
+winname  main senkov_ebc
+winclass main SenkovEBC
+winopts  main compact,notoolbar,nostatusline
+
+grouping main senkov_ebc "Senkov EBC" lrtb "" content:4 {
+    container ctl "Controls" grid noshadow,notitle,norowtitles 8 content:8 {
+        knob   Uset  "Uset"  text - V %5.2f Uset  disprange:0-60
+        disp   Umes  "Umes"  text - V %5.2f Umes  disprange:0-60
+        disp   Iheat "Iheat" text - A %5.2f Iheat disprange:0-60
+        knob   onoff ""      choicebs \
+                items:"#TOff\b\blit=red\tOn\b\blit=green" \
+                r:"_all_code; push 1; getchan not_on_bit; sub; ret;" \
+                w:"_all_code; push 1; qryval; sub; putchan not_on_bit; ret;"
+        disp   state ""      selector \
+                r:"_all_code; getchan inpr8b; mod 16; ret;" \
+                items:"#T0000\t0001\t0010\t0011\t"\
+                        "0100\t0101\t0110\t0111\t"\
+                        "1000\t1001\t1010\t1011\t"\
+                        "1100\tOK\b\blit=green\tERR\b\blit=red\tWAIT\b\blit=yellow"
+        button Reset "Reset" button r:"_all_code; ret 0;" \
+                w:"_all_code; push 1; putchan reset_bit; sleep 4;
+                              push 0; putchan reset_bit; ret;"
+        disp   pwr   "P=U*I" text - W %5.1f \
+                "_all_code; getchan Umes; getchan Iheat; mul; ret;" \
+                disprange:0-3600
+        minmax p_dlt "[-/+]" text - - %7.2f \
+                "_all_code; getchan Umes; getchan Iheat; mul; ret;" \
+                disprange:0-20
+    }
+
+    container service "Service\nchannels..." subwin \
+            str3:"EBC service channels" content:1 {
+        container "" "" lrtb content:2 {
+
+define(`SENKOV_EBC_DAC_ADC_LINE', `
+    knob dac$1 "" text - - %5.2f out$1
+    disp dac$1 "" text - - %5.2f adc$1
+')
+            container dacadc "DAC and ADC" grid \
+                    str1:"DAC, V\tADC, V" str2:"0\t1\t2\t3\t4" \
+                    param1:2 content:10 {
+                SENKOV_EBC_DAC_ADC_LINE(0)
+                SENKOV_EBC_DAC_ADC_LINE(1)
+                SENKOV_EBC_DAC_ADC_LINE(2)
+                SENKOV_EBC_DAC_ADC_LINE(3)
+                SENKOV_EBC_DAC_ADC_LINE(4)
+            }
+
+define(`SENKOV_EBC_OUTB_LINE', `
+    knob outrb$1 "" onoff r:outrb$1
+')
+define(`SENKOV_EBC_INPB_LINE', `
+    disp inprb$1 "" led  "shape=circle" r:inprb$1
+')
+            container "" "I/O" grid "" \
+                      9  0 0 \
+                      "8b`'fordown(`N', 7, 0, `\t`'N')" \
+                      "OutR\tInpR" \
+                      content:18 {
+                knob "outr8b" "8b" text "noincdec" dpyfmt:"%3.0f" r:outr8b
+                fordown(`N', 7, 0, `SENKOV_EBC_OUTB_LINE(N)')
+                disp "inpr8b" "8b" text            dpyfmt:"%3.0f" r:inpr8b
+                fordown(`N', 7, 0, `SENKOV_EBC_INPB_LINE(N)')
+            }
+
+        }
+    }
+
+    noop - "" leds
+    noop plot "" histplot \
+        "width=700,height=400,add=ctl.Uset,add=ctl.Umes,add=ctl.Iheat,add=ctl.pwr,add=ctl.p_dlt" \
+        layinfo:newline
+}

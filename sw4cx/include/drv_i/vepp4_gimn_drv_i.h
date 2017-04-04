@@ -1,0 +1,23 @@
+#ifndef __VEPP4_GIMN_DRV_I_H
+#define __VEPP4_GIMN_DRV_I_H
+
+
+// w5i,r5i
+enum
+{
+    VEPP4_GIMN_CHAN_CODE_SET    = 0,
+    VEPP4_GIMN_CHAN_SWITCH      = 1,
+
+    VEPP4_GIMN_CHAN_RESET_STATE = 4,
+
+    VEPP4_GIMN_CHAN_PKS_VAL     = 5,
+    VEPP4_GIMN_CHAN_GVI_OUTRB0  = 6,
+    VEPP4_GIMN_CHAN_GVI_OUTRB1  = 7,
+
+    VEPP4_GIMN_CHAN_GIMN_STATE  = 9,
+
+    VEPP4_GIMN_NUMCHANS = 10
+};
+
+
+#endif /* __VEPP4_GIMN_DRV_I_H */

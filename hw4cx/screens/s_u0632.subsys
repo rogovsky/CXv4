@@ -1,0 +1,45 @@
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+     define(`fordown',
+            `pushdef(`$1', `$2')_fordown(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_fordown',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', decr($1))_fordown(`$1', `$2', `$3', `$4')')')
+#---------------------------------------------------------------------
+
+define(`R_MSTR', `"#T400.00e3\t100.00e3\t25.00e3\t6.25e3"')
+define(`T_MSTR', `"#F32f,0.1088,0.0,%4.2fms"')
+define(`U0632_LINE', `
+    disp      online$1 "\n$1" led      r:online$1
+    disp      cur_m$1  ""     selector r:cur_m$1  items:R_MSTR
+    disp      cur_p$1  ""     selector r:cur_p$1  items:T_MSTR
+    selector  m$1      ""     selector r:m$1      items:R_MSTR
+    selector  p$1      ""     selector r:p$1      items:T_MSTR
+    container data$1   "..."  subwin  subwintitle:"IPP #$1" content:1 {
+        pzframe ipp "" u0632 "" box$1
+    }
+')
+
+grouping main u0632 "U0632: whole-device panel" \
+        grid "noshadow,nocoltitles" ncols:6 nflrs:15 nattl:7 \
+        content:eval(7+30*6) {
+
+    disp   bias_is_on      "Bias:" led                r:bias_is_on
+    disp   bias_cur_count  ""      text               r:bias_cur_count  dpyfmt:%2.0f
+    knob   bias_count      ""      text   "noincdec"  r:bias_count      dpyfmt:%2.0f
+    button bias_get        "Get"   button             r:bias_get
+    button bias_drop       "Drop"  button             r:bias_drop
+    disp   bias_steps_left "..."   text   "withlabel" r:bias_steps_left dpyfmt:%3.0f
+    disp   bias_steps_togo "/"     text   "withlabel"                   dpyfmt:%-3.0f \
+            r:"_all_code; getchan bias_count; mul 4; ret;"
+
+    forloop(`N', 0, 29, `U0632_LINE(N)')
+}
+
+wintitle main "U0632: whole-device panel"
+winname  main u0632
+winclass main U0632
+winopts  main ""

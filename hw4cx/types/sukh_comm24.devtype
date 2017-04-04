@@ -1,0 +1,3 @@
+devtype sukh_comm24 w2i {
+	comm<0-1>	0
+}

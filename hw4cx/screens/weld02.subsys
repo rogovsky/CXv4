@@ -1,0 +1,37 @@
+
+wintitle main "WELD02 test panel"
+winname  main weld02
+winclass main Weld02
+winopts  main ""
+
+# 1:id&r 2:label 3:units 4:set_dpyfmt 5:mes_dpyfmt 6:alwd_max 7:disp_max
+define(`WELD02_CTL', `
+    knob $1_set $2 text - $3 $4 set_$1 alwdrange:0-$6 disprange:0-$7
+    disp $1_mes "" text - "" $5 mes_$1                disprange:0-$7
+')
+
+grouping main weld02 "" grid "nodecor" content:3 {
+    container ctl "Control" grid "noshadow,nocoltitles" 2 content:8 {
+        WELD02_CTL(uh, "Umesh high", "V", %6.0f, %6.0f, 6000, 6000)
+        WELD02_CTL(ul, "Umesh low",  "V", %6.0f, %6.0f, 6000, 6000)
+        WELD02_CTL(un, "Iheat",      "A", %6.0f, %6.0f, 85,   100)
+        noop
+        disp I "Imes" text - mkA %3.0f r:"_all_code; ret -1;" disprange:0-300
+    }
+    container stab "Current stabilization mode, mA" \
+            grid "noshadow,nocoltitles" 2 content:8 {
+        WELD02_CTL(ih, "Icathode high",  -, %6.1f, %6.2f, 100, 100)
+        WELD02_CTL(il, "Icathode low",   -, %6.1f, %6.2f, 100, 100)
+        knob ampl "Amplification" selector "nolabel" r:set_gain \
+                items:"#T-\tx10"
+        noop
+        knob stab "Stabilization" selector "nolabel" r:set_stab \
+                items:"#T-\t1kHz\t300Hz\t30Hz"
+        noop
+    }
+    container mes "Measurements, V" grid "noshadow,nocoltitles" 1 content:3 {
+        disp Uheat_mes "Uheat"  text - - %8.3f mes_u_heat layinfo:horz=right
+        disp Uhigh_mes "Uhigh"  text - - %8.3f mes_u_high layinfo:horz=right
+        disp Upowr_mes "Upower" text - - %8.3f mes_u_powr layinfo:horz=right
+    } layinfo:horz=fill
+}

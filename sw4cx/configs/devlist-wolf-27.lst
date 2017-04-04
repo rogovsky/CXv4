@@ -1,0 +1,13 @@
+include(`liu_key.devtype')
+
+dev pult_key liu_key ~ -   dev=/dev/ttyUSB0 \
+			 on_on="_all_code; push 0; putchan rack0:24.dl200s.soft_lock; ret;" \
+			on_off="_all_code; push 1; putchan rack0:24.dl200s.soft_lock; ret;"
+
+# Note:
+#     Following lines are for testing of liu_key driver.
+#     "mknod /tmp/liu_key", start server, send \xaa and \xbb to /tmp/liu_key
+#dev fake_key liu_key ~ -   dev=/tmp/liu_key \
+#			 on_on="_all_code; push 0; putchan insrv::state.0; ret;" \
+#			on_off="_all_code; push 1; putchan insrv::state.0; ret;"
+#dev state noop w1i -

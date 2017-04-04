@@ -1,0 +1,25 @@
+devtype vsdc2 r10i,r10s,w20i,r2s2000,r8i,w20i,r30i {
+        hw_ver		0
+        sw_ver		1
+
+	gain<0-1>	2
+
+	int<0-1>	10
+
+	line<0-1>	40
+	get_osc<0-1>	58
+	ptsofs<0-1>	60
+	cur_ptsofs<0-1>	70
+	cur_numpts<0-1>	72
+	write_addr<0-1>	74
+
+	# !!!DEVTYPE-DOT-HACK
+	inp<0-1>.data		40
+	inp<0-1>.int		10
+	inp<0-1>.gain		2
+	inp<0-1>.get		58
+	inp<0-1>.ptsofs		60
+	inp<0-1>.cur_ptsofs	70
+	inp<0-1>.cur_numpts	72
+	inp<0-1>.write_addr	74
+}

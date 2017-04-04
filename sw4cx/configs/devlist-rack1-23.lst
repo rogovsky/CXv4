@@ -1,0 +1,60 @@
+# rackN:23 LIU "slave" crate functions
+
+include(`dl200me.devtype')
+include(`adc200me.devtype')
+include(`adc812me.devtype')
+include(`panov_ubs.devtype')
+
+define(`RN', `1')
+
+dev dl200f_`'RN	dl200me@pci4624		~	0	fast
+
+dev ubs_`'RN`'a	panov_ubs@sktcankoz	~	0,1
+dev ubs_`'RN`'b	panov_ubs@sktcankoz	~	0,2
+dev ubs_`'RN`'c	panov_ubs@sktcankoz	~	0,3
+dev ubs_`'RN`'d	panov_ubs@sktcankoz	~	0,4
+dev ubs_`'RN`'e	panov_ubs@sktcankoz	~	0,5
+dev ubs_`'RN`'f	panov_ubs@sktcankoz	~	0,6
+
+dev adc_`'RN`'a	adc200me@pci4624	~	4
+dev adc_`'RN`'b	adc200me@pci4624	~	2
+dev adc_`'RN`'c	adc200me@pci4624	~	0
+dev adc_`'RN`'d	adc200me@pci4624	~	1
+dev adc_`'RN`'e	adc200me@pci4624	~	3
+dev adc_`'RN`'f	adc200me@pci4624	~	5
+
+dev adc812_`'RN`'l adc812me@pci4624	~	0	ptsofs=28000 numpts=10000 frqdiv=8
+dev adc812_`'RN`'r adc812me@pci4624	~	1	ptsofs=28000 numpts=10000 frqdiv=8
+
+######################################################################
+#    Virtual hardware                                                #
+######################################################################
+
+# 1:l/r 2:a/b/c/d/e/f 3:N(0-2)
+define(`TWO812CH', `
+    cpoint two812ch_`'RN`'$2 {
+        line1		adc812_`'RN`'$1.line`'eval($3*2+0)
+        line2		adc812_`'RN`'$1.line`'eval($3*2+1)
+        marker		adc812_`'RN`'$1.marker
+
+        xs_per_point	adc812_`'RN`'$1.xs_per_point
+        xs_divisor	adc812_`'RN`'$1.xs_divisor
+        xs_factor	adc812_`'RN`'$1.xs_factor
+        cur_ptsofs	adc812_`'RN`'$1.cur_ptsofs
+        cur_numpts	adc812_`'RN`'$1.cur_numpts
+        cur_timing	adc812_`'RN`'$1.cur_timing #!!! Should be removed upon deployment of XS management in fastadc_data
+        cur_frqdiv	adc812_`'RN`'$1.cur_frqdiv #!!! Should be removed upon deployment of XS management in fastadc_data
+
+	line1rangemin	adc812_`'RN`'$1.line`'eval($3*2+0)rangemin
+	line2rangemin	adc812_`'RN`'$1.line`'eval($3*2+1)rangemin
+	line1rangemax	adc812_`'RN`'$1.line`'eval($3*2+0)rangemax
+	line2rangemax	adc812_`'RN`'$1.line`'eval($3*2+1)rangemax
+    }
+')
+
+TWO812CH(l,c,0)
+TWO812CH(l,b,1)
+TWO812CH(l,a,2)
+TWO812CH(r,d,0)
+TWO812CH(r,e,1)
+TWO812CH(r,f,2)

@@ -1,0 +1,40 @@
+devtype c061621 r1i4096,r9i,w20i,r19i,r1t20 {
+	data		0
+
+	shot		10
+	stop		11
+	istart		12
+	waittime	13
+	calc_stats	14
+
+	ptsofs		20
+	numpts		21
+	timing		22
+	range		23
+
+	elapsed		30
+	xs_per_point	31
+	xs_divisor	32
+	xs_factor	33
+	cur_ptsofs	34
+	cur_numpts	35
+	cur_timing	36
+	cur_range	37
+
+	on		38
+	rangemin	39
+	rangemax	40
+
+	min		41
+	max		42
+	avg		43
+	int		44
+
+	totalmin	45
+	totalmax	46
+
+	num_lines	47
+
+	devtype_id	48
+	devtype_str	49
+}

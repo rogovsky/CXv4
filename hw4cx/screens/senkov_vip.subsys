@@ -1,0 +1,15 @@
+wintitle main "Senkov VIP controller test panel"
+winname  main senkov_vip
+winclass main SenkovVIP
+winopts  main compact,notoolbar,nostatusline
+
+grouping main senkov_vip "Senkov VIP" grid "nodecor" 3 content:3 {
+    container ctl "Control" grid noshadow,nocoltitles,norowtitles content:8 {
+        container - "Settings" grid notitle,noshadow,nocoltitles content:2 {
+            knob u_high "U high" text - kV %4.1f set_dac_uout alwdrange:0-60
+            knob k_corr "K corr" text - -  %4.0f set_dac_corr alwdrange:0-255
+        }
+    }
+    noop - - vseparator layinfo:vert=fill
+    noop
+}

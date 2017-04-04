@@ -1,0 +1,169 @@
+<HTML>
+<HEAD>
+<TITLE>Структура директорий в инсталлированном дереве CXv4</TITLE>
+<LINK REL="stylesheet" TYPE="text/css" HREF="style.css">
+</HEAD>
+<BODY>
+
+<H1>Структура директорий в инсталлированном дереве CXv4</H1>
+
+
+		<H2>Введение</H2>
+
+<OL>
+
+<LI>Инсталлированное дерево CXv4 располагается в поддиректории
+<TT>4pult/</TT> в home-директории пользователя (на пультовых машинах --
+обычно пользователь <TT>oper</TT>), т.е., <TT>~/4pult/</TT>.
+
+<P>Программа CX-starter по умолчанию предполагает именно это местоположение.
+
+<LI>Структура директорий похожа на общепринятую в *nix: директории
+<TT>bin/</TT>, <TT>sbin/</TT>, <TT>lib/</TT>, ..., с поддиректориями по мере
+надобности.
+
+</OL>
+
+
+		<H2>Структура директорий</H2>
+
+<DL>
+
+<DT><TT>~/4pult</TT></DT>
+<DD>
+
+  <DL>
+
+  <DT><TT>bin</TT></DT><DD>Программы.  В т.ч.:
+
+    <UL TYPE=square>
+
+    <LI>Утилиты командной строки -- <CODE>cdaclient</CODE>,
+<CODE>das-experiment</CODE>, <CODE>dataset-save</CODE>.
+
+    <LI>CX-starter: собственно <CODE>cx-starter</CODE>, а также
+скрипт-обвязка <CODE>cstart</CODE>.
+
+    <LI>Метаклиенты, поддерживающие "экраны" пультовых программ:
+<CODE>pult</CODE>, <CODE>pzframeclient</CODE>, ...
+
+    <LI>Пультовые "программы", являющиеся в основном симлинками на
+метаклиенты.
+
+    <LI>"Программы"-"экраны" для конкретных типов устройств
+(<CODE>cac208</CODE>, <CODE>v06xx</CODE>, ...), также являющиеся симлинками
+на метаклиенты.
+
+    <LI>Специфичные утилиты экранов для pzframe-устройств
+(<CODE>adc200</CODE>, <CODE>ottcam</CODE>, ... -- в основном из
+<TT>hw4cx/pzframes/</TT>).
+
+    <LI>Графические программы общего назначения, вроде
+<CODE>histplot</CODE>.
+
+    </UL>
+
+</DD>
+
+  <DT><TT>sbin</TT></DT><DD>"Системные" программы.  Конкретно CX-сервер,
+<CODE>cxsd</CODE>.</DD>
+
+  <DT><TT>configs</TT></DT><DD>Разнообразные файлы конфигурации, в т.ч.:</DD>
+
+    <UL TYPE=square>
+
+    <LI>Списки аппаратуры для серверов, <TT>devlist-*.lst</TT>, а также
+сопутствующие include-файлы <TT>*.m4</TT>.
+
+    <LI>Списки программ для CX-starter, <TT>cx-starter-*.conf</TT>, а также
+файл <TT>srvparams.conf</TT>, с параметрами для запуска конкретных серверов
+и групп серверов.
+
+    </UL>
+
+  <DT><TT>screens</TT></DT><DD>"Экраны" программ -- <TT>*.subsys</TT> и
+сопутствующие include-файлы <TT>*.m4</TT>.</DD>
+
+  <DT><TT>settings</TT></DT><DD>Специфичные для разных пультовых программ
+файлы.</DD>
+
+    <DL>
+
+    <DT><TT>common</TT></DT><DD>Общие для разных программ данные, такие, как
+калибровки, таблицы интерполяции и т.д.</DD>
+
+    <DT><TT><I>PROGNAME</I></TT></DT><DD>Файлы, специфичные для конкретной
+программы.
+
+<P>При запуске программы <I>PROGNAME</I> из CX-starter предварительно
+делается <CODE>cd</CODE> в директорию
+
+<BLOCKQUOTE CLASS=excerpt><TT>~/4pult/settings/<I>PROGNAME</I></TT></BLOCKQUOTE>
+
+<P>Соответственно, в этой директории сохраняются:
+
+      <UL TYPE=square>
+
+      <LI>Локальные режимы --
+<TT>mode_<I>PROGNAME</I>_<I>YYYYMMDD_NNN</I>.dat</TT> (в случае
+использования локальных режимов).
+
+      <LI>Протокол действий программы --
+<TT>events_<I>PROGNAME</I>.log</TT>.
+
+      <LI>Данные с самописцев (histplots) --
+<TT>plot_<I>PROGNAME</I>_<I>YYYYMMDD_NNN</I>.dat</TT> .
+
+      <LI>Данные осциллограмм --
+<TT>data_<I>DEVTYPE</I>-<I>PROGNAME</I>_<I>YYYYMMDD_NNN</I>.dat</TT>.
+
+      </UL>
+
+
+</DD>
+
+    </DL>
+
+  <DT><TT>lib</TT></DT><DD>Разнообразные "библиотечные" файлы:
+
+    <DL>
+    <DT><TT>server</TT></DT><DD>
+
+      <DL>
+
+      <DT><TT>drivers</TT></DT><DD>Драйверы (<TT>*_drv.so</TT>) и layer'ы
+(<TT>*_lyr.so</TT>).</DD>
+
+      <DT><TT>exts</TT></DT><DD>Модули расширений (<TT>*_ext.so</TT>).</DD>
+
+      <DT><TT>frontends</TT></DT><DD>Frontend'ы 
+(<TT>cxsd_fe_*.so</TT>).</DD>
+
+      <DT><TT>libs</TT></DT><DD>Модули библиотек (<TT>*_lib.so</TT>).</DD>
+
+      </DL>
+
+<P>В настоящий момент (02.11.2016) последние 3 директории не используются.
+
+</DD>
+
+    </DL>
+
+<P>Кроме того, непосредственно в этой директории лежат инсталлированные
+копии библиотек <TT>lib*.a</TT> и <TT>lib*.so</TT>, могущие использоваться
+при сборке программ.
+
+</DD>
+
+  <DT><TT>include</TT></DT><DD>Инсталлированные копии
+<CODE>#include</CODE>-файлов <TT>*.h</TT> (в т.ч. интерфейсы драйверов
+  <TT>drv_i/*_drv_i.h</TT>), могущие использоваться при сборке программ.</DD>
+
+  </DL>
+
+</DD>
+
+</DL>
+
+</BODY>
+</HTML>

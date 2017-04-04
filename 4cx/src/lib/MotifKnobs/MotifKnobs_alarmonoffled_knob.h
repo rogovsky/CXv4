@@ -1,0 +1,4 @@
+extern dataknob_knob_vmt_t motifknobs_alarm_vmt;
+extern dataknob_knob_vmt_t motifknobs_onoff_vmt;
+extern dataknob_knob_vmt_t motifknobs_led_vmt;
+extern dataknob_knob_vmt_t motifknobs_radiobtn_vmt;

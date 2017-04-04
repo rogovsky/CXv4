@@ -1,0 +1,13 @@
+
+grouping main v5adc200_grp2 "Grouper RF measurements (2/2)" \
+        canvas "notitle,noshadow" content:1 {
+    pzframe adc "" adc200 "width=700,height=200,maxfrq=10" adc200_grp2 \
+            layinfo:"left=0,right=0,top=0,bottom=0"
+}
+
+sysname   v5adc200_grp2
+defserver linac1:15
+wintitle  main "Grouper RF measurements (2/2)"
+winname   main v5adc200_grp2
+winclass  main v5adc200_grp2
+winopts   main resizable,compact,notoolbar

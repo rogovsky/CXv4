@@ -1,0 +1,72 @@
+
+# 1:N(0-7) 2:Label
+define(`TVAC320_STAT_LINE', `
+    disp s$1 "$1 "$2 led   "color=blue"  r:stat_$1
+')
+
+# 1:N(0-7) 2:Label
+define(`TVAC320_ILK_LINE', `
+    knob m$1 "$1 "$2 onoff "color=amber" r:lkm_$1
+    disp l$1 ""      led   "color=red"   r:ilk_$1
+')
+
+grouping main TVAC320 "TVAC320" grid "nocoltitles,norowtitles" \
+        nattl:3 content:eval(3+3) {
+
+    disp   hw_ver    HW    text   "withlabel" dpyfmt:"%-2.0f" r:hw_ver
+    disp   sw_ver    SW    text   "withlabel" dpyfmt:"%-2.0f" r:sw_ver
+    knob   onoff     ""    choicebs \
+            items:"#TВыкл\b\blit=red\tВкл\b\blit=green" \
+            r:stat_charger_on \
+            w:"_all_code;
+                       qryval;      putchan switch_tvr_on;
+               push 1; qryval; sub; putchan switch_tvr_off;
+               ret;"
+
+    container vals "" grid nodecor ncols:4 content:4 {
+        knob set ""  text "withunits"           "V" %5.1f Uset
+        disp mes ""  text ""                    ""  %5.1f Umes
+        knob min "[" text "withlabel"           ""  %5.1f Umin
+        knob max "-" text "withlabel,withunits" "]" %5.1f Umax
+    }
+
+    noop   -         ""    hseparator layinfo:horz=fill
+
+    container bits "" grid nodecor ncols:3 content:3 {
+
+        container stat "Состояние" grid "noshadow,nocoltitles,norowtitles" \
+                content:8 {
+            TVAC320_STAT_LINE(0, "ЗУ вкл")
+            TVAC320_STAT_LINE(1, "ТРН вкл")
+            TVAC320_STAT_LINE(2, "стаб. фазы ТРН")
+            TVAC320_STAT_LINE(3, "стаб. U ТРН")
+            TVAC320_STAT_LINE(4, "разряд накоп.")
+            TVAC320_STAT_LINE(5, "")
+            TVAC320_STAT_LINE(6, "")
+            TVAC320_STAT_LINE(7, "ЗУ неисправно")
+        }
+
+        noop - "" vseparator layinfo:vert=fill
+
+        container ilks "Блокировки" grid "noshadow,nocoltitles,norowtitles" \
+                ncols:2 nattl:1 content:eval(1+8*2) {
+
+            button - "Сброс" button r:rst_ilks
+
+            TVAC320_ILK_LINE(0, "превышение Iзар")
+            TVAC320_ILK_LINE(1, "превышение Uраб")
+            TVAC320_ILK_LINE(2, "полн.разряд накоп.")
+            TVAC320_ILK_LINE(3, "")
+            TVAC320_ILK_LINE(4, "")
+            TVAC320_ILK_LINE(5, "")
+            TVAC320_ILK_LINE(6, "")
+            TVAC320_ILK_LINE(7, "ЗУ неисправно")
+        }
+
+    }
+}
+
+wintitle main "TVAC320 - LIU charger controller"
+winname  main tvac320
+winclass main TVAC320
+winopts  main ""

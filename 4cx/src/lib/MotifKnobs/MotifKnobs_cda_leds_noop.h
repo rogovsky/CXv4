@@ -1,0 +1,1 @@
+extern dataknob_noop_vmt_t motifknobs_cda_leds_vmt;

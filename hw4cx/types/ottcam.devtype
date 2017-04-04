@@ -1,0 +1,29 @@
+devtype ottcam r1h361440,r9i,w20i,r20i {
+	data		0
+
+	shot		10
+	istart		11
+	waittime	12
+	stop		13
+
+	x		14
+	y		15
+	w		16
+	h		17
+	k		18
+	t		19
+	sync		20
+	rrq_msecs	21
+
+	miss		30
+	elapsed		31
+
+	cur_x		34
+	cur_y		35
+	cur_w		36
+	cur_h		37
+	cur_k		38
+	cur_t		39
+	cur_sync	40
+	cur_rrq_msecs	41
+}

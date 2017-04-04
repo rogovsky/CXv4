@@ -1,0 +1,1 @@
+extern dataknob_pzfr_vmt_t two812ch_pzfr_vmt;

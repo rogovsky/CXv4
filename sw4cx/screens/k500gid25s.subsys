@@ -1,0 +1,78 @@
+
+# From m4-1.4.1-7.src.rpm::m4-1.4.1.tar.gz#utar/m4-1.4.1/examples/foreach.m4
+# foreach(x, (item_1, item_2, ..., item_n), stmt)
+define(`foreach', `pushdef(`$1', `')_foreach(`$1', `$2', `$3')popdef(`$1')')
+define(`_arg1', `$1')
+define(`_foreach',
+        `ifelse(`$2', `()', ,
+                `define(`$1', _arg1$2)$3`'_foreach(`$1', (shift$2), `$3')')')
+#---------------------------------------------------------------------
+
+include(`gid25_subsys_macros.m4')
+include(`subsys_magx_macros.m4')
+
+define(`LAB2GID', `G`'translit($1,`-',`_')')
+
+define(`THE_LINE', `
+    GID25_K500_LINE(LAB2GID($1)_, LAB2GID($1)., `$1')
+    container $1osc "..." subwin "resizable,compact,noclsbtn" \
+            subwintitle:"$1 oscillogram" content:1 {
+        pzframe adc "" vsdc2_1 "width=400" LAB2GID($1).osc
+    }
+')
+define(`CTL_COLM', `
+    GID25_CEAC124_BUTTON(g$1_ceac, "CEAC \x23`'eval($1+1)", "CEAC124 \x23`'eval($1+1)", gid25_group$1.ceac)
+    GID25_CGVI8_BUTTON(g$1_cgvi, "GVI \x23`'eval($1+1)", "CGVI8 \x23`'eval($1+1)", gid25_group$1.gvi)
+    button/unsavable g0_progstart "Tyk!" button r:gid25_group$1.gvi.progstart
+    container/unsavable - "~~" subwin "resizable,compact,noclsbtn" \
+            str3:"Plots:foreach(`x', `(GIDS_G$1)',` x')" content:1 {
+        noop plot "" histplot \
+                "width=500 height=300 \
+                 foreach(`x', `(GIDS_G$1)', ` add=.matrix.LAB2GID(x)_Imes') \
+                 fixed"
+    }
+')
+
+define(`GIDS_G0', `5L1,5L2,5L3,5L4')
+define(`GIDS_G1', `5L5,5L6,5L7,5L8')
+define(`GIDS_G2', `5KL2X,5KL3Z,5L9,5L10')
+define(`GIDS_G3', `Test1,Test2,Test3,Test4')
+define(`GIDS_G4', `6L-1,6L-2,6L-3,6L-4')
+define(`GIDS_G5', `6L-5,6KZL-1,6KXL-2,6KZL-3')
+define(`GIDS_G6', `6L-6,6L-7,6L-8,6L-9')
+define(`GIDS_G7', `6L-20,6L-21,6L-32,6L-33')
+define(`GIDS_G8', `6L-42,6L-43,6L-51,6L-52')
+define(`GIDS_G9', `6L-53,6L-54,6KZL-25,6KXL-26')
+define(`GIDS_LIST', `GIDS_G0,GIDS_G1,GIDS_G2,GIDS_G3,GIDS_G4,GIDS_G5,GIDS_G6,GIDS_G7,GIDS_G8,GIDS_G9')
+
+grouping main gid25x4 "IST@CDAC20 test app" lrtb "" content:2 {
+
+    container matrix "Settings and measurements" grid "noshadow,notitle" \
+            11 0 0 \
+            "Uset, V\tUmes, V\tUVH, V\tImes, A\tCharge\t \t \tStart, us\t \tVsDC start,us\t " \
+            content:eval(11*40) {
+        foreach(`x', `(GIDS_LIST)', `THE_LINE(x)')
+    }
+
+    container devices "Common devs" grid "noshadow,notitle,norowtitles" \
+            1 str1:" " content:eval(4*10) {
+        CTL_COLM(0)
+        CTL_COLM(1)
+        CTL_COLM(2)
+        CTL_COLM(3)
+        CTL_COLM(4)
+        CTL_COLM(5)
+        CTL_COLM(6)
+        CTL_COLM(7)
+        CTL_COLM(8)
+        CTL_COLM(9)
+    }
+}
+
+
+sysname       k500gid25s
+defserver     v2k-k500-1:23
+wintitle main "K500 GID25s"
+winname  main k500gid25s
+winclass main K500GID25s
+winopts  main "maxitoolbar,with_save_btn,with_load_btn"

@@ -1,0 +1,34 @@
+devtype u0632 r30i32,r120i32,r90i,w60i,w50i,r50i {
+	data<0-29>	0
+	bias_r0_<0-29>	30
+	bias_r1_<0-29>	60
+	bias_r2_<0-29>	90
+	bias_r3_<0-29>	120
+
+	online<0-29>	150
+	cur_M<0-29>	180
+	cur_P<0-29>	210
+	M<0-29>		240
+	P<0-29>		270
+
+	bias_get	310
+	bias_drop	311
+	bias_count	312
+
+	hw_ver		350
+	sw_ver		351
+
+	bias_is_on	360
+	bias_steps_left	361
+	bias_cur_count	362
+
+	const32		370
+
+	# !!!DEVTYPE-DOT-HACK
+	box<0-29>.data		0
+	box<0-29>.online	150
+	box<0-29>.cur_M		180		
+	box<0-29>.cur_P		210
+	box<0-29>.M		240
+	box<0-29>.P		270
+}

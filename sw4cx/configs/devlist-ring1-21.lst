@@ -1,0 +1,17 @@
+# ring1:21 -- ringcamsel, turnmag, ringcurmon
+
+# 0. Devtypes
+include(`canadc40.devtype')
+include(`cac208.devtype')
+include(`lebedev_ringcamsel.devtype')
+include(`lebedev_turnmag.devtype')
+
+# 1. Hardware
+dev ringsel_adc canadc40/remdrv ~ 0,63 b:cangw-ringcams:8002 beg=31 end=32 adc_timecode=4 gain=0
+dev curmon_cac  cac208/remdrv   ~ 0,62 b:cangw-ringcams:8002 beg=0  end=0  fast
+
+# 2. Virtual hardware
+dev ringcamsel lebedev_ringcamsel ~ - ringsel_adc
+dev turnmag    lebedev_turnmag    ~ - ringsel_adc
+
+cpoint ring_current curmon_cac.adc0

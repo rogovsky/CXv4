@@ -1,0 +1,12 @@
+
+extern dataknob_noop_vmt_t motifknobs_rectangle_vmt;
+extern dataknob_noop_vmt_t motifknobs_frectangle_vmt;
+extern dataknob_noop_vmt_t motifknobs_ellipse_vmt;
+extern dataknob_noop_vmt_t motifknobs_fellipse_vmt;
+extern dataknob_noop_vmt_t motifknobs_polygon_vmt;
+extern dataknob_noop_vmt_t motifknobs_fpolygon_vmt;
+extern dataknob_noop_vmt_t motifknobs_polyline_vmt;
+extern dataknob_noop_vmt_t motifknobs_pipe_vmt;
+extern dataknob_noop_vmt_t motifknobs_string_vmt;
+
+extern dataknob_cont_vmt_t motifknobs_canvas_vmt;

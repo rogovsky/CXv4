@@ -1,0 +1,102 @@
+sysname   linipp
+defserver linac1:16
+wintitle  main "Linac IPPs"
+winname   main linipp
+winclass  main LinIPP
+winopts   main "with_freeze_btn"
+
+# 1:N
+define(`ONE_GLOBAL', `
+    container N$1 "$1" grid notitle,norowtitles,nocoltitles base:"ipp$1" nflrs:1 content:4 {
+        disp bias_is_on      ""      onoff            r:bias_is_on
+        disp bias_cur_count  ""      text  units:";"  r:bias_cur_count  dpyfmt:%2.0f
+        disp bias_steps_left "got"   text "withlabel" r:bias_steps_left dpyfmt:%3.0f
+        disp bias_steps_togo "/"     text "withlabel"                   dpyfmt:%-3.0f \
+                r:"_all_code; getchan bias_count; mul 4; ret;"
+    }
+')
+
+grouping main LINIPP_grouping "Linac IPPs" lrtb content:10 {
+
+    container globals "" grid noshadow,notitle,nocoltitles \
+            nflrs:1 content:3 {
+        container all "Bias" grid nodecor ncols:2 content:2 {
+            button - "Get" button \
+                    w:"_all_code;
+                       push 1; putchan ipp1.bias_get;
+                       push 1; putchan ipp2.bias_get;
+                       ret;"
+            button - "Drop" button \
+                    w:"_all_code;
+                       push 1; putchan ipp1.bias_drop;
+                       push 1; putchan ipp2.bias_drop;
+                       ret;"
+        }
+        ONE_GLOBAL(1)
+        ONE_GLOBAL(2)
+    }
+
+    container ipp1_1  "#1.1: Before spectrometer" grid \
+            "nohline,nocoltitles,norowtitles,fold_h" \
+            nattl:1 content:2 {
+        knob in "(*)" onoff "panel,color=green" r:sensor1.in_state
+        pzframe ipp "" u0632 "" ipp1_1
+    } layinfo:newline
+
+    container ipp1_14 "#1.14: 180\xb0-Spectrometer" grid \
+            "nohline,nocoltitles,norowtitles,fold_h" \
+            nattl:1 content:2 {
+        disp i "I:" text "withlabel" dpyfmt:%-6.1f \
+                r:"_all_code; getchan linac1:11.Spectr1.dcct1; getchan linac1:11.Spectr2.dcct1; add; ret;"
+        pzframe ipp "" u0632 "kind=spectr ext_i_fla=\"_all_code; getchan linac1:11.Spectr1.dcct1; getchan linac1:11.Spectr2.dcct1; add; ret;\"" \
+                                ipp1_14
+    }
+
+    container ipp1_8  "#1.8: After beam probe" grid \
+            "nohline,nocoltitles,norowtitles,fold_h" \
+            nattl:1 content:2 {
+        knob in "(*)" onoff "panel,color=green" r:sensor2.in_state
+        pzframe ipp "" u0632 "" ipp1_8
+    }
+
+    container ipp0_4  "#0.4: Sensor 3 (after section 5)" grid \
+            "nohline,nocoltitles,norowtitles,fold_h" \
+            nattl:1 content:2 {
+        knob in "(*)" onoff "panel,color=green" r:sensor3.in_state
+        pzframe ipp "" u0632 "" ipp0_4
+    } layinfo:newline
+
+    container ipp0_7  "#0.7: Sensor 4 (mid tech.space #1)" grid \
+            "nohline,nocoltitles,norowtitles,fold_h" \
+            nattl:1 content:2 {
+        knob in "(*)" onoff "panel,color=green" r:sensor4.in_state
+        pzframe ipp "" u0632 "" ipp0_7
+    }
+
+    container ipp0_3  "#0.3: Sensor 5 (mid tech.space #2)" grid \
+            "nohline,nocoltitles,norowtitles,fold_h" \
+            nattl:1 content:2 {
+        knob in "(*)" onoff "panel,color=green" r:sensor5.in_state
+        pzframe ipp "" u0632 "" ipp0_3
+    }
+
+    container ipp0_0  "#0.0: Sensor 6 (before turn)" grid \
+            "nohline,nocoltitles,norowtitles,fold_h" \
+            nattl:1 content:2 {
+        knob in "(*)" onoff "panel,color=green" r:sensor6.in_state
+        pzframe ipp "" u0632 "" ipp0_0
+    } layinfo:newline
+
+    container ipp1_13 "#1.13: Separator magnet" grid \
+            "nohline,nocoltitles,norowtitles,fold_h" \
+            nattl:0 content:1 {
+        pzframe ipp "" u0632 "" ipp1_13
+    }
+
+    container ipp1_2  "#1.2: Hall 2 IPP (in transfer)" grid \
+            "nohline,nocoltitles,norowtitles,fold_h" \
+            nattl:0 content:1 {
+        pzframe ipp "" u0632 "" ipp1_2
+    }
+
+}

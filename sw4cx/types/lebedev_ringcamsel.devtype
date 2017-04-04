@@ -1,0 +1,11 @@
+devtype lebedev_ringcamsel w10i,r10i,r50i {
+	choice			0
+	is_in			1
+
+	state			10
+	i_motor			11
+	time_left		12
+
+	limit_sw_up<0-23>	20
+	limit_sw_dn<0-23>	44
+}

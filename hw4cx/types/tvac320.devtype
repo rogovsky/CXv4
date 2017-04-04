@@ -1,0 +1,35 @@
+devtype tvac320 w10i,r10i,w10i,r8i,r8i,w8i,r36i,r10i {
+	Uset			0
+	Umin			1
+	Umax			2
+
+	Umes			10
+
+	switch_tvr_on		20
+	switch_tvr_off		21
+	rst_ilks		22
+	reboot			23
+
+	stat_<0-7>		30
+	stat_charger_on		stat_0
+	stat_tvr_on		stat_1
+	stat_tvr_phase_stab	stat_2
+	stat_tvr_u_stab		stat_3
+	stat_discharge		stat_4
+	stat_charger_fault	stat_7
+
+	ilk_<0-7>		38
+	ilk_i_charge_excess	ilk_0
+	ilk_u_work_excess	ilk_1
+	ilk_full_discharge	ilk_2
+	ilk_charger_fault	ilk_7
+
+	lkm_<0-7>		46
+	lkm_i_charge_excess	lkm_0
+	lkm_u_work_excess	lkm_1
+	lkm_full_discharge	lkm_2
+	lkm_charger_fault	lkm_7
+
+	hw_ver			90
+	sw_ver			91
+}

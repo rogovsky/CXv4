@@ -1,0 +1,9 @@
+devtype caniva r16i,r16i,w16i,w16i,r16i,r16i,r16i {
+	imes<0-15>	0
+	umes<0-15>	16
+	ilim<0-15>	32
+	ulim<0-15>	48
+	ilhw<0-15>	64
+	ialm<0-15>	80
+	ualm<0-15>	96
+}

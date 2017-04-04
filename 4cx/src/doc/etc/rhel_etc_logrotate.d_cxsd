@@ -1,0 +1,8 @@
+/var/tmp/4access.log /var/tmp/4cxsd.log /var/tmp/4drivers.log {
+    missingok
+    sharedscripts
+    notifempty
+    postrotate
+        /bin/kill -HUP $(cat /var/tmp/cxsd-*.pid 2>/dev/null) 2>/dev/null || true
+    endscript
+}

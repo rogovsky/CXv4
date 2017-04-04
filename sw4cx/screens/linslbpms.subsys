@@ -1,0 +1,42 @@
+define(`LINSLBPM_LINE', `
+    knob $1_eminus  "\n$1"     choicebs r:$1.eminus items:"+\t-"
+    knob $1_amplon  ""         choicebs r:$1.amplon items:"=\t*"
+    knob $1_delayA  $1_delayA  text     r:$1.delaya dpyfmt:"%5.2f"
+    knob $1_delayX1 $1_delayX1 text     r:$1.delay0 dpyfmt:"%5.2f"
+    knob $1_delayX2 $1_delayX2 text     r:$1.delay1 dpyfmt:"%5.2f"
+    knob $1_delayY1 $1_delayY1 text     r:$1.delay2 dpyfmt:"%5.2f"
+    knob $1_delayY2 $1_delayY2 text     r:$1.delay3 dpyfmt:"%5.2f"
+    knob $1_border  $1_border  text     r:$1.border dpyfmt:"%3.0f"
+    disp $1_mmxX1   $1_X1      text     r:$1.mmx0   dpyfmt:"%5.0f"
+    disp $1_mmxX2   $1_X2      text     r:$1.mmx1   dpyfmt:"%5.0f"
+    disp $1_mmxY1   $1_Y1      text     r:$1.mmx2   dpyfmt:"%5.0f"
+    disp $1_mmxY2   $1_Y2      text     r:$1.mmx3   dpyfmt:"%5.0f"
+    knob $1_nav     $1_nav     text     r:$1.Nav    dpyfmt:"%2.0f"
+    button $1_rst   "R"        button   r:$1._reset
+')
+
+sysname   linslbpms
+defserver linac1:16
+wintitle  main "Linac BPMS"
+winname   main linslbpms
+winclass  main LinSlBpms
+winopts   main ""
+
+grouping main LINSLBPMS_grouping "Linac BPMs" grid noshadow,notitle \
+        str1:"+/-\tAmpl\tDlyA, ns\tDlyX1, ns\tDlyX2, ns\tDlyY1, ns\tDlyY2, ns\tBorder\tX1\tX2\tY1\tY2\tNav" \
+        param1:14 content:eval(14*14) {
+    LINSLBPM_LINE(e1)   
+    LINSLBPM_LINE(e2)   
+    LINSLBPM_LINE(e3)   
+    LINSLBPM_LINE(e4)   
+    LINSLBPM_LINE(e5)   
+    LINSLBPM_LINE(eTech)
+    LINSLBPM_LINE(eTrip)
+    LINSLBPM_LINE(p6)
+    LINSLBPM_LINE(p9)
+    LINSLBPM_LINE(p10)
+    LINSLBPM_LINE(p11)
+    LINSLBPM_LINE(p12)
+    LINSLBPM_LINE(p13)
+    LINSLBPM_LINE(p14)
+}

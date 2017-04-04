@@ -1,0 +1,5 @@
+devtype l0403 w5i,r1i {
+	out<0-1>	0
+	disable		4
+	kind		5
+}

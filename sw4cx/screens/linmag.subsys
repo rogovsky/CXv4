@@ -1,0 +1,229 @@
+include(`subsys_magx_macros.m4')
+
+sysname linmagx
+defserver linac1:11
+wintitle main "õÐÒÁ×ÌÅÎÉÅ íÁÇÎÉÔÎÏÊ óÉÓÔÅÍÏÊ ìÉÎÁËÁ"
+winname  main linmag
+winclass main LinMag
+
+define(`MAGSYS_LINE',
+       `knob/groupable $1_set "$1" look:text dpyfmt:%6.1f r:$1.Iset \
+            options:nounits tip:$2
+        disp           $1_mes      look:text dpyfmt:%6.1f r:$1.Imes \
+            normrange:0-1 yelwrange:0-2 \
+            c:MAGX_C100($1.Iset, $1.Imes)
+        minmax         $1_dvn      look:text dpyfmt:%6.3f r:$1.Imes
+        noop - " " hlabel
+        noop - " " hlabel
+        container -$1_ctl "..." subwin str3:$2": extended controls" content:1 {
+            knob dacspd "MaxSpd, A" text "withlabel" dpyfmt:"%7.1f" r:$1.Iset_rate disprange:-5000-+5000
+        }')
+
+define(`OLD_V1000_LINE',
+       `knob/groupable $1_set "$1" look:text dpyfmt:%6.1f r:$1.Iset \
+            options:nounits tip:$2
+        disp           $1_mes      look:text dpyfmt:%6.1f r:$1.Imes \
+            normrange:0-1 yelwrange:0-2 \
+            c:MAGX_C100($1.Iset, $1.Imes)
+        minmax         $1_dvn      look:text dpyfmt:%6.3f r:$1.Imes
+        noop - " " hlabel
+        noop - " " hlabel
+        noop - " " hlabel')
+
+define(`EMPTY_LINE',
+       `noop - " " hlabel
+        noop - " " hlabel
+        noop - " " hlabel
+        noop - " " hlabel
+        noop - " " hlabel
+        noop - " " hlabel')
+
+grouping main LINMAGX_grouping "õÐÒÁ×ÌÅÎÉÅ íÁÇÎÉÔÎÏÊ óÉÓÔÅÍÏÊ ìÉÎÁËÁ" lrtb \
+        content:3 {
+
+    container magsys "íÁÇÎÉÔÎÁÑ ÓÉÓÔÅÍÁ" grid \
+            str1:"úÁÄÁÎÏ, A\téÚÍ., A\td/dT\t \t \t " \
+            param1:6 param2:24 param3:1 content:eval(1+24*6*2) {
+
+        define(`RINGS_TARGET', `Rings.Iset')
+        container -lebedcycle "LebedRings" subwin str3:"Lebedev's cycling" content:1 {
+            container "" "" grid noshadow,notitle,nocoltitles \
+                    at_init:"_all_code;
+                             push 50;  putchan %rings_lo;
+                             push 580; putchan %rings_hi;
+                             ret;" \
+                    param1:1 content:3 {
+                knob rings_set "Rings" text r:RINGS_TARGET
+                container range "Range" grid nodecor param1:2 content:2 {
+                    knob rings_lo ""  text "withlabel" units:""  dpyfmt:"%6.1f" r:"%rings_lo"
+                    knob rings_hi "-" text "withlabel" units:""  dpyfmt:"%6.1f" r:"%rings_hi"
+                }
+                knob cycler "" scenario w:"_all_code
+                        label START
+                        print_str Start
+            
+                        getchan %rings_lo; putchan %curval;
+                        label MOVE_UP
+                        getchan %curval; putchan RINGS_TARGET;
+                        sleep 1
+                        getchan %curval; add 1; putchan %curval;
+                        getchan %curval; getchan %rings_hi; cmp_if_lt; goto MOVE_UP;
+            
+                        getchan %rings_hi; putchan %curval;
+                        label MOVE_DOWN
+                        getchan %curval; putchan RINGS_TARGET;
+                        sleep 1
+                        getchan %curval; sub 1; putchan %curval;
+                        getchan %curval; getchan %rings_lo; cmp_if_gt; goto MOVE_DOWN;
+            
+                        goto START;
+            
+                        ret"
+            }
+        }
+
+        MAGX_IST_CDAC20_LINE(Rings,     "Rings", "\n÷1000: ÷1000-1", 1500, 1, icd_rings, 1, 0, 1)
+       #OLD_V1000_LINE(Rings)
+        MAGX_IST_CDAC20_LINE(esol,      "eSol",  "\néð2: éóô-3",     1800, 1, icd_esol,  1, 0)
+        MAGSYS_LINE(QL1,     "\néð2: ÷þ300-1")
+        MAGSYS_LINE(QL2,     "\néð2: ÷þ300-2")
+        MAGSYS_LINE(QL3,     "\néð2: ÷þ300-3")
+        MAGSYS_LINE(QL4,     "\néð2: õí-15-1")
+
+        knob/groupable Spectr_set "Spectr" text dpyfmt:"%6.1f" r:Spectr.Iset \
+                alwdrange:-2600-2600 options:nounits tip:"\n÷1000: ÷þ1300, 2ÛÔ"
+        disp           Spectr_mes Spectr_m text dpyfmt:"%6.1f" \
+                r:"_all_code; getchan Spectr1.dcct1; getchan Spectr2.dcct1; add; ret;"
+        noop - " " hlabel
+        disp           Spectr_opr ""  led  shape=circle \
+                r:"_all_code; getchan Spectr1.opr;   getchan Spectr2.opr;   mul; ret;"
+        RGSWCH(-Spectr_swc, "", 0, 1, 
+                 `"_all_code; getchan Spectr1.is_on; getchan Spectr2.is_on; mul; ret;"', 
+                Spectr.switch_off, Spectr.switch_on)
+        noop - " " hlabel
+        MAGX_IST_CDAC20_LINE(Spectr1,   "Spectr1",  "\n÷1000: ÷þ1300-1", 1000, 1, icd_spectr1, 1, 0, 1, 1)
+        MAGX_IST_CDAC20_LINE(Spectr2,   "Spectr2",  "\n÷1000: ÷þ1300-2", 1000, 1, icd_spectr2, 1, 0, 1, 1)
+       #OLD_V1000_LINE(Spectr)
+
+        MAGSYS_LINE(   QL5,    "\néð2: õí-15-2")
+        MAGSYS_LINE(   QL6n7,  "\néð2: ÷þ300-4")
+        MAGSYS_LINE(   QL8n9,  "\néð2: ÷þ300-5")
+        MAGSYS_LINE(   QL10,   "\néð2: ÷þ300-6")
+        MAGSYS_LINE(   QL11,   "\néð2: ÷þ300-7")
+        MAGSYS_LINE(   QL12,   "\néð2: ÷300-1 (÷ÅÌÉËÁÎÏ×)")
+        MAGSYS_LINE(   QL13,   "\néð2: ÷300-2 (÷ÅÌÉËÁÎÏ×)")
+        MAGSYS_LINE(   QL14,   "\néð2: ÷300-3 (÷ÅÌÉËÁÎÏ×)")
+        MAGSYS_LINE(   QLB1,   "\néð2: á300-1")
+        MAGSYS_LINE(   QLB3n4, "\néð2: á300-2")
+        MAGSYS_LINE(   QLB2n5, "\néð2: á300-3")
+        MAGX_IST_CDAC20_LINE(bend,      "Bend",  "\néóôò: éóô-1",    1800, 1, icd_bend,  1, 0)
+##        OLD_V1000_LINE(QLTr1,  `"\n÷1000: ÷300-1, ôÒÉÐÌÅÔ"')
+##        OLD_V1000_LINE(QLTr2,  `"\n÷1000: ÷300-2, ôÒÉÐÌÅÔ"')
+##        OLD_V1000_LINE(QLTr3,  `"\n÷1000: ÷300-3, ôÒÉÐÌÅÔ"')
+        MAGX_IST_CDAC20_LINE(qltr1,     "QLTr1", "\n÷1000: ÷500-1",  500,  1, icd_qltr1, 1, 0, 1)
+        MAGX_IST_CDAC20_LINE(qltr2,     "QLTr2", "\n÷1000: ÷500-2",  500,  1, icd_qltr2, 1, 0, 1)
+        MAGX_IST_CDAC20_LINE(qltr3,     "QLTr3", "\n÷1000: ÷500-3",  500,  1, icd_qltr3, 1, 0, 1)
+        MAGX_IST_CDAC20_LINE(coil1,     "Coil1", "\n÷1000: ÷1000-1", 1500, 1, icd_coil1, 1, 0, 1)
+        MAGX_IST_CDAC20_LINE(coil2,     "Coil2", "\n÷1000: ÷1000-2", 1500, 1, icd_coil2, 1, 0, 1)
+       #OLD_V1000_LINE(Coil2)
+        MAGX_IST_CDAC20_LINE(psol,      "pSol",  "\néóôò: éóô-2",    1800, 1, icd_psol,  1, 0)
+       #OLD_V1000_LINE(QL15, `"\n÷1000: ÷300-4"')
+        MAGX_IST_CDAC20_LINE(ql15,      "QL15", "\n÷1000: ÷500-4",   300,  1, icd_ql15,  1, 0, 1)
+
+        MAGX_VCH300_LINE(QL16, "QL16", "\néð2: IIIÒóô ÷þ300", 1000, 1, v3h0, 0)
+        MAGX_VCH300_LINE(QL17, "QL17", "\néð2: IIIÒóô ÷þ300", 1000, 1, v3h0, 1)
+        MAGX_VCH300_LINE(QL18, "QL18", "\néð2: IIIÒóô ÷þ300", 1000, 1, v3h0, 2)
+        MAGX_VCH300_LINE(QL19, "QL19", "\néð2: IIIÒóô ÷þ300", 1000, 1, v3h0, 3)
+        MAGX_VCH300_LINE(QL20, "QL20", "\néð2: IIIÒóô ÷þ300", 1000, 1, v3h0, 4)
+        MAGX_VCH300_LINE(QL21, "QL21", "\néð2: IIIÒóô ÷þ300", 1000, 1, v3h0, 5)
+        MAGX_VCH300_LINE(QL22, "QL22", "\néð2: IIIÒóô ÷þ300", 1000, 1, v3h0, 6)
+        MAGX_VCH300_LINE(QL23, "QL23", "\néð2: IIIÒóô ÷þ300", 1000, 1, v3h0, 7)
+        MAGX_VCH300_LINE(QL24, "QL24", "\néð2: VÒóô ÷þ300",   1000, 1, v3h1, 0)
+        MAGX_VCH300_LINE(QL25, "QL25", "\néð2: VÒóô ÷þ300",   1000, 1, v3h1, 1)
+        MAGX_VCH300_LINE(QL26, "QL26", "\néð2: VÒóô ÷þ300",   1000, 1, v3h1, 2)
+        MAGX_VCH300_LINE(QL27, "QL27", "\néð2: VÒóô ÷þ300",   1000, 1, v3h1, 3)
+        MAGX_VCH300_LINE(QL28, "QL28", "\néð2: VÒóô ÷þ300",   1000, 1, v3h1, 4)
+        MAGX_VCH300_LINE(QL29, "QL29", "\néð2: VÒóô ÷þ300",   1000, 1, v3h1, 5)
+        MAGX_VCH300_LINE(QL30, "QL30", "\néð2: VÒóô ÷þ300",   1000, 1, v3h1, 6)
+        MAGX_VCH300_LINE(QL31, "QL31", "\néð2: VÒóô ÷þ300",   1000, 1, v3h1, 7)
+
+        MAGSYS_LINE(   Cor1,   "\néð2: á300-0")
+        MAGSYS_LINE(   Cor2n3, "\néð2: ÷þ300-8")
+
+        EMPTY_LINE()
+
+        MAGX_IST_CDAC20_LINE(d1m,      "1M:1-4", "\néð2: éóô-?",    1800, 1, icd_d1m, 1, 0)
+    }
+
+    container magcor "íÁÇÎÉÔÎÁÑ ËÏÒÒÅËÃÉÑ" grid \
+            str1:"úÁÄÁÎÏ, mA\téÚÍ.\tU, V" \
+            base:rst1 param1:3 param2:24 content:eval(24*3*2) {
+        MAGX_COR4016_LINE(LENS1,  "LENS1")
+        MAGX_COR4016_LINE(LENS2,  "LENS2")
+        MAGX_COR4016_LINE(GUN_V,  "GUN_V")
+        MAGX_COR4016_LINE(GUN_H,  "GUN_H")
+        MAGX_COR4016_LINE(CAV_V,  "CAV_V")
+        MAGX_COR4016_LINE(CAV_H,  "CAV_H", colz:hilited)
+        MAGX_COR4016_LINE(SCR_V,  "SCR_V")
+        MAGX_COR4016_LINE(SCR_H,  "SCR_H")
+        MAGX_COR4016_LINE(BUN_H,  "BUN_H")
+        MAGX_COR4016_LINE(BUN_V,  "BUN_V")
+        MAGX_COR4016_LINE(BUN1_H, "BUN1_H")
+        MAGX_COR4016_LINE(BUN2_H, "BUN2_H")
+        MAGX_COR4016_LINE(S1_V,   "S1_V")
+        MAGX_COR4016_LINE(S1_H,   "S1_H")
+        MAGX_COR4016_LINE(S2_V,   "S2_V")
+        MAGX_COR4016_LINE(S2_H,   "S2_H")
+
+        MAGX_COR4016_LINE(S3_V,   "S3_V")
+        MAGX_COR4016_LINE(S3_H,   "S3_H")
+        MAGX_COR4016_LINE(S4_V,   "S4_V")
+        MAGX_COR4016_LINE(S4_H,   "S4_H")
+        MAGX_COR4016_LINE(S5_V,   "S5_V")
+        MAGX_COR4016_LINE(S5_H,   "S5_H")
+        MAGX_COR4016_LINE(B1,     "B1")
+        MAGX_COR4016_LINE(B2,     "B2")
+        MAGX_COR4016_LINE(B_V,    "B_V")
+        MAGX_COR4016_LINE(B3,     "B3")
+        MAGX_COR4016_LINE(TR_V,   "TR_V")
+        MAGX_COR4016_LINE(TR_H,   "TR_H")
+        MAGX_COR4016_LINE(CNV_V,  "CNV_V")
+        MAGX_COR4016_LINE(CNV_H,  "CNV_H")
+        MAGX_COR4016_LINE(S6_V,   "S6_V")
+        MAGX_COR4016_LINE(QLN,    "QLN")
+
+        MAGX_COR4016_LINE(S7_V,   "S7_V")
+        MAGX_COR4016_LINE(r_S7_H, "rsrv1")
+        MAGX_COR4016_LINE(S8_V,   "S8_V")
+        MAGX_COR4016_LINE(r_S8_H, "rsrv2")
+        MAGX_COR4016_LINE(S9_V,   "S9_V")
+        MAGX_COR4016_LINE(S9_H,   "S9_H")
+        MAGX_COR4016_LINE(S10_V,  "S10_V")
+        MAGX_COR4016_LINE(S10_H,  "S10_H")
+        MAGX_COR4016_LINE(S11_V,  "S11_V")
+        MAGX_COR4016_LINE(S11_H,  "S11_H")
+        MAGX_COR4016_LINE(S12_V,  "S12_V")
+        MAGX_COR4016_LINE(S12_H,  "S12_H")
+        MAGX_COR4016_LINE(S13_V,  "S13_V")
+        MAGX_COR4016_LINE(S13_H,  "S13_H")
+        MAGX_COR4016_LINE(S14_V,  "S14_V")
+        MAGX_COR4016_LINE(S14_H,  "S14_H")
+    }
+
+    container mc-c208 "ëÏÒ208" grid \
+            str1:"Iset, mA\tImes\tUmes, V" \
+            base:fedcor param1:3 param3:2 content:eval(2+6*3) {
+        knob/ign_otherop -switch "" choicebs nolabel \
+            items:"#T0\b\blit=red\t1\b\blit=green" \
+            r:inprb0 \
+            w:"_all_code; push 1; qryval; sub; putchan outrb0; ret"
+        disp look:text options:withlabel r:opora
+
+        MAGX_COR208_LINE(tech_v, "tech_v")
+        MAGX_COR208_LINE(tech_h, "tech_h")
+        MAGX_COR208_LINE(tr2_h,  "tr2_h")
+        MAGX_COR208_LINE(tr2_v,  "tr2_v")
+        MAGX_COR208_LINE(n45,    `"#4/N5"')
+        MAGX_COR208_LINE(n56,    `"#5/N6"')
+    }
+}

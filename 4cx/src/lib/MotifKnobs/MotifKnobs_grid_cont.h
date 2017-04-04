@@ -1,0 +1,2 @@
+extern dataknob_cont_vmt_t motifknobs_grid_vmt;
+extern dataknob_cont_vmt_t motifknobs_def_cont_vmt;

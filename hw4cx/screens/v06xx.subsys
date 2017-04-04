@@ -1,0 +1,28 @@
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+     define(`fordown',
+            `pushdef(`$1', `$2')_fordown(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_fordown',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', decr($1))_fordown(`$1', `$2', `$3', `$4')')')
+#---------------------------------------------------------------------
+
+define(`V06XX_OUT_LINE', `
+    knob outrb$1 "$1" onoff "color=blue"   r:outrb$1
+')
+
+grouping main V06xx "V06xx" grid "nodecor" \
+        ncols:8 content:eval(8*3) {
+
+    fordown(`N', 7,   0, `V06XX_OUT_LINE(N)')
+    fordown(`N', 15,  8, `V06XX_OUT_LINE(N)')
+    fordown(`N', 23, 16, `V06XX_OUT_LINE(N)')
+}
+
+wintitle main "V06xx"
+winname  main v06xx
+winclass main V06xx
+winopts  main "notoolbar"

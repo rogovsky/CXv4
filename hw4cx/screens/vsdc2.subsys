@@ -1,0 +1,24 @@
+
+wintitle main "VSDC2"
+winname  main vsdc2
+winclass main VsDC2
+winopts  main ""
+
+define(`VSDC2_LINE', `
+    disp      int$1    "" text dpyfmt:"%8.3f" r:int$1
+    container data$1   "..."  subwin  subwintitle:"VsDC line $1" content:1 {
+        pzframe osc "" vsdc2_1 "" inp$1
+    }
+')
+
+grouping main VSDC2 "VSDC2" lrtb "" content:2 {
+    container "" "" grid "nodecor" 2 content:2 {
+        disp   hw_ver HW    text   "withlabel" dpyfmt:"%-2.0f" r:hw_ver
+        disp   sw_ver SW    text   "withlabel" dpyfmt:"%-2.0f" r:sw_ver
+    }
+    container mes "Data" grid "" 1 str1:"Int, ??" str2:"0\t1" \
+            layinfo:newline ncols:2 content:4 {
+        VSDC2_LINE(0)
+        VSDC2_LINE(1)
+    }
+}

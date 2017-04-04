@@ -1,0 +1,48 @@
+devtype adc812me r1i2097144,r8i262143,r1i,w30i,r110i {
+	data		0
+        line<0-7>	1
+	marker		9
+
+	shot		10
+        stop		11
+        istart		12
+        waittime	13
+        calibrate	14
+        fgt_clb		15
+        visible_clb	16
+        calc_stats	17
+
+	ptsofs		20
+        numpts		21
+        timing		22
+        frqdiv		23
+        range<0-7>	24
+
+	elapsed		40
+        serial		41
+        clb_state	42
+        xs_per_point	43
+	xs_divisor	44
+	xs_factor	45
+        cur_ptsofs	46
+        cur_numpts	47
+        cur_timing	48
+        cur_frqdiv	49
+        cur_range<0-7>	50
+
+	line<0-7>on	60
+        line<0-7>rangemin 68
+        line<0-7>rangemax 76
+
+	clb_ofs<0-7>	84
+	clb_cor<0-7>	92
+
+	min<0-7>	100
+        max<0-7>	108
+        avg<0-7>	116
+        int<0-7>	124
+
+	line<0-7>totalmin 132
+	line<0-7>totalmax 140
+	num_lines	148
+}

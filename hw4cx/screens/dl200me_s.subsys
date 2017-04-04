@@ -1,0 +1,77 @@
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+
+#---------------------------------------------------------------------
+
+define(`DL200ME_NUMOUTPUTS', 16)
+
+define(`DL200_S_T_LINE', `
+    knob off`'eval($1+1)  "" onoff "color=black" r:off$1
+    knob set`'eval($1+1)  "" text  ""            r:t$1    dpyfmt:"%8.2f"
+    knob ilas`'eval($1+1) "" onoff "color=blue"  r:ilas$1
+    disp ilk`'eval($1+1)  "" led   "color=red"   r:ailk$1
+')
+
+define(`DL200_S_I_LINE', `
+    knob iinh`'eval($1+1) "зб-eval($1+1)" onoff "color=amber" r:iinh$1
+')
+
+grouping main DL200ME_S "Slow DL200ME" \
+         grid "nocoltitles,norowtitles" param3:2 content:5 {
+
+    disp -    "#" text "withlabel" r:serial   dpyfmt:"%-5.0f" tip:"Serial #" 
+    knob mode ""  selector         r:run_mode items:"Off\tProg\tExt\tP+E"
+
+    container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+            2 content:2 {
+        knob tyk  ""       arrowrt "offcol=blue size=giant"  r:do_shot
+        container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+                1 content:2 {
+            container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+                    2 content:2 {
+                knob -auto "каждые" onoff   "color=green" r:auto_shot
+                knob secs  ""       text    ""            r:auto_msec \
+                        units:"s" dpyfmt:"%4.1f"
+            }
+            container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+                    4 content:4 {
+                disp - "  !  " led   "panel"       r:was_shot
+                disp - ""      led   "color=green" r:was_fin   tip:"Было срабатывание"
+                disp - ""      led   "color=red"   r:was_ilk   tip:"Была блокировка"
+                disp - ""      text  ""            r:auto_left dpyfmt:"%6.0f" \
+                                                               tip:"Осталось до авто-тука"
+            }
+        }
+    }
+
+    noop - - hseparator layinfo:horz=fill
+
+    container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+            3 content:3 {
+
+        container "" "" grid "noshadow,notitle" \
+                str1:"-\bОтключение\tT, us\t#\bНеблокирующесть\t?\bБлокировка?" \
+                str2:"forloop(`N', 1, DL200ME_NUMOUTPUTS, `N\t')" \
+                param1:4 content:eval(4*DL200ME_NUMOUTPUTS) {
+            forloop(`N', 0, eval(DL200ME_NUMOUTPUTS-1), `DL200_S_T_LINE(N)')
+        }
+
+        noop - - vseparator layinfo:vert=fill
+
+        container "" "" grid "noshadow,notitle" \
+                str1:"ЗпБлк\bЗапреты блокировок" \
+                str2:"forloop(`N', 1, DL200ME_NUMOUTPUTS, `N\t')" \
+                param1:1 content:eval(1*DL200ME_NUMOUTPUTS) {
+            forloop(`N', 0, eval(DL200ME_NUMOUTPUTS-1), `DL200_S_I_LINE(N)')
+        }
+    }
+}
+
+
+wintitle main "Slow DL200ME"
+winname  main dl200me_s
+winclass main DL200ME_S
+winopts  main ""

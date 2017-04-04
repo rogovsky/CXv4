@@ -1,0 +1,83 @@
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+     define(`fordown',
+            `pushdef(`$1', `$2')_fordown(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_fordown',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', decr($1))_fordown(`$1', `$2', `$3', `$4')')')
+#---------------------------------------------------------------------
+
+define(`KOZDEV_CHAN_ADC_n_COUNT', 100)
+define(`KOZDEV_CHAN_OUT_n_COUNT', 32)
+
+define(`KOZDEV_DAC_LINE', `
+    knob dac$1_set dpyfmt:"%7.4f" r:out$1      alwdrange:-10.0-+10.0
+    knob dac$1_spd dpyfmt:"%7.4f" r:out_rate$1 alwdrange:-20.0-+20.0
+    disp dac$1_cur dpyfmt:"%7.4f" r:out_cur$1
+')
+define(`KOZDEV_ADC_LINE', `
+    disp adc$1 dpyfmt:"%9.6f" r:adc$1
+')
+define(`KOZDEV_OUTB_LINE', `
+    knob outrb$1 "" onoff r:outrb$1
+')
+define(`KOZDEV_INPB_LINE', `
+    disp inprb$1 "" led  "shape=circle" r:inprb$1
+')
+
+grouping main KOZDEV "KOZDEV" \
+         lrtb "" content:3 {
+
+    container "" "ADC" grid "" \
+              1 10 4 \
+              "U, V" \
+              "forloop(`N', 0, eval(KOZDEV_CHAN_ADC_n_COUNT-1), `N\t')" \
+              content:eval(4+KOZDEV_CHAN_ADC_n_COUNT) {
+        selector adc_time "" selector r:adc_timecode \
+                 items:"1ms\t2ms\t5ms\t10ms\t20ms\t40ms\t80ms\t160ms"
+        selector adc_gain "" selector r:adc_gain \
+                 items:"x1\tx10\t\nx100\t\nx1000"
+        knob     adc_beg "Ch" text "withlabel" dpyfmt:"%2.0f" r:adc_beg
+        knob     adc_end "-"  text "withlabel" dpyfmt:"%2.0f" r:adc_end
+        forloop(`N', 0, eval(KOZDEV_CHAN_ADC_n_COUNT-1), `KOZDEV_ADC_LINE(N)')
+    }
+
+    container "" "DAC" grid "" \
+              3 8 7 \
+              "Set, V\tMaxSpd, V/s\tCur, V" \
+              "forloop(`N', 0, eval(KOZDEV_CHAN_OUT_n_COUNT-1), `N\t')" \
+              layinfo:newline \
+              content:eval(7+KOZDEV_CHAN_OUT_n_COUNT*3) {
+        button calibrate "Calibrate" button r:do_calb_dac
+        knob   auto_calb "Auto"      onoff  r:autocalb_onoff
+        knob   auto_secs "@"         text   r:autocalb_secs \
+                units:s options:withlabel
+        noop   -         -           vseparator layinfo:vert=bottom
+        knob   dc_mode   "Dig.corr"  onoff  r:digcorr_mode
+        disp   dc_valid  ""          led    r:digcorr_valid
+        disp   dc_val    ""          text   r:digcorr_factor dpyfmt:%8.0f
+        forloop(`N', 0, eval(KOZDEV_CHAN_OUT_n_COUNT-1), `KOZDEV_DAC_LINE(N)')
+    }
+
+    container "" "I/O" grid "" \
+              9 0 3 \
+              "8b`'fordown(`N', 7, 0, `\t`'N')" \
+              "OutR\tInpR" \
+              layinfo:newline content:eval(3+18) {
+        disp   hw_ver HW    text   "withlabel" dpyfmt:"%-2.0f" r:hw_ver
+        disp   sw_ver SW    text   "withlabel" dpyfmt:"%-2.0f" r:sw_ver
+        button reset  Reset button                             r:do_reset
+        knob "outr8b" "8b" text "noincdec" dpyfmt:"%3.0f" r:outr8b
+        fordown(`N', 7, 0, `KOZDEV_OUTB_LINE(N)')
+        disp "inpr8b" "8b" text            dpyfmt:"%3.0f" r:inpr8b
+        fordown(`N', 7, 0, `KOZDEV_INPB_LINE(N)')
+    }
+}
+
+wintitle main "KOZDEV"
+winname  main kozdev
+winclass main KOZDEV
+winopts  main ""

@@ -1,0 +1,7 @@
+devtype liu_doorilks w10i,r10i {
+	mode		0
+	used<0-3>	1
+
+	sum_state	10
+	ilk<0-3>	11
+}

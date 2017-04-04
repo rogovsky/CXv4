@@ -1,0 +1,71 @@
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+     define(`fordown',
+            `pushdef(`$1', `$2')_fordown(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_fordown',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', decr($1))_fordown(`$1', `$2', `$3', `$4')')')
+#---------------------------------------------------------------------
+
+define(`SMC8_LINE', `
+    knob     steps$1  ""   text     - - %8.0f    r:num_steps$1
+    button   go$1     GO   button                r:go$1
+    light    going$1  ""   led                   r:going$1
+    button   stop$1   Stop button                r:stop$1
+    light    km$1     ""   led      "color=red"  r:km$1
+    light    kp$1     ""   led      "color=red"  r:kp$1
+    disp     state$1  ""   selector align=right  r:state$1 \
+            items:"----\tLimitSw\tStopped\tErrPar\t?4?\t?5?\t?6?\t?7?\t\
+Start\tAccel\tGoing\tDecel\tStop\t?13?\t?14?\t?15"
+    knob     s_frq$1  "["  text     "withlabel"  \
+                                      - %5.0f    r:start_freq$1
+    knob     f_frq$1  "-"  text     "withlabel,withunits" \
+                                    "]" %5.0f    r:final_freq$1
+    knob     accel$1  ""   text     - - %5.0f    r:acceleration$1
+    disp     ctr$1    ""   text     - - %8.0f    r:counter$1
+    button   rstctr$1 "=0" button                r:rst_counter$1
+    selector out_md$1 ""   selector              r:out_md$1 \
+            items:"S+/S-\tS/Dir"
+    selector mask_m$1 ""   selector              r:mask_m$1 \
+            items:"Ign\tStop"
+    selector mask_p$1 ""   selector              r:mask_p$1 \
+            items:"Ign\tStop"
+    selector type_m$1 ""   selector              r:type_m$1 \
+            items:"Cls\tOpn"
+    selector type_p$1 ""   selector              r:type_p$1 \
+            items:"Cls\tOpn"
+')
+
+define(`INIT_LINE', `
+    push 100; putchan start_freq$1;
+    push 100; putchan final_freq$1;
+    push 1;   putchan     type_m$1;
+    push 1;   putchan     type_p$1;
+')
+
+grouping main SMC8 "SMC8" grid "noshadow" \
+        coltitles:"# steps\t \t...\t \t-\t+\tState\tStartFrq, /s\tFinalFrq, /s\tAccel, /s^2\tCounter\t \tOut Mode\tM-\tM+\tT-\tT+" \
+        rowtitles:"0\t1\t2\t3\t4\t5\t6\t7" \
+        base:kshd1 \
+        ncols:17 nattl:1 content:eval(1+17*6) {
+    button init "Init" button \
+            w:"_all_code;
+               INIT_LINE(0); INIT_LINE(1); INIT_LINE(2);
+               INIT_LINE(3); INIT_LINE(4); INIT_LINE(5);
+               ret;"
+    SMC8_LINE(0)
+    SMC8_LINE(1)
+    SMC8_LINE(2)
+    SMC8_LINE(3)
+    SMC8_LINE(4)
+    SMC8_LINE(5)
+}
+
+wintitle main "Linac RF Stepper Motors"
+winname  main linrf_smc
+winclass main LinRF_SMC
+winopts  main "nostatusline"
+defserver linac1:22

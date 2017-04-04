@@ -1,0 +1,2 @@
+extern dataknob_cont_vmt_t motifknobs_lrtb_vmt;
+extern dataknob_grpg_vmt_t motifknobs_def_grpg_vmt;

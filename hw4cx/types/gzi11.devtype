@@ -1,0 +1,4 @@
+devtype gzi11 w4i {
+	out<1-2>	0
+	enable<1-2>	2
+}

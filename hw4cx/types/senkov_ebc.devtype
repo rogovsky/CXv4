@@ -1,0 +1,15 @@
+devtype senkov_ebc r5i,w5i,w8i,r16i,w1i,r2i,w13i {
+	adc<0-4>	0
+	out<0-4>	5
+
+	outrb<0-7>	10
+	inprb<0-7>	18
+	outr8b		34
+	inpr8b		35
+
+        Uset		out0
+	Iheat		adc0
+	Umes		adc1
+	not_on_bit	outrb0
+	reset_bit	outrb1
+}

@@ -1,0 +1,9 @@
+devtype dds300 w4i,w2i,w3i,r1i {
+	amp<1-2>	0
+	phs<1-2>	2
+	frq<1-2>	4
+	ref_sel		6
+	out_sel		7
+	reset		8
+	serial		9
+}

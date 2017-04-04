@@ -1,0 +1,17 @@
+devtype cgvi8 w40i,r20i,w8i,r16i,w1i,r2i,w13i {
+	raw<0-7>	0
+	quant<0-7>	8
+	mask_bit_<0-7>	16
+	mask8		24
+	progstart	25
+	prescaler	26
+	basebyte	27
+
+	hw_ver		40
+	sw_ver		41
+
+	outrb<0-7>	60
+	inprb<0-7>	68
+	outr8b		84
+	inpr8b		85
+}

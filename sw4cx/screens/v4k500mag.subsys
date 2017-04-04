@@ -1,0 +1,49 @@
+
+include(`subsys_magx_macros.m4')
+
+grouping main v4k500mag "VEPP-4 K500 magnetic system" lrtb "" content:3 {
+
+# 1:id&r, 2:label, 3:units
+define(`M5_MES_LINE', `
+    noop - "\n$2" hlabel 
+    disp m5_$1 "" text "" $3 "%9.1f" m5.$1
+    noop - " "    hlabel
+    noop - " "    hlabel
+    noop - " "    hlabel
+    noop - " "    hlabel
+')
+
+    container magsys "ISTR M5" grid "" \
+            str1:"Set, A\tMes, A\td/dT\t \t \t " \
+            param1:6 content:eval(6*5) {
+        MAGX_IST_CDAC20_LINE(m5, "M5",  "", 1000, 1, icd_m5, 0, 1) # rev
+        M5_MES_LINE(dcct2,   "Idcct2", "A")
+        M5_MES_LINE(dac_mes, "Idac",   "A")
+        M5_MES_LINE(u2,      "Uload",  "V")
+        M5_MES_LINE(adc4,    "Upol",   "V")
+    }
+
+    container podiem "Dovzhenko" grid "" \
+            str1:"Iset, mA\tImes\tUmes, V" \
+            base:corr param1:3 content:eval(4*3) {
+        MAGX_COR208_LINE(kz13, "KZ13")
+        MAGX_COR208_LINE(kx14, "KX14")
+        MAGX_COR208_LINE(km5,  "KM5")
+        MAGX_COR208_LINE(km6,  "KM6")
+    }
+
+    noop plot "" histplot \
+        "width=700,height=300,add=magsys.m5_set,add=magsys.m5_mes,add=magsys.m5_dcct2,add=magsys.m5_dac_mes,add=magsys.m5_u2,add=magsys.m5_adc4" \
+        layinfo:newline
+
+ #       "width=700,height=300,add=magx.Iset,add=magx.dcct1" \
+
+}
+
+sysname       v4k500mag
+defserver     vepp4-pult6:2
+wintitle main "VEPP-4 K500 magnetic system"
+winname  main "v4k500mag"
+winclass main "V4K500Mag"
+winopts  main "maxitoolbar,with_save_btn,with_load_btn,with_freeze_btn"
+

@@ -1,0 +1,32 @@
+#
+devtype fastadc_common r1i1000,?????? {
+	# 0-9: whole-data and its representations
+	data		0
+
+	# 10-19: per-line data
+	line0		10
+
+	# 20-29: standard "behavioral" controls
+	shot		20
+	stop		21
+	istart		22:data
+	waittime	23:data
+	calcstats	24:data
+
+	# 30-39: fastadc-specific controls
+	ptsofs		30:data
+	numpts		31:data
+
+	# 40-49: device-specific controls
+	calibrate	40
+	fgt_calb	41
+	visible_calb	42
+
+	# 50-59: standard "status"
+	serial		50
+	elapsed		51
+
+	#
+
+	# !!! Per-line CURRENT status???  Such as current ranges (to get rid of calculating in info2mes())
+}

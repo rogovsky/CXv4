@@ -1,0 +1,20 @@
+devtype weld02 w8i,r10i {
+	set_uh		0
+	set_ul		1
+	set_un		2
+	set_up		3
+	set_ih		4
+	set_il		5
+	set_stab	6
+	set_gain	7
+
+	mes_uh		8
+	mes_ul		9
+	mes_un		10
+	mes_up		11
+	mes_ih		12
+	mes_il		13
+	mes_u_high	14
+	mes_u_powr	15
+	mes_u_heat	16
+}

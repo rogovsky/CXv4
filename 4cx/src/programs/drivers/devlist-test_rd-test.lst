@@ -1,0 +1,6 @@
+dev rds test_rd w3i -
+cpoint another rds.0 2 0 abc def
+
+# ~/work/4cx/src/programs/server/cxsd -dc ~/work/4cx/src/programs/server/cxsd.conf -f ~/work/4cx/src/programs/drivers/devlist-test_rd-test.lst -e 'drivers-path ~/work/4cx/src/programs/drivers' :9
+# ./cdaclient -b localhost:9 -mDnRS rds.{0,1,2} another
+# 

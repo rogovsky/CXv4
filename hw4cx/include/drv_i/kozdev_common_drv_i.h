@@ -1,0 +1,112 @@
+#ifndef __KOZDEV_COMMON_DRV_I_H
+#define __KOZDEV_COMMON_DRV_I_H
+
+
+#include "drv_i/cankoz_common_drv_i.h"
+
+
+// w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w100i
+enum
+{
+    /* 0-59 */
+    KOZDEV_CONFIG_CHAN_base     = 0, /* This is crucial for driver code! */
+      KOZDEV_CONFIG_CHAN_count  = 60,
+
+    /*  */
+    KOZDEV_MODE_CHAN_base       = 0,
+      KOZDEV_MODE_CHAN_count    = 20,
+
+    KOZDEV_CHAN_DO_RESET        = KOZDEV_MODE_CHAN_base + 0,
+    KOZDEV_CHAN_ADC_MODE        = KOZDEV_MODE_CHAN_base + 1, //!!! readonly!
+    KOZDEV_CHAN_ADC_BEG         = KOZDEV_MODE_CHAN_base + 2,
+    KOZDEV_CHAN_ADC_END         = KOZDEV_MODE_CHAN_base + 3,
+    KOZDEV_CHAN_ADC_TIMECODE    = KOZDEV_MODE_CHAN_base + 4,
+    KOZDEV_CHAN_ADC_GAIN        = KOZDEV_MODE_CHAN_base + 5,
+    KOZDEV_CHAN_RESERVED6       = KOZDEV_MODE_CHAN_base + 6,
+    KOZDEV_CHAN_RESERVED7       = KOZDEV_MODE_CHAN_base + 7,
+    KOZDEV_CHAN_RESERVED8       = KOZDEV_MODE_CHAN_base + 8,
+    KOZDEV_CHAN_OUT_MODE        = KOZDEV_MODE_CHAN_base + 9, //!!! readonly!
+
+    KOZDEV_CHAN_DO_TAB_DROP     = KOZDEV_MODE_CHAN_base + 10,
+    KOZDEV_CHAN_DO_TAB_ACTIVATE = KOZDEV_MODE_CHAN_base + 11,
+    KOZDEV_CHAN_DO_TAB_START    = KOZDEV_MODE_CHAN_base + 12,
+    KOZDEV_CHAN_DO_TAB_STOP     = KOZDEV_MODE_CHAN_base + 13,
+    KOZDEV_CHAN_DO_TAB_PAUSE    = KOZDEV_MODE_CHAN_base + 14,
+    KOZDEV_CHAN_DO_TAB_RESUME   = KOZDEV_MODE_CHAN_base + 15,
+      KOZDEV_CHAN_DO_TAB_base = KOZDEV_CHAN_DO_TAB_DROP,
+      KOZDEV_CHAN_DO_TAB_cnt  = KOZDEV_CHAN_DO_TAB_RESUME - KOZDEV_CHAN_DO_TAB_base + 1,
+    KOZDEV_CHAN_RESERVED16      = KOZDEV_MODE_CHAN_base + 16,
+    KOZDEV_CHAN_RESERVED17      = KOZDEV_MODE_CHAN_base + 17,
+    KOZDEV_CHAN_RESERVED18      = KOZDEV_MODE_CHAN_base + 18,
+    KOZDEV_CHAN_RESERVED19      = KOZDEV_MODE_CHAN_base + 19,
+
+    /*  */
+    KOZDEV_CHAN_STD_WR_base     = 20,
+      KOZDEV_CHAN_STD_WR_count  = 20,
+    KOZDEV_CHAN_DO_CALB_DAC     = KOZDEV_CHAN_STD_WR_base + 0,
+    KOZDEV_CHAN_AUTOCALB_ONOFF  = KOZDEV_CHAN_STD_WR_base + 1,
+    KOZDEV_CHAN_AUTOCALB_SECS   = KOZDEV_CHAN_STD_WR_base + 2,
+    KOZDEV_CHAN_DIGCORR_MODE    = KOZDEV_CHAN_STD_WR_base + 3,
+
+    /*  */
+    KOZDEV_CHAN_STD_RD_base     = 40,
+      KOZDEV_CHAN_STD_RD_count  = 20,
+    KOZDEV_CHAN_HW_VER          = KOZDEV_CHAN_STD_RD_base + 0,
+    KOZDEV_CHAN_SW_VER          = KOZDEV_CHAN_STD_RD_base + 1,
+    KOZDEV_CHAN_DIGCORR_VALID   = KOZDEV_CHAN_STD_RD_base + 2,
+    KOZDEV_CHAN_DIGCORR_FACTOR  = KOZDEV_CHAN_STD_RD_base + 3,
+
+    /* 60-99: regs */
+    KOZDEV_CHAN_REGS_base       = 60,
+    KOZDEV_CHAN_REGS_OUTRB_n_base = KOZDEV_CHAN_REGS_base + CANKOZ_IOREGS_OFS_OUTRB0,
+    KOZDEV_CHAN_REGS_INPRB_n_base = KOZDEV_CHAN_REGS_base + CANKOZ_IOREGS_OFS_INPRB0,
+    KOZDEV_CHAN_REGS_OUTR8B     = KOZDEV_CHAN_REGS_base + CANKOZ_IOREGS_OFS_OUTR8B,
+    KOZDEV_CHAN_REGS_INPR8B     = KOZDEV_CHAN_REGS_base + CANKOZ_IOREGS_OFS_INPR8B,
+    KOZDEV_CHAN_REGS_last       = KOZDEV_CHAN_REGS_base + CANKOZ_IOREGS_CHANCOUNT -1,
+
+    KOZDEV_CHAN_REGS_RSVD_B     = KOZDEV_CHAN_REGS_base + CANKOZ_IOREGS_CHANCOUNT,
+    KOZDEV_CHAN_REGS_RSVD_E     = 99,
+    
+    /* 100-199: ADC */
+    KOZDEV_CHAN_ADC_n_base      = 100,
+      KOZDEV_CHAN_ADC_n_maxcnt  = 100,
+
+    /* 200-299: DAC */
+    KOZDEV_CHAN_OUT_n_base      = 200,
+      KOZDEV_CHAN_OUT_n_maxcnt  = 32,
+    KOZDEV_CHAN_OUT_RATE_n_base = 232,
+    KOZDEV_CHAN_OUT_CUR_n_base  = 264,
+      KOZDEV_CHAN_OUT_RESERVED_count = 4,
+
+    /* 300-399: tables */
+    KOZDEV_TABLE_CHAN_base      = 300,
+
+    KOZDEV_NUMCHANS = 400
+};
+
+enum
+{
+    KOZDEV_ADC_MODE_NORM   = 0,
+    KOZDEV_ADC_MODE_OSCILL = 1,
+    KOZDEV_ADC_MODE_PLOT   = 2,
+    KOZDEV_ADC_MODE_TBACK  = 3,
+};
+
+enum
+{
+    KOZDEV_OUT_MODE_NORM   = 0,
+    KOZDEV_OUT_MODE_TABLE  = 1,
+};
+
+enum
+{
+    KOZDEV_TMODE_NONE = 0,
+    KOZDEV_TMODE_PREP = 1, // In fact, NONE and PREP are identical
+    KOZDEV_TMODE_LOAD = 2,
+    KOZDEV_TMODE_ACTV = 3,
+    KOZDEV_TMODE_RUNN = 4,
+    KOZDEV_TMODE_PAUS = 5,
+};
+
+
+#endif /* __KOZDEV_COMMON_DRV_I_H */

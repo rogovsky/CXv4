@@ -1,0 +1,3 @@
+include(`adc200me.devtype')
+
+dev t200 adc200me@pci4624 ~ 3

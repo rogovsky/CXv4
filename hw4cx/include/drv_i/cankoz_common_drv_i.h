@@ -1,0 +1,43 @@
+#ifndef __CANKOZ_COMMON_DRV_I_H
+#define __CANKOZ_COMMON_DRV_I_H
+
+
+// w8i,r16i,w1i,r2i,w13i
+enum
+{
+    CANKOZ_IOREGS_OFS_OUTRB0           =  0,
+    CANKOZ_IOREGS_OFS_OUTRB1           =  1,
+    CANKOZ_IOREGS_OFS_OUTRB2           =  2,
+    CANKOZ_IOREGS_OFS_OUTRB3           =  3,
+    CANKOZ_IOREGS_OFS_OUTRB4           =  4,
+    CANKOZ_IOREGS_OFS_OUTRB5           =  5,
+    CANKOZ_IOREGS_OFS_OUTRB6           =  6,
+    CANKOZ_IOREGS_OFS_OUTRB7           =  7,
+    CANKOZ_IOREGS_OFS_INPRB0           =  8,
+    CANKOZ_IOREGS_OFS_INPRB1           =  9,
+    CANKOZ_IOREGS_OFS_INPRB2           = 10,
+    CANKOZ_IOREGS_OFS_INPRB3           = 11,
+    CANKOZ_IOREGS_OFS_INPRB4           = 12,
+    CANKOZ_IOREGS_OFS_INPRB5           = 13,
+    CANKOZ_IOREGS_OFS_INPRB6           = 14,
+    CANKOZ_IOREGS_OFS_INPRB7           = 15,
+    CANKOZ_IOREGS_OFS_IR_IEB0          = 16,
+    CANKOZ_IOREGS_OFS_IR_IEB1          = 17,
+    CANKOZ_IOREGS_OFS_IR_IEB2          = 18,
+    CANKOZ_IOREGS_OFS_IR_IEB3          = 19,
+    CANKOZ_IOREGS_OFS_IR_IEB4          = 20,
+    CANKOZ_IOREGS_OFS_IR_IEB5          = 21,
+    CANKOZ_IOREGS_OFS_IR_IEB6          = 22,
+    CANKOZ_IOREGS_OFS_IR_IEB7          = 23,
+    CANKOZ_IOREGS_OFS_OUTR8B           = 24,
+    CANKOZ_IOREGS_OFS_INPR8B           = 25,
+    CANKOZ_IOREGS_OFS_IR_IE8B          = 26,
+    CANKOZ_IOREGS_OFS_RESERVED_REGS_27 = 27,
+    CANKOZ_IOREGS_OFS_RESERVED_REGS_28 = 28,
+    CANKOZ_IOREGS_OFS_RESERVED_REGS_29 = 29,
+
+    CANKOZ_IOREGS_CHANCOUNT            = 30
+};
+
+
+#endif /* __CANKOZ_COMMON_DRV_I_H */

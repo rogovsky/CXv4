@@ -1,0 +1,12 @@
+devtype frolov_bfp  w6i,r4i {
+	kmax		0
+	kmin		1
+	wrk_enable	2
+	wrk_disable	3
+	mod_enable	4
+	mod_disable	5
+	stat_ubs	6
+	stat_wkalwd	7
+	stat_wrk	8
+	stat_mod	9
+}

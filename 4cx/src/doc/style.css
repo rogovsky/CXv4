@@ -1,0 +1,14 @@
+BODY         {color:      black; background: white}
+.done     {background: #c7d0d9}
+.comment  {background: #eaf0f3}
+.result   {background: #e0e0e0}
+.debug    {background: #00ff00}
+.red      {color:      red; font-weight: bold}
+.was_red  {font-weight: bold}
+.subst    {color: magenta}
+DT        {font-weight: bold}
+CODE,PRE     {color:      #1818b2; text-indent: 0em}
+CODE         {white-space: nowrap}
+TT           {color:      #18b218}
+P        {text-indent: 1em; margin-top: 0em; margin-bottom: 0em}
+.excerpt {margin-top: 0; margin-bottom: 0}

@@ -1,0 +1,35 @@
+devtype ceac124 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w100i {
+	do_reset	0
+        adc_mode	1
+        adc_beg		2
+        adc_end		3
+        adc_timecode	4
+        adc_gain	5
+        out_mode	9
+
+	do_tab_drop	10
+	do_tab_activate	11
+	do_tab_start	12
+	do_tab_stop	13
+	do_tab_pause	14
+	do_tab_resume	15
+
+        hw_ver		40
+        sw_ver		41
+
+	outrb<0-3>	60
+        inprb<0-3>	68
+	outr8b		84
+        inpr8b		85
+
+	adc<0-15>      	100
+
+        adc_t		adc12
+        adc_pwr		adc13
+	adc_p10v	adc14
+        adc_0v		adc15
+
+	out<0-3>       	200
+        out_rate<0-3>	232
+        out_cur<0-3>	264
+}

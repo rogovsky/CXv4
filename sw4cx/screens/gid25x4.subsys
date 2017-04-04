@@ -1,0 +1,27 @@
+
+include(`gid25_subsys_macros.m4')
+
+grouping main gid25x4 "IST@CDAC20 test app" lrtb "" content:2 {
+
+    container matrix "Settings and measurements" grid "" \
+            9 0 0 \
+            "Uset, V\tUc, V\tImes, A\tCharge\t \t \tGID start, us\t \tGVI start, us\tUmes, V" \
+            content:eval(9*4) {
+        GID25_MAIN_LINE(`row0_', `row0.', `1')
+        GID25_MAIN_LINE(`row1_', `row1.', `2')
+        GID25_MAIN_LINE(`row2_', `row2.', `3')
+        GID25_MAIN_LINE(`row3_', `row3.', `4')
+    }
+
+    noop plot "" histplot \
+            "width=400 height=400 \
+             add=matrix.row0_Imes add=matrix.row1_Imes \
+             add=matrix.row2_Imes add=matrix.row3_Imes" \
+            layinfo:newline
+}
+
+
+wintitle main "GID25 x4 test panel"
+winname  main gid25x4
+winclass main GID25x4
+winopts  main ""

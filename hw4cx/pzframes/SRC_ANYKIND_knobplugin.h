@@ -1,0 +1,1 @@
+extern dataknob_pzfr_vmt_t DEVTYPE_LCASE_pzfr_vmt;
