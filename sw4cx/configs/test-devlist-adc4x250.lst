@@ -1,0 +1,3 @@
+include(`adc4x250.devtype')
+
+dev a4 adc4x250/remdrv ~ 6,5,0 b:192.168.8.209:8002

@@ -13,7 +13,7 @@ grouping main v5adc200_kls1 "Klystron 1 RF measurements" \
 }
 
 sysname   v5adc200_kls1
-defserver linac1:15
+defserver cxhw:15
 wintitle  main "Klystron 1 RF measurements"
 winname   main v5adc200_kls1
 winclass  main v5adc200_kls1

@@ -3,8 +3,8 @@
 include(`adc200me.devtype')
 include(`adc812me.devtype')
 
-dev a200_0 adc200me@pci4624	~ 0
-dev a200_1 adc200me@pci4624	~ 1
-dev a200_2 adc200me@pci4624	~ 2
-dev a200_3 adc200me@pci4624	~ 3
+dev a200_0 adc200me@pci4624	~ 0	alw_timing timing=ext
+dev a200_1 adc200me@pci4624	~ 1	alw_timing timing=ext
+dev a200_2 adc200me@pci4624	~ 2	alw_timing timing=ext
+dev a200_3 adc200me@pci4624	~ 3	alw_timing timing=ext
 dev a812_0 adc812me@pci4624	~ 0

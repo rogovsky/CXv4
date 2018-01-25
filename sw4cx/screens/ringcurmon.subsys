@@ -1,6 +1,6 @@
 sysname ringcurmon
 #defserver linac3:1.dcct
-defserver ichw1-2:0.dcct
+defserver cxhw:0.dcct
 wintitle main "Ring current monitor"
 winname  main ringcurmon
 winclass main RingCurMon
@@ -18,9 +18,9 @@ grouping main RINGMAG_grouping "RingCurMon" grid "nodecor" param1:1 content:1 {
         disp storagerate       storagerate       text "" mA/s %7.3f r:storagerate
         disp lifetime          lifetime          text "" s    %7.3f r:lifetime
         container : "Source volts" grid nodecor ncols:2 content:2 {
-            disp source        "Source volts"    text "" V    %8.6f r:ring1:21.ring_current
+            disp source        "Source volts"    text "" V    %8.6f r:canhw:21.ring_current
             button -copy       "->0"          button \
-                    w:"_all_code; getchan ring1:21.ring_current; putchan ADCzero; ret;"
+                    w:"_all_code; getchan canhw:21.ring_current; putchan ADCzero; ret;"
         }
     }
 }

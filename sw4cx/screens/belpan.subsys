@@ -38,7 +38,7 @@ grouping main belpan "Belikovs MPS-20 panel" grid "" \
 }
 
 sysname   belpan
-defserver ring1:12
+defserver canhw:12
 wintitle main "Belikovs MPS-20 panel"
 winname  main belpan
 winclass main BelPan

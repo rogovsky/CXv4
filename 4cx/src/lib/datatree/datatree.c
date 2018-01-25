@@ -483,8 +483,10 @@ int  get_knob_label(DataKnob k, char **label_p)
 {
     *label_p = k->label;
     
-    if (*label_p != NULL  &&  **label_p == CX_KNOB_NOLABELTIP_PFX_C)
-        *label_p = NULL;
+    if      (*label_p != NULL  &&  **label_p == CX_KNOB_NOLABELTIP_PFX_C)
+             *label_p = NULL;
+    else if (*label_p != NULL  &&  **label_p == CX_TITLE_NOLABELTIP_PFX_C)
+             (*label_p)++;
     
     return *label_p != NULL  &&  **label_p != '\0';
 }
@@ -493,8 +495,10 @@ int  get_knob_tip  (DataKnob k, char **tip_p)
 {
     *tip_p   = k->tip;
 
-    if (*tip_p   != NULL  &&  **tip_p   == CX_KNOB_NOLABELTIP_PFX_C)
-        *tip_p   = NULL;
+    if      (*tip_p   != NULL  &&  **tip_p   == CX_KNOB_NOLABELTIP_PFX_C)
+             *tip_p   = NULL;
+    else if (*tip_p   != NULL  &&  **tip_p   == CX_TITLE_NOLABELTIP_PFX_C)
+             (*tip_p)++;
     
     return *tip_p   != NULL  &&  **tip_p   != '\0';
 }
@@ -524,8 +528,8 @@ void get_knob_rowcol_label_and_tip(const char *ms, int n,
         tbuf[0] = '\0';
     }
     
-    lp = (*lbuf != '\0'  ||  model_k == NULL)? lbuf : model_k->label;
-    tp = (*tbuf != '\0'  ||  model_k == NULL)? tbuf : model_k->tip;
+    lp = (*lbuf != '\0'  ||  model_k == NULL  ||  model_k->label == NULL  ||  *(model_k->label) == CX_TITLE_NOLABELTIP_PFX_C)? lbuf : model_k->label;
+    tp = (*tbuf != '\0'  ||  model_k == NULL  ||  model_k->tip   == NULL  ||  *(model_k->tip)   == CX_TITLE_NOLABELTIP_PFX_C)? tbuf : model_k->tip;
 
     if (lp != NULL  &&  strcmp(lp, "!-!") == 0) lp = NULL;
     if (tp != NULL  &&  strcmp(tp, "!-!") == 0) tp = NULL;

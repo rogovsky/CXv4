@@ -15,14 +15,16 @@
 struct _varinfo_t_struct;
 
 typedef void (*varchg_cb_t)(struct _varinfo_t_struct *vi,
-                            int            client_id,
-                            int            channel_n);
+                            cda_srvconn_t  client_sid,
+                            cda_hwcnref_t  client_hwr);
+
+typedef int dircn_lcn_t;
 
 typedef struct
 {
-    varchg_cb_t  proc;
-    int          client_id;
-    int          channel_n;
+    varchg_cb_t    proc;
+    cda_srvconn_t  client_sid;
+    cda_hwcnref_t  client_hwr;
 } var_cbrec_t;
 typedef struct _varinfo_t_struct
 {
@@ -106,23 +108,30 @@ static int CheckVar(cda_d_dircn_t var)
 
 //--------------------------------------------------------------------
 
+enum
+{
+    LCN_MIN_VAL   = 1,
+    LCN_MAX_COUNT = 10000,    // An arbitrary limit
+    LCN_ALLOC_INC = 2,        // Note: for inserver should be 10 or 100
+};
+
 typedef struct
 {
     void *pdt_privptr;
-} lclconn_t;
+} lcninfo_t;
 
-static lclconn_t *lclconns_list;
-static int        lclconns_list_allocd;
+static lcninfo_t *lcns_list;
+static int        lcns_list_allocd;
 
-// GetDircnSrvSlot()
-GENERIC_SLOTARRAY_DEFINE_GROWING(static, DircnSrv, lclconn_t,
-                                 lclconns, pdt_privptr, NULL, (void*)1,
-                                 0, 2, 0,
+// GetLcnSlot()
+GENERIC_SLOTARRAY_DEFINE_GROWING(static, Lcn, lcninfo_t,
+                                 lcns, pdt_privptr, NULL, (void*)1,
+                                 LCN_MIN_VAL, LCN_ALLOC_INC, LCN_MAX_COUNT,
                                  , , void)
 
-static void RlsDircnSrvSlot(int n)
+static void RlsLcnSlot(int n)
 {
-  lclconn_t *p = AccessDircnSrvSlot(n);
+  lcninfo_t *p = AccessLcnSlot(n);
 
     p->pdt_privptr = NULL;
 }
@@ -190,7 +199,7 @@ cda_d_dircn_t  cda_d_dircn_register_chan(const char          *name,
 
 static int CallVarCBs(var_cbrec_t *p, void *privptr)
 {
-    p->proc(privptr, p->client_id, p->channel_n);
+    p->proc(privptr, p->client_sid, p->client_hwr);
     return 0;
 }
 int            cda_d_dircn_update_chan  (cda_d_dircn_t  var,
@@ -221,7 +230,7 @@ int            cda_d_dircn_update_chan  (cda_d_dircn_t  var,
 
 static void PerformCycleUpdate(void *pdt_privptr);
 
-static int update_cycle_caller(lclconn_t *p, void *privptr)
+static int update_cycle_caller(lcninfo_t *p, void *privptr)
 {
     PerformCycleUpdate(p->pdt_privptr);
     return 0;
@@ -229,7 +238,7 @@ static int update_cycle_caller(lclconn_t *p, void *privptr)
 void           cda_d_dircn_update_cycle (void)
 {
     // Foreach client: call cda_dat_p_update_server_cycle()
-    ForeachDircnSrvSlot(update_cycle_caller, NULL);
+    ForeachLcnSlot(update_cycle_caller, NULL);
 }
 
 //---- Hack/debug-API ------------------------------------------------
@@ -278,10 +287,10 @@ int            cda_d_dircn_override_wr  (cda_d_dircn_t  var,
 
 //#### Internal API ##################################################
 
-static int RegisterVarCB(cda_d_dircn_t  var,
-                         varchg_cb_t    proc,
-                         int            client_id,
-                         int            channel_n)
+static int  RegisterVarCB  (cda_d_dircn_t  var,
+                            varchg_cb_t    proc,
+                            cda_srvconn_t  client_sid,
+                            cda_hwcnref_t  client_hwr)
 {
   varinfo_t      *vi = AccessVarSlot(var);
   int             n;
@@ -290,11 +299,45 @@ static int RegisterVarCB(cda_d_dircn_t  var,
     n = GetVarCbSlot(vi);
     if (n < 0) return -1;
     p = AccessVarCbSlot(n, vi);
-    p->proc      = proc;
-    p->client_id = client_id;
-    p->channel_n = channel_n;
+    p->proc       = proc;
+    p->client_sid = client_sid;
+    p->client_hwr = client_hwr;
 
     return 0;
+}
+
+typedef struct
+{
+    varinfo_t     *vi;
+    varchg_cb_t    proc;
+    cda_srvconn_t  client_sid;
+    cda_hwcnref_t  client_hwr;
+} DelVarCb_info_t;
+static int DelVarCb(var_cbrec_t *p, void *privptr)
+{
+  DelVarCb_info_t *info_p = privptr;
+
+    if (p->proc       == info_p->proc        &&
+        p->client_sid == info_p->client_sid  &&
+        p->client_hwr == info_p->client_hwr)
+        RlsVarCbSlot(p - info_p->vi->cb_list, info_p->vi); /* "p2id" for VarCbSlot */
+
+    return 0;
+}
+static void UnRegisterVarCB(cda_d_dircn_t  var,
+                            varchg_cb_t    proc,
+                            cda_srvconn_t  client_sid,
+                            cda_hwcnref_t  client_hwr)
+{
+  varinfo_t      *vi = AccessVarSlot(var);
+  DelVarCb_info_t info;
+
+    info.vi         = vi;
+    info.proc       = proc;
+    info.client_sid = client_sid;
+    info.client_hwr = client_hwr;
+
+    ForeachVarCbSlot(DelVarCb, &info, vi);
 }
 
 static int WriteToVar(cda_d_dircn_t  var,
@@ -335,7 +378,9 @@ typedef struct
 typedef struct
 {
     cda_srvconn_t    sid;
-    int              dircn_srv_id;
+    dircn_lcn_t      lcn;
+    int              being_processed;
+    int              being_destroyed;
 
     hwrinfo_t       *hwrs_list;
     int              hwrs_list_allocd;
@@ -351,6 +396,10 @@ enum
 
 //--------------------------------------------------------------------
 
+static void VarChgCB(varinfo_t     *vi,
+                     cda_srvconn_t  client_sid,
+                     cda_hwcnref_t  client_hwr);
+
 // GetHwrSlot()
 GENERIC_SLOTARRAY_DEFINE_GROWING(static, Hwr, hwrinfo_t,
                                  hwrs, in_use, 0, 1,
@@ -365,25 +414,54 @@ static void RlsHwrSlot(cda_hwcnref_t hwr, cda_d_dircn_privrec_t *me)
     if (hi->in_use == 0) return; /*!!! In fact, an internal error */
     hi->in_use = 0;
 
-
+    UnRegisterVarCB(hi->var, VarChgCB, me->sid, hwr);
 }
 
 
 //--------------------------------------------------------------------
 
-static void VarChgCB(varinfo_t *vi,
-                     int        client_id,
-                     int        channel_n)
+static int DestroyDircn_HwrIterator(hwrinfo_t *hi, void *privptr)
 {
-  cda_d_dircn_privrec_t *me = cda_dat_p_privp_of_sid(client_id);
-  hwrinfo_t             *hi = AccessHwrSlot(channel_n, me);
+  cda_d_dircn_privrec_t *me  = privptr;
+  cda_hwcnref_t          hwr = hi - me->hwrs_list; /* "hi2hwr()" */
 
-fprintf(stderr, "%s id=%d n=%d\n", __FUNCTION__, client_id, channel_n);
+    RlsHwrSlot(hwr, me);
+
+    return 0;
+}
+static void DestroyDircnPrivrec(cda_d_dircn_privrec_t *me)
+{
+    ForeachHwrSlot(DestroyDircn_HwrIterator, me, me); DestroyHwrSlotArray(me);
+    /* Note: should do "me->lcn=-1" only AFTER destroying hwr-array, since it is used for identification in HwrCb's */
+    /* Note 2: in fact, in dircn the lcn has almost no use at all */
+    if (me->lcn      >= LCN_MIN_VAL) RlsLcnSlot(me->lcn);      me->lcn      = -1;
+}
+
+//--------------------------------------------------------------------
+
+static void VarChgCB(varinfo_t     *vi,
+                     cda_srvconn_t  client_sid,
+                     cda_hwcnref_t  client_hwr)
+{
+  cda_d_dircn_privrec_t *me = cda_dat_p_privp_of_sid(client_sid);
+  hwrinfo_t             *hi = AccessHwrSlot(client_hwr, me);
+
+//fprintf(stderr, "%s sid=%d hwr=%d\n", __FUNCTION__, client_sid, client_hwr);
+    me->being_processed++;
+
     cda_dat_p_update_dataset(me->sid,
                              1, &(hi->dataref),
                              &(vi->addr), &(vi->dtype), &(vi->current_nelems),
                              &(vi->rflags), &(vi->timestamp),
                              1);
+
+    me->being_processed--;
+    if (me->being_processed == 0  &&  me->being_destroyed)
+    {
+        DestroyDircnPrivrec(me);
+        cda_dat_p_del_server_finish(me->sid);
+        return;
+    }
 }
 
 
@@ -418,7 +496,7 @@ static int  cda_d_dircn_new_chan(cda_dataref_t ref, const char *name,
     }
     vi = AccessVarSlot(var);
 
-    me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(dircn), NULL);
+    me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(dircn), NULL, CDA_DAT_P_GET_SERVER_OPT_NONE);
     if (me == NULL) return CDA_DAT_P_ERROR;
 
     hwr = GetHwrSlot(me);
@@ -442,6 +520,21 @@ static int  cda_d_dircn_new_chan(cda_dataref_t ref, const char *name,
     cda_dat_p_set_ready(ref, 1);
 
     return CDA_DAT_P_OPERATING;
+}
+
+static void cda_d_dircn_del_chan(void *pdt_privptr, cda_hwcnref_t hwr)
+{
+  cda_d_dircn_privrec_t *me = pdt_privptr;
+  hwrinfo_t             *hi = AccessHwrSlot(hwr, me);
+
+    if (hwr < 0  ||  hwr >= me->hwrs_list_allocd  ||
+        hi->in_use == 0)
+    {
+        /*!!!Bark? */
+        return;
+    }
+
+    RlsHwrSlot(hwr, me);
 }
 
 static int  cda_d_dircn_snd_data(void *pdt_privptr, cda_hwcnref_t hwr,
@@ -474,21 +567,31 @@ static int  cda_d_dircn_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
                                  const char    *argv0)
 {
   cda_d_dircn_privrec_t *me = pdt_privptr;
-  lclconn_t             *p;
+  lcninfo_t             *p;
 
     me->sid = sid;
-    me->dircn_srv_id = GetDircnSrvSlot();
-    if (me->dircn_srv_id < 0) return CDA_DAT_P_ERROR;
-    p = AccessDircnSrvSlot(me->dircn_srv_id);
+    me->lcn = GetLcnSlot();
+    if (me->lcn < 0) return CDA_DAT_P_ERROR;
+    p = AccessLcnSlot(me->lcn);
     p->pdt_privptr = pdt_privptr;
 
     return CDA_DAT_P_OPERATING;
 }
 
-static void cda_d_dircn_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
+static int  cda_d_dircn_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 {
   cda_d_dircn_privrec_t *me = pdt_privptr;
   
+    if (me->being_processed)
+    {
+        me->being_destroyed = 1;
+        return CDA_DAT_P_DEL_SRV_DEFERRED;
+    }
+    else
+    {
+        DestroyDircnPrivrec(me);
+        return CDA_DAT_P_DEL_SRV_SUCCESS;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -497,6 +600,6 @@ CDA_DEFINE_DAT_PLUGIN(dircn, "Dircn data-access plugin",
                       NULL, NULL,
                       sizeof(cda_d_dircn_privrec_t),
                       '.', ':', '\0',
-                      cda_d_dircn_new_chan, NULL,
+                      cda_d_dircn_new_chan, cda_d_dircn_del_chan,
                       cda_d_dircn_snd_data, NULL,
                       cda_d_dircn_new_srv,  cda_d_dircn_del_srv);

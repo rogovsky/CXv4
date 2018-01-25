@@ -114,7 +114,7 @@ define(`LIN485_LINE', `
 ')
 
 sysname   lin485s
-defserver linac1:16
+defserver cxhw:16
 wintitle  main "Linac 485s"
 winname   main lin485s
 winclass  main Lin485s

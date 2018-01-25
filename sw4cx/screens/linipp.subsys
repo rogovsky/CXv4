@@ -1,5 +1,5 @@
 sysname   linipp
-defserver linac1:16
+defserver cxhw:16
 wintitle  main "Linac IPPs"
 winname   main linipp
 winclass  main LinIPP
@@ -47,8 +47,8 @@ grouping main LINIPP_grouping "Linac IPPs" lrtb content:10 {
             "nohline,nocoltitles,norowtitles,fold_h" \
             nattl:1 content:2 {
         disp i "I:" text "withlabel" dpyfmt:%-6.1f \
-                r:"_all_code; getchan linac1:11.Spectr1.dcct1; getchan linac1:11.Spectr2.dcct1; add; ret;"
-        pzframe ipp "" u0632 "kind=spectr ext_i_fla=\"_all_code; getchan linac1:11.Spectr1.dcct1; getchan linac1:11.Spectr2.dcct1; add; ret;\"" \
+                r:"_all_code; getchan canhw:11.Spectr1.dcct1; getchan canhw:11.Spectr2.dcct1; add; ret;"
+        pzframe ipp "" u0632 "kind=spectr ext_i_fla=\"_all_code; getchan canhw:11.Spectr1.dcct1; getchan canhw:11.Spectr2.dcct1; add; ret;\"" \
                                 ipp1_14
     }
 

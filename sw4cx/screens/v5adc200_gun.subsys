@@ -1,0 +1,13 @@
+
+grouping main v5adc200_gun "Gun RF measurements" \
+        canvas "notitle,noshadow" content:1 {
+    pzframe adc "" adc200 "width=700,height=200,maxfrq=10" adc200_gun \
+            layinfo:"left=0,right=0,top=0,bottom=0"
+}
+
+sysname   v5adc200_gun
+defserver cxhw:15
+wintitle  main "Gun RF measurements"
+winname   main v5adc200_gun
+winclass  main v5adc200_gun
+winopts   main resizable,compact,notoolbar

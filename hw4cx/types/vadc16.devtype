@@ -1,0 +1,7 @@
+devtype vadc16 w50i,r24i,r26i {
+	adc_beg		2
+	adc_end		3
+	adc_timecode	4
+
+	adc<0-23>	50
+}

@@ -43,8 +43,11 @@ enum
 /* General device specs */
 enum
 {
-    OTTUCC_MAX_W      = ???753,
-    OTTUCC_MAX_H      = ???480,
+    OTTUCC_MIN_W      = 640,
+    OTTUCC_MIN_H      = 480,
+
+    OTTUCC_MAX_W      = 2048,
+    OTTUCC_MAX_H      = 2048,
 
     OTTUCC_SRCMAXVAL = 65535,
     OTTUCC_BPP       = 16,

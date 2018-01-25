@@ -31,10 +31,30 @@ define(`CDAC20_INPB_LINE', `
 grouping main CDAC20 "CDAC20" \
          lrtb "" content:3 {
     container "" "DAC" grid "nocoltitles,norowtitles" \
-              1 0 3 content:eval(3+1) {
-        disp   hw_ver HW    text   "withlabel" dpyfmt:"%-2.0f" r:hw_ver
-        disp   sw_ver SW    text   "withlabel" dpyfmt:"%-2.0f" r:sw_ver
-        button reset  Reset button                             r:do_reset
+              1 0 2 content:eval(2+1) {
+
+        disp "dac_mode" "Mode" selector r:out_mode \
+                items:"Norm\tTable"
+        container "" "Table..." subwin str3:"DAC table mode control" \
+                  content:1 {
+            container "" " " grid "noshadow,nocoltitles,norowtitles" \
+                      3 nattl:2 content:5 {
+                disp t_mode "" text dpyfmt:%1.0f r:__t_mode
+                mesg descr  "" text "columns=30" r:@t100:out_tab_errdescr
+                noop
+                noop - - vseparator layinfo:vert=fill
+                container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+                          content:6 {
+                    button drop     Drop     button r:do_tab_drop
+                    button activate Activate button r:do_tab_activate
+                    button start    Start    button r:do_tab_start
+                    button stop     Stop     button r:do_tab_stop
+                    button pause    Pause    button r:do_tab_pause
+                    button resume   Resume   button r:do_tab_resume
+                }
+            }
+        }
+
         container "" "" grid "notitle,noshadow" \
                   3 0 0 \
                   "Set, V\tMaxSpd, V/s\tCur, V" \
@@ -72,10 +92,13 @@ grouping main CDAC20 "CDAC20" \
     }
 
     container "" "I/O" grid "" \
-              9  0 0 \
+              9  0 3 \
               "8b`'fordown(`N', 7, 0, `\t`'N')" \
               "OutR\tInpR" \
-              layinfo:newline content:18 {
+              layinfo:newline content:eval(3+18) {
+        disp   hw_ver HW    text   "withlabel" dpyfmt:"%-2.0f" r:hw_ver
+        disp   sw_ver SW    text   "withlabel" dpyfmt:"%-2.0f" r:sw_ver
+        button reset  Reset button                             r:do_reset
         knob "outr8b" "8b" text "noincdec" dpyfmt:"%3.0f" r:outr8b
         fordown(`N', 7, 0, `CDAC20_OUTB_LINE(N)')
         disp "inpr8b" "8b" text            dpyfmt:"%3.0f" r:inpr8b

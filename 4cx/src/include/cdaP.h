@@ -32,6 +32,19 @@ enum
     CDA_DAT_P_OPERATING = +1,
 };
 
+enum
+{
+    CDA_DAT_P_DEL_SRV_SUCCESS  = 0,
+    CDA_DAT_P_DEL_SRV_DEFERRED = 1,
+};
+
+enum
+{
+    CDA_DAT_P_GET_SERVER_OPT_NONE         = 0,
+    CDA_DAT_P_GET_SERVER_OPT_NOLIST       = 16 << 16,
+
+    CDA_DAT_P_GET_SERVER_OPT_SRVTYPE_mask = 0x000000FF,
+};
 
 //////////////////////////////////////////////////////////////////////
 
@@ -52,7 +65,7 @@ enum
 typedef int  (*cda_dat_p_new_chan_f)(cda_dataref_t ref, const char *name,
                                      int options, // CDA_DATAREF_OPT_ON_UPDATE only
                                      cxdtype_t dtype, int nelems);
-typedef void (*cda_dat_p_del_chan_f)(void);
+typedef void (*cda_dat_p_del_chan_f)(void *pdt_privptr, cda_hwcnref_t hwr);
 typedef int  (*cda_dat_p_snd_data_f)(void *pdt_privptr, cda_hwcnref_t hwr,
                                      cxdtype_t dtype, int nelems, void *value);
 typedef int  (*cda_dat_p_lock_op_f) (void *pdt_privptr,
@@ -63,7 +76,7 @@ typedef int  (*cda_dat_p_new_srv_f) (cda_srvconn_t  sid, void *pdt_privptr,
                                      int            uniq,
                                      const char    *srvrspec,
                                      const char    *argv0);
-typedef void (*cda_dat_p_del_srv_f) (cda_srvconn_t  sid, void *pdt_privptr);
+typedef int  (*cda_dat_p_del_srv_f) (cda_srvconn_t  sid, void *pdt_privptr);
 
 
 typedef struct cda_dat_p_rec_t_struct
@@ -230,8 +243,10 @@ cda_context_t cda_dat_p_get_cid    (cda_dataref_t    source_ref);
 
 void *cda_dat_p_get_server         (cda_dataref_t    source_ref,
                                     cda_dat_p_rec_t *metric,
-                                    const char      *srvrspec);
+                                    const char      *srvrspec,
+                                    int              options);
 void  cda_dat_p_set_server_state   (cda_srvconn_t  sid, int state);
+void  cda_dat_p_del_server_finish  (cda_srvconn_t  sid);
 
 void  cda_dat_p_update_server_cycle(cda_srvconn_t  sid);
 void  cda_dat_p_update_dataset     (cda_srvconn_t  sid,

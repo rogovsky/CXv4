@@ -57,6 +57,9 @@ typedef struct
 typedef struct
 {
     cda_srvconn_t  sid;
+    int            being_processed;
+    int            being_destroyed;
+
     int            cd;
     int            is_suffering;
     int            was_data_somewhen;
@@ -98,7 +101,8 @@ static void RlsHwrSlot(cda_hwcnref_t hwr)
     safe_free(hi->name);
     hi->in_use = 0;
 }
-//////////////////////////////////////////////////////////////////////
+
+//--------------------------------------------------------------------
 
 static void AddHwrToSrv  (cda_d_cx_privrec_t *me, cda_hwcnref_t hwr)
 {
@@ -124,6 +128,27 @@ static void DelHwrFromSrv(cda_d_cx_privrec_t *me, cda_hwcnref_t hwr)
     if (next < 0) me->lst_hwr = prev; else AccessHwrSlot(next)->prev = prev;
 
     hi->prev = hi->next = -1;
+}
+
+//--------------------------------------------------------------------
+
+static void DestroyCxPrivrec(cda_d_cx_privrec_t *me)
+{
+  cda_hwcnref_t       hwr;
+  hwrinfo_t          *hi;
+  cda_hwcnref_t       next;
+
+    for (hwr = me->frs_hwr;  hwr >= 0;  hwr = next)
+    {
+        hi = AccessHwrSlot(hwr);
+        next = hi->next;
+
+        DelHwrFromSrv(me, hwr);
+        RlsHwrSlot(hwr);
+    }
+
+    if (me->cd >= 0) cx_close(me->cd); me->cd      = -1;
+    sl_deq_tout(me->rcn_tid);          me->rcn_tid = -1;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -152,7 +177,7 @@ static int determine_name_type(const char *name,
     /* Check than EVERYTHING preceding ':' can constitute a hostname */
     for (p = name;  p < colon_p;  p++)
         if (*p == '\0'  ||
-            (!isalnum(*p)  &&  *p != '.')  &&  *p != '-') goto DO_RET;
+            (!isalnum(*p)  &&  *p != '.'  &&  *p != '-')) goto DO_RET;
     /* Okay, skip ':' */
     p++;
     /* ':' should be followed by a digit */
@@ -245,7 +270,7 @@ static int  cda_d_cx_new_chan(cda_dataref_t ref, const char *name,
 
     if (w_srv)
     {
-        me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(cx), srvrspec);
+        me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(cx), srvrspec, CDA_DAT_P_GET_SERVER_OPT_NONE);
         if (me == NULL)
         {
             RlsHwrSlot(hwr);
@@ -280,12 +305,39 @@ static int  cda_d_cx_new_chan(cda_dataref_t ref, const char *name,
     }
     else
     {
+        RlsHwrSlot(hwr);
+        return CDA_DAT_P_ERROR;
+
         hi->rslv_type  = RSLV_TYPE_GLBL;
         hi->rslv_state = RSLV_STATE_UNKNOWN;
         cx_resolve(name);
     }
 
     return CDA_DAT_P_NOTREADY;
+}
+
+static void cda_d_cx_del_chan(void *pdt_privptr, cda_hwcnref_t hwr)
+{
+  cda_d_cx_privrec_t *me = pdt_privptr;
+  hwrinfo_t          *hi = AccessHwrSlot(hwr);
+
+    if (hwr < HWR_MIN_VAL  ||  hwr >= hwrs_list_allocd  ||
+        hi->in_use == 0)
+    {
+        /*!!!Bark? */
+        return;
+    }
+
+    if (me->state == CDA_DAT_P_OPERATING)
+    {
+        /* Send "release" */
+        cx_begin (me->cd);
+        cx_delmon(me->cd, 1, &(hi->hwid), &hwr, NULL, hi->on_update);
+        cx_run   (me->cd);
+    }
+
+    DelHwrFromSrv(me, hwr); /*!!! Should check if hwr belongs to me! */
+    RlsHwrSlot(hwr);
 }
 
 static int  cda_d_cx_snd_data(void *pdt_privptr, cda_hwcnref_t hwr,
@@ -439,7 +491,7 @@ static void FailureProc(cda_d_cx_privrec_t *me, int reason)
 
     /* And organize a timeout in a second... */
     if (me->rcn_tid >= 0) sl_deq_tout(me->rcn_tid);
-    me->rcn_tid = sl_enq_tout_after(0, NULL, /*!!!uniq*/
+    me->rcn_tid = sl_enq_tout_after(cda_dat_p_suniq_of_sid(me->sid), NULL, /*!!!uniq*/
                                     us, ReconnectProc, me);
 }
 
@@ -461,6 +513,8 @@ static void ProcessCxlibEvent(int uniq, void *unsdptr,
   hwrinfo_t          *hi;
 
     ////fprintf(stderr, "%s: reason=%d\n", __FUNCTION__, reason);
+    me->being_processed++;
+
     switch (reason)
     {
         case CAR_NEWDATA:
@@ -588,6 +642,13 @@ static void ProcessCxlibEvent(int uniq, void *unsdptr,
             FailureProc(me, reason);
             break;
     }
+
+    me->being_processed--;
+    if (me->being_processed == 0  &&  me->being_destroyed)
+    {
+        DestroyCxPrivrec(me);
+        cda_dat_p_del_server_finish(me->sid);
+    }
 }
 
 static int  DoConnect(cda_d_cx_privrec_t *me)
@@ -624,9 +685,18 @@ static void ReconnectProc(int uniq, void *unsdptr,
 
     me->rcn_tid = -1;
 
+    me->being_processed++;
+
     me->cd  = DoConnect(me);
     if (me->cd < 0)
         FailureProc(me, CAR_CONNFAIL);
+
+    me->being_processed--;
+    if (me->being_processed == 0  &&  me->being_destroyed)
+    {
+        DestroyCxPrivrec(me);
+        cda_dat_p_del_server_finish(me->sid);
+    }
 }
 
 static int  cda_d_cx_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
@@ -661,13 +731,21 @@ static int  cda_d_cx_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
     return me->state;
 }
 
-static void cda_d_cx_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
+
+static int  cda_d_cx_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 {
   cda_d_cx_privrec_t *me = pdt_privptr;
-  
-    if (me->cd >= 0)
-        cx_close(me->cd);
-    sl_deq_tout(me->rcn_tid); me->rcn_tid = -1;
+
+    if (me->being_processed)
+    {
+        me->being_destroyed = 1;
+        return CDA_DAT_P_DEL_SRV_DEFERRED;
+    }
+    else
+    {
+        DestroyCxPrivrec(me);
+        return CDA_DAT_P_DEL_SRV_SUCCESS;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -676,6 +754,6 @@ CDA_DEFINE_DAT_PLUGIN(cx, "CX data-access plugin",
                       NULL, NULL,
                       sizeof(cda_d_cx_privrec_t),
                       '.', ':', '@',
-                      cda_d_cx_new_chan, NULL,
+                      cda_d_cx_new_chan, cda_d_cx_del_chan,
                       cda_d_cx_snd_data, NULL,
                       cda_d_cx_new_srv,  cda_d_cx_del_srv);

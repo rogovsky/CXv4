@@ -1,0 +1,3 @@
+include(`kshd485.devtype')
+
+dev k1 kshd485@usbpiv485 ~ 1,1

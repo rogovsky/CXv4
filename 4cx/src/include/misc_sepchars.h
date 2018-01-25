@@ -24,6 +24,9 @@ enum
 {
     CX_KNOB_NOLABELTIP_PFX_C = '\n',
 #define CX_KNOB_NOLABELTIP_PFX_S "\n"
+
+    CX_TITLE_NOLABELTIP_PFX_C = '\r',
+#define CX_TITLE_NOLABELTIP_PFX_S "\r"
 };
 
 

@@ -1,5 +1,8 @@
+#include "timeval_utils.h"
+
 #include "cxsd_driver.h"
 #include "cankoz_lyr.h"
+#include "advdac.h"
 
 #include "drv_i/candac16_drv_i.h"
 
@@ -26,6 +29,8 @@ enum
     DESC_U_FILE_STOP   = 0xFB,
     DESC_U_FILE_RESUME = 0xE7,
     DESC_U_FILE_PAUSE  = 0xEB,
+
+    DESC_GET_DAC_STAT = CANKOZ_DESC_GETDEVSTAT,
     
     DESC_B_FILE_STOP   = 1,
     DESC_B_FILE_START  = 2,
@@ -52,28 +57,54 @@ enum
     MAX_GAIN     = 1,
     DEF_GAIN     = 0,
 
-    TABLE_NO = 7,
-    TABLE_ID = 15,
+    TABLE_NO     = 0,
+    DEF_TABLE_ID = 15,
 };
 
 enum
 {
     MAX_ALWD_VAL =   9999999,
-    MIN_ALWD_VAL = -10000305
+    MIN_ALWD_VAL = -10000305,
+    THE_QUANT    = 305,
 };
 
 enum
 {
-    //XCANDAC16_MAX_NSTEPS     = 29/*!!!???*/,
-    XCANDAC16_MAX_STEP_COUNT = 65535, // ==655.35s
-    XCANDAC16_USECS_IN_STEP  = 10000,
+    CANDAC16_TABLE_MAX_NSTEPS     = 31,
+    CANDAC16_TABLE_MAX_STEP_COUNT = 65535, // ==655.35s
+    CANDAC16_TABLE_STEPS_PER_SEC  = 100,
+    CANDAC16_TABLE_USECS_IN_STEP  = 1000000 / CANDAC16_TABLE_STEPS_PER_SEC, // ==10000
+    CANDAC16_TABLE_MAX_FILE_BYTES = (CANDAC16_TABLE_MAX_NSTEPS-1) * (4 * CANDAC16_CHAN_OUT_n_count + 2), // http://www.inp.nsk.su/~kozak/designs/cdac16mr.pdf page 11
+
+    CANDAC16_TABLE_VAL_DISABLE_CHAN   = -20000000,
+    CANDAC16_TABLE_VAL_START_FROM_CUR = +20000000,
 };
+
 
 enum
 {
     HEARTBEAT_FREQ  = 10,
     HEARTBEAT_USECS = 1000000 / HEARTBEAT_FREQ,
 };
+
+enum
+{
+    DEVSPEC_CHAN_ADC_n_count         = CANDAC16_CHAN_ADC_n_count,
+    DEVSPEC_CHAN_OUT_n_count         = CANDAC16_CHAN_OUT_n_count,
+
+    DEVSPEC_CHAN_OUT_IMM_n_base      = CANDAC16_CHAN_OUT_IMM_n_base,
+    DEVSPEC_CHAN_OUT_TAC_n_base      = CANDAC16_CHAN_OUT_TAC_n_base,
+
+    DEVSPEC_TABLE_MAX_NSTEPS         = CANDAC16_TABLE_MAX_NSTEPS,
+    DEVSPEC_TABLE_MAX_STEP_COUNT     = CANDAC16_TABLE_MAX_STEP_COUNT,
+    DEVSPEC_TABLE_STEPS_PER_SEC      = CANDAC16_TABLE_STEPS_PER_SEC,
+    DEVSPEC_TABLE_USECS_IN_STEP      = CANDAC16_TABLE_USECS_IN_STEP,
+    DEVSPEC_TABLE_MAX_FILE_BYTES     = CANDAC16_TABLE_MAX_FILE_BYTES,
+
+    DEVSPEC_TABLE_VAL_DISABLE_CHAN   = CANDAC16_TABLE_VAL_DISABLE_CHAN,
+    DEVSPEC_TABLE_VAL_START_FROM_CUR = CANDAC16_TABLE_VAL_START_FROM_CUR,
+};
+#define DEVSPEC_TLOAD_SEP_DESC (DESC_READ_n_BASE+15)
 
 
 static inline int32  kozdac_c16_to_val(uint32 kozak16)
@@ -86,24 +117,14 @@ static inline uint32 kozdac_val_to_c16(int32 val)
     return scale32via64(val, 0x8000, 10000000) + 0x8000;
 }
 
+static inline int32 val_to_daccode_to_val(int32 val)
+{
+    return kozdac_c16_to_val(kozdac_val_to_c16(val));
+}
+
 //////////////////////////////////////////////////////////////////////
 
 #define SHOW_SET_IMMED 1
-
-typedef struct
-{
-    int32  cur;  // Current value
-    int32  spd;  // Speed
-    int32  trg;  // Target
-
-    int8   rcv;  // Current value was received
-    int8   lkd;  // Is locked by table
-    int8   isc;  // Is changing now
-    int8   nxt;  // Next write may be performed (previous was acknowledged)
-    int8   fst;  // This is the FirST step
-    int8   fin;  // This is a FINal write
-} cankoz_out_ch_t;
-
 typedef struct
 {
     cankoz_vmt_t    *lvmt;
@@ -111,31 +132,47 @@ typedef struct
     int              handle;
 
     int              num_isc;
+    int              supports_unicast_t_ctl;
 
     int32            ch_cfg[KOZDEV_CONFIG_CHAN_count];
 
-    cankoz_out_ch_t  out[CANDAC16_CHAN_OUT_n_count];
+    advdac_out_ch_t  out     [DEVSPEC_CHAN_OUT_n_count];
+
+    int              t_times_nsteps;
+    int32            t_times                           [DEVSPEC_TABLE_MAX_NSTEPS];
+    int32            t_vals  [DEVSPEC_CHAN_OUT_n_count][DEVSPEC_TABLE_MAX_NSTEPS];
+    int              t_nsteps[DEVSPEC_CHAN_OUT_n_count];
+    int              t_mode;
+    int              t_GET_DAC_STAT_hbt_ctr;
+    int              t_file_bytes; // Note: signed (and 32-bit) is OK for Kozak tables; but NOT for something bigger
+    uint8            t_file[DEVSPEC_TABLE_MAX_FILE_BYTES];
 } privrec_t;
+
+#define ONE_LINE_PARAMS(lab, line) \
+    PSP_P_INT ("spd"lab, privrec_t, out[line].spd,  0, -20000000,    +20000000),    \
+    PSP_P_INT ("tac"lab, privrec_t, out[line].tac, -1, -1,           1000),         \
+    PSP_P_INT ("min"lab, privrec_t, out[line].min,  0, MIN_ALWD_VAL, MAX_ALWD_VAL), \
+    PSP_P_INT ("max"lab, privrec_t, out[line].max,  0, MIN_ALWD_VAL, MAX_ALWD_VAL)
 
 static psp_paramdescr_t candac16_params[] =
 {
-    PSP_P_INT ("spd",    privrec_t, out[0].spd,  0, -20000000, +20000000),
-    PSP_P_INT ("spd0",   privrec_t, out[0].spd,  0, -20000000, +20000000),
-    PSP_P_INT ("spd1",   privrec_t, out[1].spd,  0, -20000000, +20000000),
-    PSP_P_INT ("spd2",   privrec_t, out[2].spd,  0, -20000000, +20000000),
-    PSP_P_INT ("spd3",   privrec_t, out[3].spd,  0, -20000000, +20000000),
-    PSP_P_INT ("spd4",   privrec_t, out[4].spd,  0, -20000000, +20000000),
-    PSP_P_INT ("spd5",   privrec_t, out[5].spd,  0, -20000000, +20000000),
-    PSP_P_INT ("spd6",   privrec_t, out[6].spd,  0, -20000000, +20000000),
-    PSP_P_INT ("spd7",   privrec_t, out[7].spd,  0, -20000000, +20000000),
-    PSP_P_INT ("spd8",   privrec_t, out[8].spd,  0, -20000000, +20000000),
-    PSP_P_INT ("spd9",   privrec_t, out[9].spd,  0, -20000000, +20000000),
-    PSP_P_INT ("spd10",  privrec_t, out[10].spd, 0, -20000000, +20000000),
-    PSP_P_INT ("spd11",  privrec_t, out[11].spd, 0, -20000000, +20000000),
-    PSP_P_INT ("spd12",  privrec_t, out[12].spd, 0, -20000000, +20000000),
-    PSP_P_INT ("spd13",  privrec_t, out[13].spd, 0, -20000000, +20000000),
-    PSP_P_INT ("spd14",  privrec_t, out[14].spd, 0, -20000000, +20000000),
-    PSP_P_INT ("spd15",  privrec_t, out[15].spd, 0, -20000000, +20000000),
+    ONE_LINE_PARAMS(  "", 0),
+    ONE_LINE_PARAMS( "0", 0),
+    ONE_LINE_PARAMS( "1", 1),
+    ONE_LINE_PARAMS( "2", 2),
+    ONE_LINE_PARAMS( "3", 3),
+    ONE_LINE_PARAMS( "4", 4),
+    ONE_LINE_PARAMS( "5", 5),
+    ONE_LINE_PARAMS( "6", 6),
+    ONE_LINE_PARAMS( "7", 7),
+    ONE_LINE_PARAMS( "8", 8),
+    ONE_LINE_PARAMS( "9", 9),
+    ONE_LINE_PARAMS("10", 10),
+    ONE_LINE_PARAMS("11", 11),
+    ONE_LINE_PARAMS("12", 12),
+    ONE_LINE_PARAMS("13", 13),
+    ONE_LINE_PARAMS("14", 14),
+    ONE_LINE_PARAMS("15", 15),
     PSP_P_END()
 };
 
@@ -151,22 +188,27 @@ enum
 static int8 SUPPORTED_chans[KOZDEV_CONFIG_CHAN_count] =
 {
     [KOZDEV_CHAN_DO_RESET]     = 1,
-    [KOZDEV_CHAN_OUT_MODE]     = 1,
     [KOZDEV_CHAN_HW_VER]       = 1,
     [KOZDEV_CHAN_SW_VER]       = 1,
+    [KOZDEV_CHAN_OUT_MODE]     = 1,
+    [KOZDEV_CHAN___T_MODE]     = 1,
+
+    [KOZDEV_CHAN_DO_TAB_DROP]     = 1,
+    [KOZDEV_CHAN_DO_TAB_ACTIVATE] = 1,
+    [KOZDEV_CHAN_DO_TAB_START]    = 1,
+    [KOZDEV_CHAN_DO_TAB_STOP]     = 1,
+    [KOZDEV_CHAN_DO_TAB_PAUSE]    = 1,
+    [KOZDEV_CHAN_DO_TAB_RESUME]   = 1,
+    [KOZDEV_CHAN_OUT_TAB_ID]      = 1,
 };
 
-#define ADC_MODE_IS_NORM() \
-    (me->ch_cfg[KOZDEV_CHAN_ADC_MODE-KOZDEV_CONFIG_CHAN_base] == KOZDEV_ADC_MODE_NORM)
+#define TAB_MODE_IS_NORM() \
+    (me->t_mode < TMODE_LOAD)
 
 static void ReturnCtlCh(privrec_t *me, int chan)
 {
     ReturnInt32Datum(me->devid, chan, me->ch_cfg[chan],
                      SUPPORTED_chans[chan]? 0 : CXRF_UNSUPPORTED);
-}
-
-static void SetTmode(privrec_t *me, int mode)
-{
 }
 
 static void DoSoftReset(privrec_t *me, int flags)
@@ -210,6 +252,9 @@ static void SendRdRq(privrec_t *me, int l)
 }
 
 //////////////////////////////////////////////////////////////////////
+#include "advdac_cankoz_table_meat.h"
+#include "advdac_slowmo_kinetic_meat.h"
+//////////////////////////////////////////////////////////////////////
 
 static void candac16_ff (int devid, void *devptr, int is_a_reset);
 static void candac16_in (int devid, void *devptr,
@@ -228,10 +273,17 @@ static int  candac16_init_d(int devid, void *devptr,
     DoDriverLog(devid, 0 | DRIVERLOG_C_ENTRYPOINT, "%s([%d]:\"%s\")",
                 __FUNCTION__, businfocount, auxinfo);
 
-    if (me->out[0].spd != 0)
-        for (l = 1;  l < countof(me->out);  l++)
-            if (me->out[l].spd == 0)
-                me->out[l].spd = me->out[0].spd;
+    for (l = 1;  l < countof(me->out);  l++)
+    {
+        if (me->out[l].spd == 0)
+            me->out[l].spd = me->out[0].spd;
+        if (me->out[l].tac <  0)
+            me->out[l].tac = me->out[0].tac;
+        if (me->out[l].min == 0)
+            me->out[l].min = me->out[0].min;
+        if (me->out[l].max == 0)
+            me->out[l].max = me->out[0].max;
+    }
 
     /* Initialize interface */
     me->lvmt   = GetLayerVMT(devid);
@@ -240,23 +292,33 @@ static int  candac16_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE,
                                candac16_ff, candac16_in,
-                               KOZDEV_NUMCHANS*2/*!!!*/);
+                               KOZDEV_NUMCHANS*2/*!!!*/ +
+                               (DEVSPEC_TABLE_MAX_FILE_BYTES / 7 + 1)*2 /* *2 because of GETDEVSTAT packets */);
     if (me->handle < 0) return me->handle;
     me->lvmt->has_regs(me->handle, KOZDEV_CHAN_REGS_base);
 
     DoSoftReset(me, DSRF_RESET_CHANS);
-    SetTmode   (me, KOZDEV_TMODE_NONE);
+    SetTmode   (me, KOZDEV_TMODE_NONE, NULL);
 
     sl_enq_tout_after(devid, devptr, HEARTBEAT_USECS, candac16_hbt, NULL);
 
     SetChanRDs       (devid, KOZDEV_CHAN_OUT_n_base,      countof(me->out), 1000000.0, 0.0);
     SetChanRDs       (devid, KOZDEV_CHAN_OUT_RATE_n_base, countof(me->out), 1000000.0, 0.0);
     SetChanRDs       (devid, KOZDEV_CHAN_OUT_CUR_n_base,  countof(me->out), 1000000.0, 0.0);
+    SetChanRDs       (devid, DEVSPEC_CHAN_OUT_IMM_n_base, countof(me->out),         1000000.0, 0.0);
     SetChanReturnType(devid, KOZDEV_CHAN_OUT_CUR_n_base,  countof(me->out), IS_AUTOUPDATED_TRUSTED);
     SetChanReturnType(devid, KOZDEV_CHAN_HW_VER,          1,                IS_AUTOUPDATED_TRUSTED);
     SetChanReturnType(devid, KOZDEV_CHAN_SW_VER,          1,                IS_AUTOUPDATED_TRUSTED);
-    SetChanQuant     (devid, KOZDEV_CHAN_OUT_n_base,      countof(me->out), (CxAnyVal_t){.i32=305}, CXDTYPE_INT32);
-    SetChanQuant     (devid, KOZDEV_CHAN_OUT_CUR_n_base,  countof(me->out), (CxAnyVal_t){.i32=305}, CXDTYPE_INT32);
+    SetChanQuant     (devid, KOZDEV_CHAN_OUT_n_base,      countof(me->out), (CxAnyVal_t){.i32=THE_QUANT}, CXDTYPE_INT32);
+    SetChanQuant     (devid, KOZDEV_CHAN_OUT_CUR_n_base,  countof(me->out), (CxAnyVal_t){.i32=THE_QUANT}, CXDTYPE_INT32);
+    SetChanQuant     (devid, DEVSPEC_CHAN_OUT_IMM_n_base, countof(me->out), (CxAnyVal_t){.i32=THE_QUANT}, CXDTYPE_INT32);
+
+    /* Note: times are in MICROseconds */
+    SetChanRDs       (devid, KOZDEV_CHAN_OUT_TAB_TIMES,   1,                1000000.0, 0.0);
+    SetChanRDs       (devid, KOZDEV_CHAN_OUT_TAB_ALL,     1,                1000000.0, 0.0);
+    SetChanRDs       (devid, KOZDEV_CHAN_OUT_TAB_n_base,  countof(me->out), 1000000.0, 0.0);
+    SetChanReturnType(devid, KOZDEV_CHAN_OUT_TAB_ERRDESCR,1,                IS_AUTOUPDATED_TRUSTED);
+    ReportTableStatus(devid, NULL);
 
     return DEVSTATE_OPERATING;
 }
@@ -279,6 +341,8 @@ static void candac16_ff (int devid, void *devptr, int is_a_reset)
     me->ch_cfg[KOZDEV_CHAN_HW_VER] = hw_ver; ReturnCtlCh(me, KOZDEV_CHAN_HW_VER);
     me->ch_cfg[KOZDEV_CHAN_SW_VER] = sw_ver; ReturnCtlCh(me, KOZDEV_CHAN_SW_VER);
 
+    me->supports_unicast_t_ctl = sw_ver >= 9;
+
     if (is_a_reset)
     {
         for (l = 0;  l < countof(me->out);  l++) me->out[l].rcv = 0;
@@ -287,58 +351,19 @@ static void candac16_ff (int devid, void *devptr, int is_a_reset)
 }
 
 static void candac16_hbt(int devid, void *devptr,
-                         sl_tid_t tid,
-                         void *privptr)
+                         sl_tid_t tid  __attribute__((unused)),
+                         void *privptr __attribute__((unused)))
 {
   privrec_t  *me     = (privrec_t *) devptr;
-  int         l;       // Line #
-  int32       val;     // Value -- in volts
 
     sl_enq_tout_after(devid, devptr, HEARTBEAT_USECS, candac16_hbt, NULL);
 
     /*  */
     if (me->num_isc > 0)
-        for (l = 0;  l < countof(me->out);  l++)
-            if (me->out[l].isc  &&  me->out[l].nxt)
-            {
-                /* Guard against dropping speed to 0 in process */
-                if      (me->out[l].spd == 0)
-                {
-                    val =  me->out[l].trg;
-                    me->out[l].fin = 1;
-                }
-                /* We use separate branches for ascend and descend
-                   to simplify arithmetics and escape juggling with sign */
-                else if (me->out[l].trg > me->out[l].cur)
-                {
-                    val = me->out[l].cur + abs(me->out[l].spd) / HEARTBEAT_FREQ;
-                    if (val >= me->out[l].trg)
-                    {
-                        val =  me->out[l].trg;
-                        me->out[l].fin = 1;
-                    }
-                }
-                else
-                {
-                    val = me->out[l].cur - abs(me->out[l].spd) / HEARTBEAT_FREQ;
-                    if (val <= me->out[l].trg)
-                    {
-                        val =  me->out[l].trg;
-                        me->out[l].fin = 1;
-                    }
-                }
+        HandleSlowmoHbt(me);
 
-                SendWrRq(me, l, val);
-                SendRdRq(me, l);
-                me->out[l].nxt = 0; // Drop the "next may be sent..." flag
-            }
-
-#if 0
-    /* Request current values of table-driven channels */
-    if (me->t_mode == TMODE_RUNN)
-        for (l = 0;  l < XCANDAC16_CHAN_OUT_n_COUNT;  l++)
-            if (me->t_aff_c[l]) SendRdRq(me, l);
-#endif
+    /* Request current values of table-driven channels, plus periodically ask for DAC state if table is present */
+    HandleTableHbt(me);
 }
 
 static void candac16_in (int devid, void *devptr,
@@ -348,8 +373,6 @@ static void candac16_in (int devid, void *devptr,
   int         l;       // Line #
   int32       code;    // Code -- in device/Kozak encoding
   int32       val;     // Value -- in volts
-  rflags_t    rflags;
-  int         gain_code;
 
     switch (desc)
     {
@@ -363,29 +386,15 @@ static void candac16_in (int devid, void *devptr,
             DoDriverLog(devid, 0 | DRIVERLOG_C_PKTINFO,
                         "in: WCHAN=%d code=0x%04X val=%duv",
                         l, code, val);
-            me->out[l].cur = val;
-            me->out[l].rcv = 1;
-            me->out[l].nxt = 1;
+            HandleSlowmoREADDAC_in(me, l, val);
+            break;
 
-            if (me->out[l].fin)
-            {
-                if (me->out[l].isc) me->num_isc--;
-                me->out[l].isc = 0;
-            }
+        case DESC_FILE_CLOSE:
+            HandleDESC_FILE_CLOSE  (me, desc, dlc, data);
+            break;
 
-            ReturnInt32Datum(devid, KOZDEV_CHAN_OUT_CUR_n_base + l,
-                             me->out[l].cur, 0);
-            if (!me->out[l].isc  ||  !SHOW_SET_IMMED)
-                ReturnInt32Datum(devid, KOZDEV_CHAN_OUT_n_base + l,
-                                 me->out[l].cur, 0);
-            else if (me->out[l].fst)
-            {
-                me->out[l].fst = 0;
-                val = kozdac_c16_to_val(kozdac_val_to_c16(me->out[l].trg));
-                ReturnInt32Datum(devid, KOZDEV_CHAN_OUT_n_base + l,
-                                 val, 0);
-            }
-
+        case DESC_GET_DAC_STAT: /* Note: it is in fact a DESC_GETDEVSTAT */
+            HandleDESC_GET_DAC_STAT(me, desc, dlc, data);
             break;
 
         default:
@@ -401,7 +410,6 @@ static void candac16_rw_p(int devid, void *devptr,
 {
   privrec_t *me = (privrec_t *)devptr;
 
-#if 1
   int        n;     // channel N in addrs[]/.../values[] (loop ctl var)
   int        chn;   // channel
   int        l;     // Line #
@@ -409,8 +417,21 @@ static void candac16_rw_p(int devid, void *devptr,
 
     for (n = 0;  n < count;  n++)
     {
+        /* A. Prepare */
         chn = addrs[n];
-        if (action == DRVA_WRITE)
+        if (action == DRVA_WRITE  &&
+            (chn == KOZDEV_CHAN_OUT_TAB_TIMES  ||  chn == KOZDEV_CHAN_OUT_TAB_ALL
+             ||
+             (chn >= KOZDEV_CHAN_OUT_TAB_n_base  &&
+              chn <  KOZDEV_CHAN_OUT_TAB_n_base + DEVSPEC_CHAN_OUT_n_count)
+            )
+           )
+        {
+            if ((dtypes[n] != CXDTYPE_INT32  &&  dtypes[n] != CXDTYPE_UINT32))
+                goto NEXT_CHANNEL;
+            val = 0xFFFFFFFF; // That's just to make GCC happy
+        }
+        else if (action == DRVA_WRITE) /* Classic driver's dtype-check */
         {
             if (nelems[n] != 1  ||
                 (dtypes[n] != CXDTYPE_INT32  &&  dtypes[n] != CXDTYPE_UINT32))
@@ -421,6 +442,7 @@ static void candac16_rw_p(int devid, void *devptr,
         else
             val = 0xFFFFFFFF; // That's just to make GCC happy
 
+        /* B. Select */
         if      (chn >= KOZDEV_CHAN_REGS_base  &&  chn <= KOZDEV_CHAN_REGS_last)
         {
             me->lvmt->regs_rw(me->handle, action, chn, &val);
@@ -439,8 +461,6 @@ static void candac16_rw_p(int devid, void *devptr,
             ReturnCtlCh(me, chn);          // Should be performed via cache
         /* Note: all config channels below shouldn't check "action",
                  since DRVA_READ was already processed above */
-        /* Note: all config channels below shouldn't check "action",
-                 since DRVA_READ was already processed above */
         else if (chn == KOZDEV_CHAN_DO_RESET)
         {
             if (val == CX_VALUE_COMMAND)
@@ -449,106 +469,110 @@ static void candac16_rw_p(int devid, void *devptr,
             }
             ReturnCtlCh(me, chn);
         }
-        else if (chn == KOZDEV_CHAN_OUT_MODE)
-        {
-            /* These two are in fact read channels */
-            ReturnCtlCh(me, chn);
-        }
         else if (chn >= KOZDEV_CHAN_OUT_n_base       &&
-                 chn <  KOZDEV_CHAN_OUT_n_base      + CANDAC16_CHAN_OUT_n_count)
-        {
-            //if (action == DRVA_WRITE) fprintf(stderr, "\t[%d]:=%d\n", chn, val);
-            l = chn - KOZDEV_CHAN_OUT_n_base;
-            /* May we touch this channel now? */
-            if (me->out[l].lkd) goto NEXT_CHANNEL;
-            
-            if (action == DRVA_WRITE)
-            {
-                /* Convert volts to code, preventing integer overflow/slip */
-                if (val > MAX_ALWD_VAL) val = MAX_ALWD_VAL;
-                if (val < MIN_ALWD_VAL) val = MIN_ALWD_VAL;
-                
-                /* ...and how should we perform the change: */
-                if (!me->out[l].isc  &&  // No mangling with now-changing channels...
-                    (
-                     /* No speed limit? */
-                     me->out[l].spd == 0
-                     ||
-                     /* Or is it an absolute-value-decrement? */
-                     (
-                      me->out[l].spd > 0  &&
-                      abs(val) < abs(me->out[l].cur)
-                     )
-                     ||
-                     /* Or is this step less than speed? */
-                     (
-                      abs(val - me->out[l].cur) < abs(me->out[l].spd) / HEARTBEAT_FREQ
-                     )
-                    )
-                   )
-                /* Just do write?... */
-                {
-                    SendWrRq(me, l, val);
-                }
-                else
-                /* ...or initiate slow change? */
-                {
-                    if (me->out[l].isc == 0) me->num_isc++;
-                    me->out[l].trg = val;
-                    me->out[l].isc = 1;
-                    me->out[l].fst = 1;
-                    me->out[l].fin = 0;
-                }
-            }
-
-            /* Perform read anyway */
-            SendRdRq(me, l);
-        }
+                 chn <  KOZDEV_CHAN_OUT_n_base      + DEVSPEC_CHAN_OUT_n_count)
+            HandleSlowmoOUT_rw     (me, chn, action, action == DRVA_WRITE? val : 0);
         else if (chn >= KOZDEV_CHAN_OUT_RATE_n_base  &&
-                 chn <  KOZDEV_CHAN_OUT_RATE_n_base + CANDAC16_CHAN_OUT_n_count)
-        {
-            l = chn - KOZDEV_CHAN_OUT_RATE_n_base;
-            if (action == DRVA_WRITE)
-            {
-                /* Note: no bounds-checking for value, since it isn't required */
-                if (abs(val) < 305/*!!!*/) val = 0;
-                me->out[l].spd = val;
-            }
-            ReturnInt32Datum(devid, chn, me->out[l].spd, 0);
-        }
+                 chn <  KOZDEV_CHAN_OUT_RATE_n_base + DEVSPEC_CHAN_OUT_n_count)
+            HandleSlowmoOUT_RATE_rw(me, chn, action, action == DRVA_WRITE? val : 0);
+        else if (chn >= DEVSPEC_CHAN_OUT_IMM_n_base  &&
+                 chn <  DEVSPEC_CHAN_OUT_IMM_n_base + DEVSPEC_CHAN_OUT_n_count)
+            HandleSlowmoOUT_IMM_rw (me, chn, action, action == DRVA_WRITE? val : 0);
+        else if (chn >= DEVSPEC_CHAN_OUT_TAC_n_base  &&
+                 chn <  DEVSPEC_CHAN_OUT_TAC_n_base + DEVSPEC_CHAN_OUT_n_count)
+            HandleSlowmoOUT_TAC_rw (me, chn, action, action == DRVA_WRITE? val : 0);
         else if (chn >= KOZDEV_CHAN_OUT_CUR_n_base   &&
-                 chn <  KOZDEV_CHAN_OUT_CUR_n_base  + CANDAC16_CHAN_OUT_n_count)
+                 chn <  KOZDEV_CHAN_OUT_CUR_n_base  + DEVSPEC_CHAN_OUT_n_count)
         {
             l = chn - KOZDEV_CHAN_OUT_CUR_n_base;
             if (me->out[l].rcv)
                 ReturnInt32Datum(devid, chn, me->out[l].cur, 0);
         }
+        else if (chn == CHAN_CURSPD  ||  chn == CHAN_CURACC) ;
+        else if ((chn >= KOZDEV_CHAN_DO_TAB_base  &&
+                  chn <  KOZDEV_CHAN_DO_TAB_base + KOZDEV_CHAN_DO_TAB_cnt)  ||
+                 chn == KOZDEV_CHAN_OUT_TAB_ID     ||
+                 chn == KOZDEV_CHAN_OUT_TAB_TIMES  ||
+                 chn == KOZDEV_CHAN_OUT_TAB_ALL    ||
+                 (chn >= KOZDEV_CHAN_OUT_TAB_n_base  &&
+                  chn <  KOZDEV_CHAN_OUT_TAB_n_base + DEVSPEC_CHAN_OUT_n_count) ||
+                 chn == KOZDEV_CHAN_OUT_TAB_ERRDESCR)
+            HandleTable_rw(me, action, chn,
+                           n, dtypes, nelems, values);
         else
             ReturnInt32Datum(devid, chn, 0, CXRF_UNSUPPORTED);
 
  NEXT_CHANNEL:;
     }
+}
 
-#else
-  int        n;
-  int        x;
-  int32      iv;
-  rflags_t   zero_rflags = 0;
-  cxdtype_t  dt          = CXDTYPE_INT32;
-  int        nel         = 1;
-  void      *nvp         = &iv;
+static void CrunchTableIntoFile(privrec_t *me)
+{
+  uint8  *wp;
+  int     tr;
+  int     nsteps;
+  int     l;
+  /* Note: all these MUST be unsigned, otherwise less-than comparison doesn't work as expected */
+  uint32  this_targ;
+  uint32  prev_code;
+  uint32  delta;
+  uint32  this_incr;
+  uint32  accums[DEVSPEC_CHAN_OUT_n_count];
 
-fprintf(stderr, "%s(count=%d)\n", __FUNCTION__, count);
-    for (n = 0;  n < count;  n++)
-    {
-        x = addrs[n];
-        iv = x;
-        ReturnDataSet(devid,
-                      1,
-                      &x, &dt, &nel,
-                      &nvp, &zero_rflags, NULL);
-    }
-#endif
+    for (tr = 0, wp = me->t_file;  tr < me->t_times_nsteps;  tr++)
+        if (tr == 0)
+        {
+            for (l = 0;  l < DEVSPEC_CHAN_OUT_n_count;  l++)
+            {
+                if      (me->out[l].aff == 0)
+                    accums[l] = 0;
+                else if (me->t_vals[l][0] >= DEVSPEC_TABLE_VAL_START_FROM_CUR)
+                    accums[l] = (kozdac_val_to_c16(me->out[l].cur))   << 16;
+                else
+                    accums[l] = (kozdac_val_to_c16(me->t_vals[l][0])) << 16;
+            }
+        }
+        else
+        {
+            nsteps = me->t_times[tr] / DEVSPEC_TABLE_USECS_IN_STEP;
+            if (nsteps < 1) nsteps = 1;
+            *wp++ =  nsteps       & 0xFF;
+            *wp++ = (nsteps >> 8) & 0xFF;
+
+            for (l = 0;  l < DEVSPEC_CHAN_OUT_n_count;  l++)
+            {
+                if (me->out[l].aff == 0)
+                    this_incr = 0;
+                else
+                {
+                    this_targ = (kozdac_val_to_c16(me->t_vals[l][tr])) << 16;
+                    prev_code = accums[l];
+
+                    /* We handle positive and negative changes separately,
+                       in order to perform "direct/linear encoding" arithmetics correctly */
+
+                    if (prev_code < this_targ)
+                    {
+                        delta = this_targ - prev_code;
+                        this_incr = delta / nsteps;
+                        accums[l] = prev_code + this_incr * nsteps;
+                    }
+                    else
+                    {
+                        delta = prev_code - this_targ;
+                        this_incr = -(delta / nsteps);
+                        accums[l] = prev_code + this_incr * nsteps;
+                    }
+                }
+////fprintf(stderr, "step %d: %04x->%04x in %d cs, delta=%04x incr=%08x\n", tr, prev_code, this_targ, nsteps, delta, this_incr);
+                *wp++ =  this_incr        & 0xFF;
+                *wp++ = (this_incr >>  8) & 0xFF;
+                *wp++ = (this_incr >> 16) & 0xFF;
+                *wp++ = (this_incr >> 24) & 0xFF;
+            }
+        }
+
+    me->t_file_bytes = wp - me->t_file;
 }
 
 

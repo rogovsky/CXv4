@@ -52,7 +52,7 @@ define(`LIN124_LINE', `
 ')
 
 sysname linvac
-defserver linac1:13
+defserver canhw:13
 wintitle main "Контроль вакуума в линаках etc."
 winname  main linvac
 winclass main LinVac
@@ -189,7 +189,8 @@ grouping main LINVAC_grouping "Контроль вакуума" lrtb content:2 {
             str1:"I, uA\tU, kV\t+\t5/7\tIl, uA\tUl, kV\tI!\tU!" \
             param1:8 param2:32 content:eval(8*(12*4)) {
 
-        LIN124_LINE(K1,` ВИП 1-1  кольцо (резонатор),\nнасос 1')
+#        LIN124_LINE(K1,`ВИП 1-1 - резерв', `---')
+        LIN124_LINE(K1, `ВИП 1-1  кольцо (резонатор),\nнасос 1')
         LIN124_LINE(K2, `ВИП 1-2 - кольцо, насос  2,\nПВИГ')
         LIN124_LINE(K3, `ВИП 1-3 - кольцо, насос  3,\nПВИГ')
         LIN124_LINE(K4, `ВИП 1-4 - кольцо, насос  4,\nПВИГ')

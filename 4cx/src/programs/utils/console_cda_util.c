@@ -112,7 +112,8 @@ void PrintDatarefData(FILE *fp, util_refrec_t *urp, int parts)
 
     if      (dtype == CXDTYPE_TEXT  ||  dtype == CXDTYPE_UCTEXT)
     {
-        if (parts & UTIL_PRINT_NELEMS) fprintf(fp, "[%d]=", cur_nelems);
+        if      (parts & UTIL_PRINT_NELEMS) fprintf(fp, "[%d]=", cur_nelems);
+        else if (parts & UTIL_PRINT_NAME)   fprintf(fp, " ");
         if (parts & UTIL_PRINT_QUOTES) fprintf(fp, "\"");
         for (n = 0;  n < cur_nelems;  n++)
         {

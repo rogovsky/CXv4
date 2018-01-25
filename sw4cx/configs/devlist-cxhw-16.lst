@@ -1,0 +1,64 @@
+include(`kshd485.devtype')
+include(`slbpm.devtype')
+include(`u0632.devtype')
+include(`v06xx.devtype')
+include(`lebedev_lincamsel.devtype')
+include(`lebedev_linsenctl.devtype')
+
+dev k485_triplet kshd485/remdrv ~ 0,111 l:moxa-1:8002
+dev k485_s6      kshd485/remdrv ~ 0,112 l:moxa-1:8002
+dev k485_s7      kshd485/remdrv ~ 0,113 l:moxa-1:8002
+dev k485_s8      kshd485/remdrv ~ 0,114 l:moxa-1:8002
+
+dev e1    slbpm ~ - linbpm-e1
+dev e2    slbpm ~ - linbpm-e2
+dev e3    slbpm ~ - linbpm-e3
+dev e4    slbpm ~ - linbpm-e4
+dev e5    slbpm ~ - linbpm-e5
+dev etech slbpm ~ - linbpm-etech
+dev etrip slbpm ~ - linbpm-etrip
+dev p6    slbpm ~ - linbpm-p6
+dev p9    slbpm ~ - linbpm-p9
+dev p10   slbpm ~ - linbpm-p10
+dev p11   slbpm ~ - linbpm-p11
+dev p12   slbpm ~ - linbpm-p12
+dev p13   slbpm ~ - linbpm-p13
+dev p14   slbpm ~ - linbpm-p14
+
+dev ipp1  u0632/remdrv ~ 19 b:ppc-ipp:8002
+dev ipp2  u0632/remdrv ~ 9  b:ppc-ippspectre:8002
+
+# 1:name 2:base_dev 3:base_dev_lineN
+define(`U0632_1', `
+    cpoint $1 {
+        data   $2.data$3
+        online $2.online$3
+        cur_m  $2.cur_m$3
+        cur_p  $2.cur_p$3
+        m      $2.m$3
+        p      $2.p$3
+    }
+')
+
+U0632_1(ipp1_1,  ipp2, 1)
+U0632_1(ipp1_14, ipp2, 14)
+U0632_1(ipp1_8,  ipp2, 8)
+U0632_1(ipp0_4,  ipp1, 4)
+U0632_1(ipp0_7,  ipp1, 7)
+U0632_1(ipp0_3,  ipp1, 3)
+U0632_1(ipp0_0,  ipp1, 0)
+U0632_1(ipp1_13, ipp2, 13)
+U0632_1(ipp1_2,  ipp2, 2)
+
+
+# ---
+dev linsel_v06xx v06xx/remdrv ~ 12 b:ppc-ipp:8002
+
+dev camsel  lebedev_lincamsel ~ - linsel_v06xx
+dev sensor1 lebedev_linsenctl ~ - linsel_v06xx.0
+dev sensor2 lebedev_linsenctl ~ - linsel_v06xx.1
+dev sensor3 lebedev_linsenctl ~ - linsel_v06xx.2
+dev sensor4 lebedev_linsenctl ~ - linsel_v06xx.3
+dev sensor5 lebedev_linsenctl ~ - linsel_v06xx.4
+dev sensor6 lebedev_linsenctl ~ - linsel_v06xx.5
+#dev sensor7 lebedev_linsenctl ~ - linsel_v06xx.8

@@ -1,5 +1,17 @@
-devtype dds500 w10i,r10i {
-	reset		9
-	serial		10
-	firmware	11
+devtype dds500 w30i,r20i {
+	ampl<0-1>	0
+	phase<0-1>	2
+	ftw<0-1>	4
+
+	clr_phase	21
+
+	debug_reg_n	27
+	debug_reg_w	28
+
+	reset		29
+
+	serial		40
+	firmware	41
+
+	debug_reg_r	49
 }

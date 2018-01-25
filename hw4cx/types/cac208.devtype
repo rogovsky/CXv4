@@ -1,11 +1,9 @@
-devtype cac208 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w100i {
+devtype cac208 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w1i31,w1i248,w8i31,w89i,r1t100 {
 	do_reset	0
-        adc_mode	1
         adc_beg		2
         adc_end		3
         adc_timecode	4
         adc_gain	5
-        out_mode	9
 
 	do_tab_drop	10
 	do_tab_activate	11
@@ -13,9 +11,13 @@ devtype cac208 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w100i {
 	do_tab_stop	13
 	do_tab_pause	14
 	do_tab_resume	15
+	out_tab_id	19
 
         hw_ver		40
         sw_ver		41
+	adc_mode	44
+	out_mode	45
+	__t_mode	46
 
 	outrb<0-7>	60
         inprb<0-7>	68
@@ -32,4 +34,13 @@ devtype cac208 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w100i {
 	out<0-7>       	200
         out_rate<0-7>	232
         out_cur<0-7>	264
+
+	out_imm<0-7>	208
+	out_tac<0-7>	240
+
+	out_tab_times	300
+	out_tab_all	301
+	out_tab<0-7>	302
+
+	out_tab_errdescr	399
 }

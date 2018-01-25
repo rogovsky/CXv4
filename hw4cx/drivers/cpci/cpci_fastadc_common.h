@@ -32,6 +32,7 @@ static int  FASTADC_INIT_D(int devid, void *devptr,
                            const char *auxinfo __attribute__((unused)))
 {
   FASTADC_PRIVREC_T   *me = (FASTADC_PRIVREC_T *)devptr;
+  int                 n;
 
   enum {BAR0 = 0};
 
@@ -59,6 +60,11 @@ static int  FASTADC_INIT_D(int devid, void *devptr,
                                 BAR0, FASTADC_ON_CLS2_OFS, sizeof(int32),
                                 FASTADC_ON_CLS2_VAL);
     if (me->handle < 0) return me->handle;
+
+    for (n = 0;  n < countof(chinfo);  n++)
+        if (chinfo[n].chtype == PZFRAME_CHTYPE_AUTOUPDATED  ||
+            chinfo[n].chtype == PZFRAME_CHTYPE_STATUS)
+            SetChanReturnType(me->devid, n, 1, IS_AUTOUPDATED_TRUSTED);
 
     pzframe_drv_init(&(me->pz), devid,
                      PARAM_SHOT, PARAM_ISTART, PARAM_WAITTIME, PARAM_STOP, PARAM_ELAPSED,

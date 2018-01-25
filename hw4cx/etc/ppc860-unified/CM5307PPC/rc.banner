@@ -1,0 +1,8 @@
+echo " "
+echo "*************************************"
+echo -n "CM5307 Power PC linux image release "
+cat /var/elf/image.release
+echo
+cat /var/elf/image.date
+echo "*************************************"
+echo " "

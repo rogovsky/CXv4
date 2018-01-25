@@ -1,4 +1,4 @@
-#include "Qcxscheduler.h"
+#include "Qt_ZZZ_VERSION_ZZZ_cxscheduler.h"
 
 /* ============================================================================= */
 

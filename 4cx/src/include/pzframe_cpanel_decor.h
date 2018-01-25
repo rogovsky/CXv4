@@ -169,6 +169,18 @@ static Widget MakeParKnob(Widget parent_grid, int grid_x, int grid_y,
     return w;
 }
 
+static Widget MakeFreeGrid(Widget parent)
+{
+  CxWidget  w;
+
+    w = XhCreateGrid(ABSTRZE(parent), "grid");
+    XhGridSetGrid   (w, 0, 0);
+    XhGridSetSpacing(w, MOTIFKNOBS_INTERKNOB_H_SPACING, MOTIFKNOBS_INTERKNOB_V_SPACING);
+    XhGridSetPadding(w, 0, 0);
+
+    return CNCRTZE(w);
+}
+
 
 #ifdef __cplusplus
 }

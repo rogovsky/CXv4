@@ -13,7 +13,7 @@ winname   main lincamsel
 winclass  main LinCamSel
 winopts   main nostatusline
 wintitle  main "Camera Selector"
-defserver linac1:16
+defserver cxhw:16
 
 grouping  main LinCamSel "Camera Selector" lrtb content:2 {
     container cameras "Cameras" grid nocoltitles,norowtitles \

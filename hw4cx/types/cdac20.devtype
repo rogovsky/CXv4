@@ -1,11 +1,9 @@
-devtype cdac20 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w100i {
+devtype cdac20 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w1i31,w1i31,w1i31,w96i,r1t100 {
 	do_reset	0
-        adc_mode	1
         adc_beg		2
         adc_end		3
         adc_timecode	4
         adc_gain	5
-        out_mode	9
 
 	do_tab_drop	10
 	do_tab_activate	11
@@ -13,6 +11,7 @@ devtype cdac20 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w100i {
 	do_tab_stop	13
 	do_tab_pause	14
 	do_tab_resume	15
+	out_tab_id	19
 
 	do_calb_dac	20
 	autocalb_onoff	21
@@ -23,6 +22,9 @@ devtype cdac20 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w100i {
         sw_ver		41
         digcorr_valid	42
         digcorr_factor	43
+	adc_mode	44
+	out_mode	45
+	__t_mode	46
 
 	outrb<0-7>	60
         inprb<0-7>	68
@@ -39,7 +41,18 @@ devtype cdac20 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w100i {
         out_rate0	232
         out_cur0	264
 
+	out_imm0	201
+	out_tac0	233
+
         out		out0
         out_rate	out_rate0
         out_cur		out_cur0
+        out_imm		out_imm0
+        out_tac		out_tac0
+
+	out_tab_times	300
+	out_tab_all	301
+	out_tab0	302
+
+	out_tab_errdescr	399
 }

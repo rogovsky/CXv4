@@ -1,6 +1,6 @@
 sysname v5ringcurmon4v4
 #defserver linac3:1.dcct
-defserver ichw1-2:0.dcct
+defserver cxhw:0.dcct
 wintitle main "Ring current monitor"
 winname  main v5ringcurmon4v4
 winclass main V5RingCurMon4V4

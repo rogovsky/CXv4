@@ -1,0 +1,21 @@
+.PHONY:		firsttarget
+firsttarget:	all
+
+LISTOFDRIVERS=	$(SRCDIR)/ListOfVmeDrivers.mk
+MAKEFILE_PARTS+=$(LISTOFDRIVERS)
+include		$(LISTOFDRIVERS)
+
+DIRECTDRIVERSSOURCES=	$(addprefix $(VME_PFX)_, \
+			  $(addsuffix _drv.c, $(VMEDRIVERS)) \
+			 )
+VMEDRIVERSSYMLINKS=	$(DIRECTDRIVERSSOURCES)
+$(VMEDRIVERSSYMLINKS):	$(VME_PFX)_%:	$(SRCDIR)/%
+
+# General symlinks' management
+SHD_SYMLINKS=	$(VMEDRIVERSSYMLINKS)
+SHD_GNTDFILES=	$(SHD_SYMLINKS)
+
+$(SHD_SYMLINKS):
+		$(SCRIPTSDIR)/ln-sf_safe.sh $< $@
+
+SHD_INCLUDES=	-I$(SRCDIR)

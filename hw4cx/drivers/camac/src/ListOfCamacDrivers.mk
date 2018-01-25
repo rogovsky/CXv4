@@ -2,6 +2,7 @@ CAMACDRIVERS=   g0603 c0642 v0308 v06xx g0601 gzi11 v0628 c0612 c0609 l0403 \
 		frolov_d16 dds300 dds500 u0632 \
 		adc200 adc502 adc333 adc4 c061621 \
 		frolov_bfp frolov_bfp2 frolov_bfp16 frolov_bl700 frolov_spd \
+		frolov_k4x1_2x2x1 \
 		sukh_comm24 \
 		#nadc200 nadc333 nadc4 nadc502 c061621 \
 		c0609 c0612 c0642 \

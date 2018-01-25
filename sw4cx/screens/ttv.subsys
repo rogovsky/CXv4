@@ -1,4 +1,4 @@
-defserver ring1:24
+defserver cxhw:24
 
 define(`TTV_LINE', `
     disp proto_ver "" text - -  "%2.0f" um$1.proto_ver

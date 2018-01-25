@@ -1,5 +1,6 @@
 MONO_C_FILES=	ist_cdac20_drv.so v1k_cdac20_drv.so v3h_a40d16_drv.so \
 		mps20_ceac124_drv.so \
+		kurrez_cac208_drv.so \
 		iset_walker_drv.so \
 		lebedev_subharmonic_drv.so zebedev_subharmonic_drv.so \
 		lebedev_lincamsel_drv.so lebedev_linsenctl_drv.so \
@@ -16,6 +17,7 @@ include		$(PRJDIR)/PrjRules.mk
 ######################################################################
 v1k_cdac20_drv.so ist_cdac20_drv.so v3h_a40d16_drv.so \
 mps20_ceac124_drv.so \
+kurrez_cac208_drv.so \
 iset_walker_drv.so \
 zebedev_subharmonic_drv.so \
 lebedev_lincamsel_drv.so lebedev_linsenctl_drv.so \

@@ -1,4 +1,4 @@
-TYPES_LIST=	ist_cdac20 v1k_cdac20 v3h_a40d16 mps20_ceac124 \
+TYPES_LIST=	ist_cdac20 v1k_cdac20 v3h_a40d16 mps20_ceac124 kurrez_cac208 \
 		iset_walker \
 		lebedev_subharmonic \
 		lebedev_lincamsel lebedev_linsenctl \

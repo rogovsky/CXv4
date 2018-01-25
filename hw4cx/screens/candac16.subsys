@@ -28,11 +28,34 @@ grouping main CANDAC16 "CANDAC16" \
          lrtb "" content:2 {
 
     container "" "DAC" grid "" \
-              3 8 0 \
+              3 8 2 \
               "Set, V\tMaxSpd, V/s\tCur, V" \
               "forloop(`N', 0, eval(CANDAC16_CHAN_OUT_n_COUNT-1), `N\t')" \
               layinfo:newline \
-              content:eval(CANDAC16_CHAN_OUT_n_COUNT*3) {
+              content:eval(CANDAC16_CHAN_OUT_n_COUNT*3 + 2) {
+
+        disp "dac_mode" "Mode" selector r:out_mode \
+                items:"Norm\tTable"
+        container "" "Table..." subwin str3:"DAC table mode control" \
+                  content:1 {
+            container "" " " grid "noshadow,nocoltitles,norowtitles" \
+                      3 nattl:2 content:5 {
+                disp t_mode "" text dpyfmt:%1.0f r:__t_mode
+                mesg descr  "" text "columns=30" r:@t100:out_tab_errdescr
+                noop
+                noop - - vseparator layinfo:vert=fill
+                container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+                          content:6 {
+                    button drop     Drop     button r:do_tab_drop
+                    button activate Activate button r:do_tab_activate
+                    button start    Start    button r:do_tab_start
+                    button stop     Stop     button r:do_tab_stop
+                    button pause    Pause    button r:do_tab_pause
+                    button resume   Resume   button r:do_tab_resume
+                }
+            }
+        }
+
         forloop(`N', 0, eval(CANDAC16_CHAN_OUT_n_COUNT-1), `CANDAC16_DAC_LINE(N)')
     }
 

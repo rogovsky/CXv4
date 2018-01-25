@@ -130,6 +130,7 @@ typedef struct
     ////
     sl_tid_t          alv_tid;
     int               may_use_alv;
+    int               alv_neq_count;
 } slbpm_privrec_t;
 
 //////////////////////////////////////////////////////////////////////
@@ -452,12 +453,34 @@ static void slbpm_fd_p(int devid, void *devptr,
                 {
                     if (val16 != SLBPM_PING_VAL)
                     {
-                        sq_clear(&(me->q));
-                        SendInit(me);
-                        DoDriverLog(devid, 0, "PING val differ: %d!=%d", val16, SLBPM_PING_VAL);
+                        me->alv_neq_count++;
+                        DoDriverLog(devid, 0, "PING val differ: %d!=%d, count=%d, %s",
+                                    val16, SLBPM_PING_VAL, me->alv_neq_count,
+                                    me->alv_neq_count < 2? "re-trying" : "re-initializing");
+                        if (me->alv_neq_count < 2)
+                        {
+                          slbpm_hdr_t         hdr;
 
-                        SetDevState(devid, DEVSTATE_NOTREADY,  0, NULL);
-                        SetDevState(devid, DEVSTATE_OPERATING, 0, NULL);
+                            FillHdr(&hdr, SLBCMD_RDREG, SLBPM_PING_REG, 0);
+                            r = send(me->fd, &hdr, sizeof(hdr), 0);
+                        }
+                        else
+                        {
+                            me->alv_neq_count = 0;
+                            sq_clear(&(me->q));
+                            SendInit(me);
+
+                            SetDevState(devid, DEVSTATE_NOTREADY,  0, NULL);
+                            SetDevState(devid, DEVSTATE_OPERATING, 0, NULL);
+                        }
+                    }
+                    else
+                    {
+                        if (me->alv_neq_count != 0)
+                        {
+                            DoDriverLog(devid, 0, "PING val correct on attempt#%d", me->alv_neq_count);
+                            me->alv_neq_count = 0;
+                        }
                     }
                 }
                 else if (addr == SLBREG_DELAYA)

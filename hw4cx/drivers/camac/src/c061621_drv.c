@@ -104,6 +104,8 @@ static pzframe_chinfo_t chinfo[] =
     /* data */
     [C061621_CHAN_DATA]          = {PZFRAME_CHTYPE_BIGC,        0},
 
+    [C061621_CHAN_MARKER]        = {PZFRAME_CHTYPE_MARKER,      0},
+
     /* controls */
     [C061621_CHAN_SHOT]          = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
     [C061621_CHAN_STOP]          = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
@@ -239,8 +241,6 @@ static int   InitParams(pzframe_drv_t *pdr)
   int                devtype;
   const char        *devname;
 
-  int                n;
-
     rflags = status2rflags(DO_NAF(CAMAC_REF, me->N_DEV, A_AUXDAT, 1, &w));
     if (rflags != 0)
     {
@@ -294,11 +294,6 @@ static int   InitParams(pzframe_drv_t *pdr)
             return -CXRF_WRONG_DEV;
     }
     me->k_type = (devtype & 010) != 0;
-
-    for (n = 0;  n < countof(chinfo);  n++)
-        if (chinfo[n].chtype == PZFRAME_CHTYPE_AUTOUPDATED  ||
-            chinfo[n].chtype == PZFRAME_CHTYPE_STATUS)
-            SetChanReturnType(me->devid, n, 1, IS_AUTOUPDATED_TRUSTED);
 
     me->nxt_args[C061621_CHAN_NUMPTS] = me->memsize;
     me->nxt_args[C061621_CHAN_TIMING] = me->mintick;
@@ -496,6 +491,13 @@ static void PrepareRetbufs     (pzframe_drv_t *pdr, rflags_t add_rflags)
         me->r.rflags[n] = add_rflags;
         n++;
     }
+    /* A marker (just for compatibility with others) */
+    me->r.addrs [n] = C061621_CHAN_MARKER;
+    me->r.dtypes[n] = CXDTYPE_INT32;
+    me->r.nelems[n] = 1;
+    me->r.val_ps[n] = me->cur_args + C061621_CHAN_MARKER;
+    me->r.rflags[n] = add_rflags;
+    n++;
     /* ...and drop "requested" flags */
     me->data_rqd = 0;
 

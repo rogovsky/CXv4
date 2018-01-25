@@ -6,8 +6,8 @@ QT -= gui
 QMAKE_CFLAGS_DEBUG += -fPIC
 QMAKE_CFLAGS_RELEASE += -fPIC
 
-TARGET = Qt4cxscheduler
-HEADERS += Qcxscheduler.h
-SOURCES += Qt4cxscheduler.cpp
+TARGET = Qt_ZZZ_VERSION_ZZZ_cxscheduler
+HEADERS += Qt_ZZZ_VERSION_ZZZ_cxscheduler.h
+SOURCES += Qt_ZZZ_VERSION_ZZZ_cxscheduler.cpp
 
 INCLUDEPATH += $${TOP_INCLUDES}

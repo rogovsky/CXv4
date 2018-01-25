@@ -152,6 +152,8 @@ int  cx_rslv  (int cd, const char *name,      int  param1,  int  param2);
 
 int  cx_setmon(int cd, int count, int *hwids, int *param1s, int *param2s,
                int on_update);
+int  cx_delmon(int cd, int count, int *hwids, int *param1s, int *param2s,
+               int on_update);
 int  cx_rd_cur(int cd, int count, int *hwids, int *param1s, int *param2s);
 int  cx_rq_rd (int cd, int count, int *hwids, int *param1s, int *param2s);
 int  cx_rq_wr (int cd, int count, int *hwids, int *param1s, int *param2s,

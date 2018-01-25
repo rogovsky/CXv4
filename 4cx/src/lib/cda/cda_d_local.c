@@ -135,7 +135,7 @@ static int CheckVar(cda_d_local_t var)
 // GetLcnSlot()
 GENERIC_SLOTARRAY_DEFINE_GROWING(static, Lcn, lcninfo_t,
                                  lcns, fd, LCN_VAL_UNUSED, LCN_VAL_USED,
-                                 0, 2, 0,
+                                 LCN_MIN_VAL, LCN_ALLOC_INC, LCN_MAX_COUNT,
                                  , , void)
 
 static void RlsLcnSlot(int n)
@@ -209,7 +209,7 @@ static int CallVarCBs(var_cbrec_t *p, void *privptr)
 {
   lcninfo_t *lci = AccessLcnSlot(p->lcn);
 
-fprintf(stderr, "%s(fd=%d,ioh=%d)\n", __FUNCTION__, lci->fd, lci->iohandle);
+//fprintf(stderr, "%s(fd=%d,ioh=%d)\n", __FUNCTION__, lci->fd, lci->iohandle);
     fdio_send(lci->iohandle, &(p->client_hwr), sizeof(p->client_hwr));
     return 0;
 }
@@ -331,8 +331,8 @@ static int RegisterLocalSid(int fd)
     return lcn;
 }
 
-static int RegisterLocalHwr(local_lcn_t    lcn,
-                            cda_d_local_t  var, cda_hwcnref_t  client_hwr)
+static int  RegisterLocalHwr  (local_lcn_t    lcn,
+                               cda_d_local_t  var, cda_hwcnref_t  client_hwr)
 {
   varinfo_t      *vi = AccessVarSlot(var);
   int             n;
@@ -340,11 +340,41 @@ static int RegisterLocalHwr(local_lcn_t    lcn,
 
     n = GetVarCbSlot(vi);
     if (n < 0) return -1;
+//if (client_hwr == VAR_MIN_VAL) fprintf(stderr, "n=%d lcn=%d\n", n, lcn);
     p = AccessVarCbSlot(n, vi);
     p->lcn        = lcn;
     p->client_hwr = client_hwr;
 
     return 0;
+}
+
+typedef struct
+{
+    varinfo_t     *vi;
+    local_lcn_t    lcn;
+    cda_hwcnref_t  client_hwr;
+} DelVarCb_info_t;
+static int DelVarCB(var_cbrec_t *p, void *privptr)
+{
+  DelVarCb_info_t *info_p = privptr;
+
+//if (info_p->client_hwr == 1) fprintf(stderr, "%s lcn=%d:%d hwr=%d:%d\n", __FUNCTION__, p->lcn, info_p->lcn, p->client_hwr, info_p->client_hwr);
+    if (p->lcn == info_p->lcn  &&  p->client_hwr == info_p->client_hwr)
+        RlsVarCbSlot(p - info_p->vi->cb_list, info_p->vi); /* "p2id" for VarCbSlot */
+
+    return 0;
+}
+static void UnRegisterLocalHwr(local_lcn_t    lcn,
+                               cda_d_local_t  var, cda_hwcnref_t  client_hwr)
+{
+  varinfo_t      *vi = AccessVarSlot(var);
+  DelVarCb_info_t info;
+
+    info.vi         = vi;
+    info.lcn        = lcn;
+    info.client_hwr = client_hwr;
+
+    ForeachVarCbSlot(DelVarCB, &info, vi);
 }
 
 static int WriteToVar(cda_d_local_t  var,
@@ -419,8 +449,29 @@ static void RlsHwrSlot(cda_hwcnref_t hwr, cda_d_local_privrec_t *me)
 
     if (hi->in_use == 0) return; /*!!! In fact, an internal error */
     hi->in_use = 0;
+    UnRegisterLocalHwr(me->lcn, hi->var, hwr);
 }
 
+
+//--------------------------------------------------------------------
+
+static int DestroyLocal_HwrIterator(hwrinfo_t *hi, void *privptr)
+{
+  cda_d_local_privrec_t *me  = privptr;
+  cda_hwcnref_t          hwr = hi - me->hwrs_list; /* "hi2hwr()" */
+
+    RlsHwrSlot(hwr, me);
+
+    return 0;
+}
+static void DestroyLocalPrivrec(cda_d_local_privrec_t *me)
+{
+    ForeachHwrSlot(DestroyLocal_HwrIterator, me, me); DestroyHwrSlotArray(me);
+    /* Note: should do "me->lcn=-1" only AFTER destroying hwr-array, since it is used for identification in HwrCb's */
+    if (me->read_fd  >= 0)           close     (me->read_fd);  me->read_fd  = -1;
+    if (me->fdhandle >= 0)           sl_del_fd (me->fdhandle); me->fdhandle = -1;
+    if (me->lcn      >= LCN_MIN_VAL) RlsLcnSlot(me->lcn);      me->lcn      = -1;
+}
 
 //--------------------------------------------------------------------
 
@@ -462,13 +513,19 @@ static void local_fd_p(int uniq, void *privptr1,
                     repcount = 0;
                     goto END_PROCESSED;
                 }
+
+                hi = AccessHwrSlot(hwr, me);
+                if (hwr < 0  ||  hwr >= me->hwrs_list_allocd  ||
+                    hi->in_use == 0) goto END_PROCESSED;
+                vi = AccessVarSlot(hi->var);
                 /* Here, in cda_d_local, for now -- do nothing */
             }
         }
         else
         {
-            /*!!! Check hwr */
             hi = AccessHwrSlot(hwr, me);
+            if (hwr < 0  ||  hwr >= me->hwrs_list_allocd  ||
+                hi->in_use == 0) goto END_PROCESSED;
             vi = AccessVarSlot(hi->var);
             cda_dat_p_update_dataset(me->sid,
                                      1, &(hi->dataref),
@@ -481,7 +538,9 @@ static void local_fd_p(int uniq, void *privptr1,
         me->being_processed--;
         if (me->being_processed == 0  &&  me->being_destroyed)
         {
-            /*!!!*/
+            DestroyLocalPrivrec(me);
+            cda_dat_p_del_server_finish(me->sid);
+            return;
         }
     }
 }
@@ -517,7 +576,7 @@ static int  cda_d_local_new_chan(cda_dataref_t ref, const char *name,
     }
     vi = AccessVarSlot(var);
 
-    me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(local), NULL);
+    me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(local), NULL, CDA_DAT_P_GET_SERVER_OPT_NONE);
     if (me == NULL) return CDA_DAT_P_ERROR;
 
     hwr = GetHwrSlot(me);
@@ -541,6 +600,21 @@ static int  cda_d_local_new_chan(cda_dataref_t ref, const char *name,
     cda_dat_p_set_ready(ref, 1);
 
     return CDA_DAT_P_OPERATING;
+}
+
+static void cda_d_local_del_chan(void *pdt_privptr, cda_hwcnref_t hwr)
+{
+  cda_d_local_privrec_t *me = pdt_privptr;
+  hwrinfo_t             *hi = AccessHwrSlot(hwr, me);
+
+    if (hwr < 0  ||  hwr >= me->hwrs_list_allocd  ||
+        hi->in_use == 0)
+    {
+        /*!!!Bark? */
+        return;
+    }
+
+    RlsHwrSlot(hwr, me);
 }
 
 static int  cda_d_local_snd_data(void *pdt_privptr, cda_hwcnref_t hwr,
@@ -612,10 +686,20 @@ static int  cda_d_local_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
     return CDA_DAT_P_ERROR;
 }
 
-static void cda_d_local_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
+static int  cda_d_local_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 {
   cda_d_local_privrec_t *me = pdt_privptr;
-  
+
+    if (me->being_processed)
+    {
+        me->being_destroyed = 1;
+        return CDA_DAT_P_DEL_SRV_DEFERRED;
+    }
+    else
+    {
+        DestroyLocalPrivrec(me);
+        return CDA_DAT_P_DEL_SRV_SUCCESS;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -624,6 +708,6 @@ CDA_DEFINE_DAT_PLUGIN(local, "Local data-access plugin",
                       NULL, NULL,
                       sizeof(cda_d_local_privrec_t),
                       '.', ':', '\0',
-                      cda_d_local_new_chan, NULL,
+                      cda_d_local_new_chan, cda_d_local_del_chan,
                       cda_d_local_snd_data, NULL,
                       cda_d_local_new_srv,  cda_d_local_del_srv);

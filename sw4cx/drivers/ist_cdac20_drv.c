@@ -10,6 +10,7 @@ enum
 {
     C20C_OUT,
     C20C_OUT_RATE,
+    C20C_OUT_IMM,
     C20C_SWITCH_ON,
     C20C_ENABLE,
     C20C_RST_ILKS_B2,
@@ -56,6 +57,7 @@ static vdev_sodc_dsc_t cdac2ist_mapping[SUBORD_NUMCHANS] =
 {
     [C20C_OUT]            = {"out",            VDEV_IMPR,             -1},
     [C20C_OUT_RATE]       = {"out_rate",                   VDEV_TUBE, IST_CDAC20_CHAN_ISET_RATE},
+    [C20C_OUT_IMM]        = {"out_imm",        VDEV_PRIV,             -1},
     [C20C_SWITCH_ON]      = {"outrb0",         VDEV_PRIV,             -1},
     [C20C_ENABLE]         = {"outrb1",         VDEV_PRIV,             -1},
     [C20C_RST_ILKS_B2]    = {"outrb2",         VDEV_PRIV,             -1},
@@ -235,6 +237,7 @@ static void SwchToINTERLOCK(void *devptr, int prev_state __attribute__((unused))
   privrec_t *me = devptr;
 
     SndCVal(me, C20C_OUT,       0);
+    SndCVal(me, C20C_OUT_IMM,   0);
     SndCVal(me, C20C_SWITCH_ON, 0);
     SndCVal(me, C20C_ENABLE,    0);
 }

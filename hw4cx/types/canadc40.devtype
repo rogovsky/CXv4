@@ -1,6 +1,5 @@
 devtype canadc40 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w100i {
 	do_reset	0
-        adc_mode	1
         adc_beg		2
         adc_end		3
         adc_timecode	4
@@ -8,6 +7,7 @@ devtype canadc40 w40i,r20i,w8i,r16i,w1i,r2i,w13i,r100i,w32i,w32i,r32i,r4i,w100i 
 
         hw_ver		40
         sw_ver		41
+	adc_mode	44
 
 	outrb<0-7>	60
         inprb<0-7>	68

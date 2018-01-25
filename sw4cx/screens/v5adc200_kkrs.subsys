@@ -1,0 +1,34 @@
+
+grouping main blm "VEPP5 kickers ADC200s" \
+        canvas "notitle,noshadow" content:3 {
+    pzframe adc1 "" adc200 \
+            "width=700,height=200,maxfrq=10,save_button,subsys=v5adc200-kkr-1" \
+            adc200_kkr1 \
+            layinfo:"left=0,right=0,top=0,bottom=0@comms"
+
+    container comms "" grid nodecor layinfo:"left=0,bottom=0@adc2" \
+            ncols:2 content:4 {
+        knob/ign_otherop c1_1 "Ch A" choicebs r:kkr_comm1.comm1 \
+                items:"#TInp1\b\bcolor=blue\tInp2"
+        knob/ign_otherop c1_2 "Ch B" choicebs r:kkr_comm1.comm2 \
+                items:"#TInp3\b\bcolor=red\tInp4"
+        knob/ign_otherop c2_1 "Ch A" choicebs r:kkr_comm2.comm1 \
+                items:"#TInp1\b\bcolor=blue\tInp2"
+        knob/ign_otherop c2_2 "Ch B" choicebs r:kkr_comm2.comm2 \
+                items:"#TInp3\b\bcolor=red\tInp4"
+    }
+
+    pzframe adc2 "" adc200 \
+            "width=700,height=200,maxfrq=10,save_button,subsys=v5adc200-kkr-2" \
+            adc200_kkr2 \
+            layinfo:"left=0,right=0,bottom=0"
+
+
+}
+
+sysname   v5adc200_kkrs
+defserver cxhw:18
+wintitle  main "VEPP5 kickers ADC200s"
+winname   main v5adc200_kkrs
+winclass  main v5adc200_kkrs
+winopts   main resizable,compact,notoolbar

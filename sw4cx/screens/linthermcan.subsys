@@ -16,7 +16,7 @@ define(`_foreach',
 #---------------------------------------------------------------------
 
 sysname linthermcan
-defserver linac1:14
+defserver canhw:14
 wintitle main "Система термостабилизации - CAN"
 winname  main linthermcan
 winclass main LinThermCAN
@@ -25,7 +25,8 @@ winclass main LinThermCAN
 define(`THERMLINE',
        `disp $1_in  $2     text ""        "╟C" "%5.2f" $1.Tin  disprange:+20-+40
         knob/fixedranges \
-             $1_set $2_set text "nounits" "╟C" "%5.2f" $1.Tset disprange:+20-+40 alwdrange:+20-+40
+             $1_set $2_set text "nounits" "╟C" "%5.2f" $1.Tset disprange:+20-+40 \
+                                            step:0.1           alwdrange:+20-+40 
         disp $1_out $2_out text ""        "╟C" "%5.2f" $1.Tavg disprange:+20-+40 \
                 normrange:-1-+1 yelwrange:-2-+2 \
                 c:"_all_code; getchan $1.Tavg; getchan $1.Tset; sub; ret"

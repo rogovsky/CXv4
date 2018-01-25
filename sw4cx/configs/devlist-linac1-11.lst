@@ -6,7 +6,6 @@ include(`cac208.devtype')
 include(`canadc40.devtype')
 include(`candac16.devtype')
 include(`cdac20.devtype')
-include(`cdac20k.devtype')
 include(`ist_cdac20.devtype')
 include(`v1k_cdac20.devtype')
 include(`v3h_a40d16.devtype')
@@ -28,12 +27,12 @@ dev v3ha40_1      canadc40/remdrv ~ 0,54 b:cangw-magsys:8002 adc_timecode=4 gain
 dev v3hd16_1      candac16/remdrv ~ 0,55 b:cangw-magsys:8002 spd=-1333330  # -50A
 
 # Magcor
-dev rst1_a40_0 canadc40/remdrv ~ 0,31 b:cangw-magsys:8002 adc_timecode=2 gain=0 end=31
-dev rst1_c16_0 candac16/remdrv ~ 0,30 b:cangw-magsys:8002
-dev rst1_a40_1 canadc40/remdrv ~ 0,29 b:cangw-magsys:8002 adc_timecode=2 gain=0 end=31
-dev rst1_c16_1 candac16/remdrv ~ 0,28 b:cangw-magsys:8002
-dev rst1_a40_2 canadc40/remdrv ~ 0,27 b:cangw-magsys:8002 adc_timecode=2 gain=0 end=31
-dev rst1_c16_2 candac16/remdrv ~ 0,26 b:cangw-magsys:8002
+dev rst1_a40_0 canadc40/remdrv ~ 0,31 b:cangw-rst1:8002 adc_timecode=4 gain=0 end=31
+dev rst1_c16_0 candac16/remdrv ~ 0,30 b:cangw-rst1:8002
+dev rst1_a40_1 canadc40/remdrv ~ 0,29 b:cangw-rst1:8002 adc_timecode=4 gain=0 end=31
+dev rst1_c16_1 candac16/remdrv ~ 0,28 b:cangw-rst1:8002
+dev rst1_a40_2 canadc40/remdrv ~ 0,27 b:cangw-rst1:8002 adc_timecode=4 gain=0 end=31
+dev rst1_c16_2 candac16/remdrv ~ 0,26 b:cangw-rst1:8002
 
 ### pks8
 ##dev pks_0 g0603/remdrv ~ 5  b:ppc-v1000:8002
@@ -41,26 +40,26 @@ dev rst1_c16_2 candac16/remdrv ~ 0,26 b:cangw-magsys:8002
 ##dev c0612 c0612/remdrv ~ 16 b:ppc-v1000:8002
 
 # ISTs
-dev icd_esol  cdac20k/remdrv ~ 0,47 b:cangw-magsys:8002 spd=-400000 tac=10
-dev icd_d1m   cdac20k/remdrv ~ 0,46 b:cangw-magsys:8002 spd=-400000 tac=10
+dev icd_esol  cdac20/remdrv ~ 0,47 b:cangw-magsys:8002 spd=-400000 tac=10
+dev icd_d1m   cdac20/remdrv ~ 0,46 b:cangw-magsys:8002 spd=-400000 tac=10
 # ISTR-13
-dev icd_psol  cdac20k/remdrv ~ 0,15 b:cangw-v1000:8002 spd=-400000 tac=10 # 15=63-48
-dev icd_bend  cdac20k/remdrv ~ 0,14 b:cangw-v1000:8002 spd=-400000 tac=10 # 14=62-48
+dev icd_psol  cdac20/remdrv ~ 0,15 b:cangw-rst1:8002 spd=-400000 tac=10 # 15=63-48
+dev icd_bend  cdac20/remdrv ~ 0,14 b:cangw-rst1:8002 spd=-400000 tac=10 # 14=62-48
 # V1000
-dev icd_coil1   cdac20k/remdrv ~ 0,63 b:cangw-v1000:8002  spd=-800000 tac=10
-dev icd_coil2   cdac20k/remdrv ~ 0,62 b:cangw-v1000:8002  spd=-800000 tac=10
-dev icd_rings   cdac20k/remdrv ~ 0,61 b:cangw-v1000:8002  spd=-800000 tac=10
-dev icd_spectr1 cdac20k/remdrv ~ 0,60 b:cangw-v1000:8002  spd=-800000 tac=10
-dev icd_spectr2 cdac20k/remdrv ~ 0,59 b:cangw-v1000:8002  spd=-800000 tac=10
-##dev icd_ql15    cdac20/remdrv ~ 0,58 b:cangw-v1000:8002  spd=-2000000
+dev icd_coil1   cdac20/remdrv ~ 0,63 b:cangw-rst1:8002  spd=-800000 tac=10
+dev icd_coil2   cdac20/remdrv ~ 0,62 b:cangw-rst1:8002  spd=-800000 tac=10
+dev icd_rings   cdac20/remdrv ~ 0,61 b:cangw-rst1:8002  spd=-800000 tac=10
+dev icd_spectr1 cdac20/remdrv ~ 0,60 b:cangw-rst1:8002  spd=-800000 tac=10
+dev icd_spectr2 cdac20/remdrv ~ 0,59 b:cangw-rst1:8002  spd=-800000 tac=10
+##dev icd_ql15    cdac20/remdrv ~ 0,58 b:cangw-rst1:8002  spd=-2000000
 #
-dev icd_ql15    cdac20k/remdrv ~ 0,54 b:cangw-v1000:8002  spd=-2000000 max=3000000 tac=10
-dev icd_qltr3   cdac20k/remdrv ~ 0,53 b:cangw-v1000:8002  spd=-2000000 max=3000000 tac=10
-dev icd_qltr2   cdac20k/remdrv ~ 0,52 b:cangw-v1000:8002  spd=-2000000 max=3000000 tac=10
-dev icd_qltr1   cdac20k/remdrv ~ 0,51 b:cangw-v1000:8002  spd=-2000000 max=3000000 tac=10
+dev icd_ql15    cdac20/remdrv ~ 0,54 b:cangw-rst1:8002  spd=-2000000 max=3000000 tac=10
+dev icd_qltr3   cdac20/remdrv ~ 0,53 b:cangw-rst1:8002  spd=-2000000 max=3000000 tac=10
+dev icd_qltr2   cdac20/remdrv ~ 0,52 b:cangw-rst1:8002  spd=-2000000 max=3000000 tac=10
+dev icd_qltr1   cdac20/remdrv ~ 0,51 b:cangw-rst1:8002  spd=-2000000 max=3000000 tac=10
 
 # Magcor aux crate 2/cac208
-dev fedcor cac208/remdrv ~ 0,25 b:cangw-magsys:8002
+dev fedcor cac208/remdrv ~ 0,25 b:cangw-rst1:8002
 
 #### 2. Cpoints and virtual hardware #################################
 
@@ -157,11 +156,16 @@ MAGX_IST_CDAC20_DEV(spectr2, =icd_spectr2, 0.004, 0) #!!!FLOAT: 1./250
 #MAGX_IST_CDAC20_DEV(ql15,     [max_hw=1200000]icd_ql15,    0.004, 1) #!!!FLOAT: 1./250 //!!!-1!!!
 # Spectrometer -- "double IST" artificial channels
 dev spectr_iset_dev       double_iset w1d - Spectr1.Iset       Spectr2.Iset
+###dev spectr_iset_cur_dev   formula     r1d - \
+###        r:"_all_code; getchan Spectr1.Iset_cur; getchan Spectr2.Iset_cur; add; ret;"
 dev spectr_switch_on_dev  mux_write   w1i - Spectr1.switch_on  Spectr2.switch_on
 dev spectr_switch_off_dev mux_write   w1i - Spectr1.switch_off Spectr2.switch_off
 cpoint Spectr.Iset       spectr_iset_dev.0
+###cpoint Spectr.Iset_cur   spectr_iset_cur_dev.0
 cpoint Spectr.switch_on  spectr_switch_on_dev.0
 cpoint Spectr.switch_off spectr_switch_off_dev.0
+###cpoint Spectr._devstate  Spectr1._devstate
+###MAGX_WALKER_SUBDEV(Spectr, 1)
 
 MAGX_IST_CDAC20_DEV(ql15,     icd_ql15,    0.01, 1) #!!!FLOAT: 1./250 //!!!-1!!!
 MAGX_IST_CDAC20_DEV(qltr3,    icd_qltr3,   0.01, 1) #!!!FLOAT: 1./250 //!!!-1!!!

@@ -1,0 +1,6 @@
+echo " "
+echo "*************************************"
+echo "BIVME2 Power PC linux image Ver. 1.01"
+cat /etc/image.date
+echo "*************************************"
+echo " "

@@ -1,0 +1,252 @@
+
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+
+#---------------------------------------------------------------------
+
+# 1:C_mes 2:C_lim
+define(`VAC_FLIMDIFF100',
+       `"_all_code;
+         getchan $2; cmp_if_eq 0; ret 0;
+         getchan $1; getchan $2; div; mul 100; ret;"')
+
+# 1:id
+define(`LINIVA_LINE', `
+    disp  $1_Imes $1 text  ""         "" "%6.1f" $1.Imes disprange:0-1100 \
+            normrange:0-90 yelwrange:0-95 \
+            c:VAC_FLIMDIFF100($1.Imes, $1.Ilim) \
+            tip:"$2"
+    alarm $1_Ialm "" alarm ""                  r:$1.Ialm
+    disp  $1_Umes "" text  ""         "" "%4.1f" $1.Umes disprange:0-26
+    alarm $1_Ualm "" alarm ""                  r:$1.Ualm
+    knob  $1_Ilim "" text  "noincdec" "" "%3.0f" $1.Ilim alwdrange:0-9999
+    knob  $1_Ulim "" text  "noincdec" "" "%3.1f" $1.Ulim
+')
+
+define(`LIN124_LINE', `
+    disp  $1_Imes ifelse(`$3', `', $1, $3) \
+            text  ""         "" "%6.3f" $1.Imes disprange:0-1100 \
+            tip:"$2"
+    alarm $1_Ialm "" alarm "" \
+            r:"_all_code;
+               getchan $1.IsOn; push 0.1; cmp_if_le; ret 0;
+               getchan $1.Ilim; push 0.1; cmp_if_le; ret 0;
+               getchan $1.Imes; getchan $1.Ilim; cmp_if_gt; ret 1;
+               ret 0;"
+    disp  $1_Umes "" text  ""         "" "%6.3f" $1.Umes disprange:0-26
+    alarm $1_Ualm "" alarm "" \
+            r:"_all_code;
+               getchan $1.IsOn; push 0.1; cmp_if_le; ret 0;
+               getchan $1.Ulim; push 0.1; cmp_if_le; ret 0;
+               getchan $1.Umes; getchan $1.Ulim; cmp_if_lt; ret 1;
+               ret 0;"
+    knob  $1_IsOn "" onoff "color=green"       r:$1.IsOn layinfo:horz=center
+    knob  $1_U5_7 "" choicebs items:"5\t7" \
+            r:"_all_code; push 0; push 0; push 1; getchan $1.U5_7; case; ret;" \
+            w:"_all_code; qryval; mul 7; putchan $1.U5_7; ret;"
+    knob  $1_Ilim "" text  "noincdec" "" "%3.0f" $1.Ilim alwdrange:0-9999
+    knob  $1_Ulim "" text  "noincdec" "" "%3.1f" $1.Ulim
+')
+
+sysname linvac
+defserver linac1:13
+wintitle main "Контроль вакуума в линаках etc."
+winname  main linvac
+winclass main LinVac
+
+grouping main LINVAC_grouping "Контроль вакуума" lrtb content:2 {
+
+    container ivas "" grid noshadow,notitle \
+            str1:"I, uA\t \tU, kV \t\tIl, uA\tUl, kV" \
+            param1:6 param2:32 content:eval(6*(32+32+32)) {
+
+        LINIVA_LINE(GUN)
+        LINIVA_LINE(BUN1)
+        LINIVA_LINE(BUN2)
+        LINIVA_LINE(GRUPP)
+
+        LINIVA_LINE(WG1_2)
+        LINIVA_LINE(SLED1)
+        LINIVA_LINE(WG1_3)
+        LINIVA_LINE(WG1_4)
+
+        LINIVA_LINE(S1_in)
+        LINIVA_LINE(S1_out)
+        LINIVA_LINE(LOS1)
+        LINIVA_LINE(S2_in)
+
+        LINIVA_LINE(S2_out)
+        LINIVA_LINE(LOS2)
+        LINIVA_LINE(SPECT)
+        LINIVA_LINE(S3_in)
+
+        LINIVA_LINE(S3_out)
+        LINIVA_LINE(LOS3)
+        LINIVA_LINE(WG2_2)
+        LINIVA_LINE(WG2_3)
+
+        LINIVA_LINE(SLED2)
+        LINIVA_LINE(WG2_4)
+        LINIVA_LINE(WG2_5)
+        LINIVA_LINE(WG2_6)
+
+        LINIVA_LINE(WG2_7)
+        LINIVA_LINE(WG2_8)
+        LINIVA_LINE(S4_in)
+        LINIVA_LINE(S4_out)
+
+        LINIVA_LINE(LOS4)
+        LINIVA_LINE(S5_in)
+        LINIVA_LINE(S5_out)
+        LINIVA_LINE(LOS5)
+
+        LINIVA_LINE(TURN_1)
+        LINIVA_LINE(TURN_2)
+        LINIVA_LINE(RSV22)
+        LINIVA_LINE(pCnv)
+
+        LINIVA_LINE(S6_in)
+        LINIVA_LINE(S6_out)
+        LINIVA_LINE(LOS6)
+        LINIVA_LINE(WG3_2)
+
+        LINIVA_LINE(SLED3)
+        LINIVA_LINE(WG3_3)
+        LINIVA_LINE(WG3_4)
+        LINIVA_LINE(WG3_5)
+
+        LINIVA_LINE(WG3_6)
+        LINIVA_LINE(WG3_7)
+        LINIVA_LINE(S7_in)
+        LINIVA_LINE(S7_out)
+
+        LINIVA_LINE(LOS7)
+        LINIVA_LINE(S8_in)
+        LINIVA_LINE(S8_out)
+        LINIVA_LINE(LOS8)
+
+        LINIVA_LINE(S9_in)
+        LINIVA_LINE(S9_out)
+        LINIVA_LINE(LOS9)
+        LINIVA_LINE(S10_in)
+
+        LINIVA_LINE(S10_out)
+        LINIVA_LINE(LOS10)
+        LINIVA_LINE(WG4_2)
+        LINIVA_LINE(SLED4)
+
+        LINIVA_LINE(WG4_3)
+        LINIVA_LINE(WG4_4)
+        LINIVA_LINE(WG4_5)
+        LINIVA_LINE(RSV315)
+
+        LINIVA_LINE(S11_in)
+        LINIVA_LINE(S11_out)
+        LINIVA_LINE(LOS11)
+        LINIVA_LINE(S12_in)
+
+        LINIVA_LINE(S12_out)
+        LINIVA_LINE(LOS12)
+        LINIVA_LINE(S13_in)
+        LINIVA_LINE(S13_out)
+
+        LINIVA_LINE(LOS13)
+        LINIVA_LINE(S14_in)
+        LINIVA_LINE(S14_out)
+        LINIVA_LINE(LOS14)
+
+        LINIVA_LINE(PP)
+        LINIVA_LINE(RSV413)
+        LINIVA_LINE(RSV414)
+        LINIVA_LINE(RSV415)
+
+        LINIVA_LINE(_5D1)
+        LINIVA_LINE(_5D2)
+        LINIVA_LINE(_5D3)
+        LINIVA_LINE(_5D4)
+
+        LINIVA_LINE(_6D1)
+        LINIVA_LINE(_6D2)
+        LINIVA_LINE(_6D3)
+        LINIVA_LINE(_6D4)
+
+        LINIVA_LINE(_7D1)
+        LINIVA_LINE(_7D2)
+        LINIVA_LINE(_7D3)
+        LINIVA_LINE(_7D4)
+
+        LINIVA_LINE(_8D1)
+        LINIVA_LINE(_8D2)
+        LINIVA_LINE(_8D3)
+        LINIVA_LINE(_8D4)
+
+    }
+
+    container c124s "" grid noshadow,notitle \
+            str1:"I, uA\tU, kV\t+\t5/7\tIl, uA\tUl, kV\tI!\tU!" \
+            param1:8 param2:32 content:eval(8*(12*4)) {
+
+        LIN124_LINE(K1,` ВИП 1-1  кольцо (резонатор),\nнасос 1')
+        LIN124_LINE(K2, `ВИП 1-2 - кольцо, насос  2,\nПВИГ')
+        LIN124_LINE(K3, `ВИП 1-3 - кольцо, насос  3,\nПВИГ')
+        LIN124_LINE(K4, `ВИП 1-4 - кольцо, насос  4,\nПВИГ')
+
+        LIN124_LINE(K5, `ВИП 2-1 - кольцо, насос  5,\nПВИГ')
+        LIN124_LINE(K6, `ВИП 2-2 - кольцо, насос  6,\nПВИГ')
+        LIN124_LINE(K7, `ВИП 2-3 - кольцо, насос  7,\nПВИГ')
+        LIN124_LINE(K8, `ВИП 2-4 - кольцо, насос  8,\nНМД-0,025')
+
+        LIN124_LINE(K9, `ВИП 3-1 - кольцо, насос  9,\nПВИГ')
+        LIN124_LINE(K10, `ВИП 3-2 - кольцо, насос  10,\nПВИГ')
+        LIN124_LINE(K11, `ВИП 3-3 - кольцо, насос  11,\nПВИГ')
+        LIN124_LINE(K12, `ВИП 3-4 - кольцо, насос  12,\nПВИГ')
+
+        LIN124_LINE(K13, `ВИП 4-1 - кольцо, насос  13,\nПВИГ')
+        LIN124_LINE(K14, `ВИП 4-2 - кольцо, насос  14,\nПВИГ')
+        LIN124_LINE(KD3, `ВИП 4-3 - резерв', ---)
+        LIN124_LINE(KD4, `ВИП 4-4 - электронный канал 1,\nНМД-0,025')
+
+        LIN124_LINE(E1, `ВИП 5-1 - электронный канал 2,\nНМД-0,025')
+        LIN124_LINE(E2, `ВИП 5-2 - электронный канал 3,\nПВИГ')
+        LIN124_LINE(E3, `ВИП 5-3 - электронный канал 4,\nПВИГ')
+        LIN124_LINE(E4, `ВИП 5-4 - электронный канал 5,\n???')
+
+        LIN124_LINE(E5,  `ВИП 6-1 - резерв', ---)
+        LIN124_LINE(R51, `ВИП 6-2 - резерв', ---)
+        LIN124_LINE(P5,  `ВИП 6-3 - резерв', ---)
+        LIN124_LINE(P6,  `ВИП 6-4 - резерв', ---)
+
+        LIN124_LINE(P1, `ВИП 7-1 - позитронный канал 1,\nНМД-0,025')
+        LIN124_LINE(P2, `ВИП 7-2 - позитронный канал 2,\nНМД-0,025')
+        LIN124_LINE(P3, `ВИП 7-3 - позитронный канал 3,\nПВИГ')
+        LIN124_LINE(P4, `ВИП 7-4 - позитронный канал 4,\nПВИГ')
+
+        LIN124_LINE(R70, `ВИП 8-1 - позитронный канал 5,\n???')
+        LIN124_LINE(R71, `ВИП 8-2 - позитронный канал 6,\n???')
+        LIN124_LINE(R72, `ВИП 8-3 - позитронный канал 7,\n???')
+        LIN124_LINE(R73, `ВИП 8-4 - Тоннель,\nВЭПП-4, спуск, насос  1, НМД-0,16')
+
+        LIN124_LINE(R80, `ВИП 9-1 - Тоннель,\nВЭПП-4, ось 40, насос  2, НМД-0,16')
+        LIN124_LINE(R81, `ВИП 9-2 - Тоннель,\nВЭПП-4, ось 43-44, насос  3, НМД-0,016')
+        LIN124_LINE(R82, `ВИП 9-3 - Тоннель,\nВЭПП-4, ось 47, насос  4, НМД-0,16')
+        LIN124_LINE(R83, `ВИП 9-4 - Тоннель,\nВЭПП-4, ось 52, насос  5, НМД-0,16')
+
+        LIN124_LINE(R90, `ВИП 10-1 - Тоннель,\nВЭПП-2000, ось 35-36, насос  6, НМД-0,016')
+        LIN124_LINE(R91, `ВИП 10-2 - Тоннель,\nВЭПП-2000, ось 32, насос  7, НМД-0,16')
+        LIN124_LINE(R92, `ВИП 10-3 - Тоннель,\nВЭПП-2000, ось 28, насос  8, НМД-0,16')
+        LIN124_LINE(R93, `ВИП 10-4 - Тоннель,\nВЭПП-2000, ось 23-24, насос  9, НМД-0,16')
+
+        LIN124_LINE(R100, `ВИП 11-1 - Тоннель,\nВЭПП-2000, ось 19, насос  10, НМД-0,16')
+        LIN124_LINE(R101, `ВИП 11-2 - Тоннель,\nВЭПП-2000, ось 14, насос  11, НМД-0,16')
+        LIN124_LINE(R102, `ВИП 11-3 - Тоннель,\nВЭПП-2000, ось 9-10, насос  12, НМД-0,16')
+        LIN124_LINE(R103, `ВИП 11-4 - Тоннель,\nВЭПП-2000, ось 4-5, насос  13, НМД-0,16')
+
+        LIN124_LINE(R110, `ВИП 12-1 - резерв', ---)
+        LIN124_LINE(R111, `ВИП 12-2 - резерв', ---)
+        LIN124_LINE(R112, `ВИП 12-3 - резерв', ---)
+        LIN124_LINE(R113, `ВИП 12-4 - резерв', ---)
+    }
+}

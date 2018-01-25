@@ -1,0 +1,9 @@
+devtype vdac20 w50i,r8i,w1i,r41i {
+	do_calb_dac	16
+	digcorr_mode	17
+	digcorr_v	18 #!!!
+
+	adc<0-7>	50
+	out0		58
+	out		out0
+}

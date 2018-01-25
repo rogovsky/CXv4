@@ -10,23 +10,23 @@ include(`c0642.devtype')
 #### 1. Hardware #####################################################
 
 # a. ADC200s
-dev adc200_kls1 adc200/remdrv ~ 5  b:ppc-v1000:8002
-dev adc200_kls2 adc200/remdrv ~ 10 b:ppc-v1000:8002
+dev adc200_kls1 adc200/remdrv ~ 5  b:ppc-rf-adc200s:8002
+dev adc200_kls2 adc200/remdrv ~ 10 b:ppc-rf-adc200s:8002
 dev adc200_grp1 adc200/remdrv ~ 3  b:ppc-podval:8002
 dev adc200_grp2 adc200/remdrv ~ 5  b:ppc-podval:8002
-dev adc200_kls3 adc200/remdrv ~ 15 b:ppc-v1000:8002
+dev adc200_kls3 adc200/remdrv ~ 15 b:ppc-rf-adc200s:8002
 dev adc200_ionc adc200/remdrv ~ 14 b:ppc-podval:8002
 
 # b. Selectors
-dev l0403_kls1 l0403/remdrv ~ 3  b:ppc-v1000:8002  241
-dev l0403_kls2 l0403/remdrv ~ 8  b:ppc-v1000:8002  241
-dev l0403_kls3 l0403/remdrv ~ 13 b:ppc-v1000:8002  241
+dev l0403_kls1 l0403/remdrv ~ 3  b:ppc-rf-adc200s:8002  241
+dev l0403_kls2 l0403/remdrv ~ 8  b:ppc-rf-adc200s:8002  241
+dev l0403_kls3 l0403/remdrv ~ 13 b:ppc-rf-adc200s:8002  241
 dev v0308_ionc v0308/remdrv ~ 11 b:ppc-podval:8002
 
 # c. Sukhanov's
-dev adc_phs     c0609/remdrv       ~ 1  b:ppc-sukhanov:8002
-dev dac_phs     c0642/remdrv       ~ 13 b:ppc-sukhanov:8002
-dev adc200_phs1 adc200/remdrv      ~ 3  b:ppc-sukhanov:8002
-dev adc200_phs2 adc200/remdrv      ~ 22 b:ppc-sukhanov:8002
-dev comm24_phs1 sukh_comm24/remdrv ~ 5  b:ppc-sukhanov:8002
-dev comm24_phs2 sukh_comm24/remdrv ~ 20 b:ppc-sukhanov:8002
+dev adc_phs     c0609/remdrv       ~ 1  b:ppc-sukhphase:8002
+dev dac_phs     c0642/remdrv       ~ 13 b:ppc-sukhphase:8002
+dev adc200_phs1 adc200/remdrv      ~ 3  b:ppc-sukhphase:8002
+dev adc200_phs2 adc200/remdrv      ~ 22 b:ppc-sukhphase:8002
+dev comm24_phs1 sukh_comm24/remdrv ~ 5  b:ppc-sukhphase:8002
+dev comm24_phs2 sukh_comm24/remdrv ~ 20 b:ppc-sukhphase:8002

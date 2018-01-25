@@ -1,7 +1,7 @@
 include(`subsys_magx_macros.m4')
 
 sysname ringcor45
-defserver ring1:12
+defserver canhw:12
 wintitle main "Магнитная коррекция накопителя - RST4/5"
 winname  main ringcor45
 winclass main RingCor45

@@ -45,6 +45,8 @@ typedef struct
     vdev_sodc_cur_t     cur[SUBORD_NUMCHANS];
     vdev_sodc_cur_t     devstate_cur[countof(devstate_names)];
 
+    int                 q;
+
     int                 cur_step;
     int                 steps_count;
     int32               steps[MAX_STEPS];
@@ -126,8 +128,15 @@ static int iset_walker_init_d(int devid, void *devptr,
 {
   privrec_t      *me = (privrec_t *)devptr;
   const char     *p  = auxinfo;
+  const char     *beg;
+  size_t          len;
+  char            buf[1000];
+  int             q;
+  char           *errp;
 
     me->devid = devid;
+    me->q     = 305;
+
     if (p == NULL  ||  *p == '\0')
     {
         DoDriverLog(devid, 0,
@@ -135,6 +144,20 @@ static int iset_walker_init_d(int devid, void *devptr,
                     __FUNCTION__);
         return -CXRF_CFG_PROBL;
     }
+    beg = p;
+    while (*p != '\0'  &&  !isspace(*p)) p++;
+    len = p - beg;
+    if (len > sizeof(buf) - 1)
+        len = sizeof(buf) - 1;
+    memcpy(buf, beg, len); buf[len] = '\0';
+
+    while (*p != '0'  &&  isspace(*p)) p++;
+    if (*p != '\0')
+    {
+        q = strtol(p, &errp, 10);
+        if (errp != p  &&  me->q >= 0) me->q = q;
+    }
+
     me->ctx.num_sodcs      = SUBORD_NUMCHANS;
     me->ctx.map            = hw2our_mapping;
     me->ctx.cur            = me->cur;
@@ -153,7 +176,7 @@ static int iset_walker_init_d(int devid, void *devptr,
     SetChanRDs       (devid, ISET_WALKER_CHAN_LIST,     1, 1000000.0, 0.0);
     SetChanReturnType(devid, ISET_WALKER_CHAN_CUR_STEP, 1, IS_AUTOUPDATED_TRUSTED);
 
-    return vdev_init(&(me->ctx), devid, devptr, WORK_HEARTBEAT_PERIOD, p);
+    return vdev_init(&(me->ctx), devid, devptr, WORK_HEARTBEAT_PERIOD, buf);
 }
 
 static void iset_walker_term_d(int devid __attribute__((unused)), void *devptr)
@@ -170,7 +193,7 @@ static void iset_walker_sodc_cb(int devid, void *devptr,
 
     if (sodc == C_OUT_CUR  &&  me->ctx.cur_state == WLK_STATE_WALKING)
     {
-        if (abs(val - me->steps[me->cur_step]) <= 305)
+        if (abs(val - me->steps[me->cur_step]) <= me->q)
         {
             me->cur_step++;
             if (me->cur_step < me->steps_count)
@@ -202,6 +225,7 @@ static void iset_walker_rw_p(int devid, void *devptr,
     for (n = 0;  n < count;  n++)
     {
         chn = addrs[n];
+////fprintf(stderr, "%s %d %d\n", __FUNCTION__, action, chn);
         if (action == DRVA_WRITE  &&  chn == ISET_WALKER_CHAN_LIST)
         {
             if ((dtypes[n] != CXDTYPE_INT32  &&  dtypes[n] != CXDTYPE_UINT32))

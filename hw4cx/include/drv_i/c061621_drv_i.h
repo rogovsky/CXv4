@@ -8,6 +8,8 @@ enum
     /* 0-9: data */
     C061621_CHAN_DATA          = 0,
 
+    C061621_CHAN_MARKER        = 9,  // Note: just for compatibility with others
+
     /* 10-29: controls */
     C061621_CHAN_SHOT          = 10, 
     C061621_CHAN_STOP          = 11,

@@ -80,6 +80,7 @@ static pzframe_chan_dscr_t adc812me_chan_dscrs[] =
     [ADC812ME_CHAN_PTSOFS]       = {"ptsofs"},
     [ADC812ME_CHAN_NUMPTS]       = {"numpts"},
     [ADC812ME_CHAN_TIMING]       = {"timing"},
+    [ADC812ME_CHAN_FRQDIV]       = {"frqdiv"},
     DSCR_X8   (RANGE,,              "range","",     0, 0, 0, 0),
 
     [ADC812ME_CHAN_ELAPSED]      = {"elapsed",      0, PZFRAME_CHAN_IMMEDIATE_MASK | PZFRAME_CHAN_ON_CYCLE_MASK},
@@ -91,6 +92,7 @@ static pzframe_chan_dscr_t adc812me_chan_dscrs[] =
     [ADC812ME_CHAN_CUR_PTSOFS]   = {"cur_ptsofs",   1},
     [ADC812ME_CHAN_CUR_NUMPTS]   = {"cur_numpts"},
     [ADC812ME_CHAN_CUR_TIMING]   = {"cur_timing",   1},
+    [ADC812ME_CHAN_CUR_FRQDIV]   = {"cur_frqdiv",   1},
     DSCR_X8   (CUR_RANGE,,          "cur_range","", 1, 0, 0, 0),
 
     DSCR_X8   (LINE,ON,          "line","on",       0, 0, 0, 0),

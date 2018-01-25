@@ -1,0 +1,5 @@
+dev n noop         w10000i -
+dev d test_cda_del w100i   - insrv::
+#dev d test_cda_del w100i   - dircn::
+#dev d test_cda_del w100i   - local::
+#dev d test_cda_del w100i   - cx::

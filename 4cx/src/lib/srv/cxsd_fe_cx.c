@@ -225,7 +225,7 @@ static void RlsV4connSlot(int cd)
     cxsd_hw_do_cleanup  (cp->ID);
     CxsdHwDeleteClientID(cp->ID);
 
-    DestroyMonSlotArray(cp);
+    DestroyMonSlotArray(cp); /* Note: we do NOT call RlsMonSlot() for each element only because this is done by cxsd_hw_do_cleanup() */
     safe_free(cp->per_cycle_monitors);
 
     ////////////
@@ -245,18 +245,18 @@ GENERIC_SLOTARRAY_DEFINE_GROWING(static, Advisor, advisor_t,
                                  0, ADVISORS_ALLOC_INC, ADVISORS_MAX_CONNS,
                                  , , void)
 
-static void RlsAdvisorSlot(int cd)
+static void RlsAdvisorSlot(int jd)
 {
-  advisor_t *cp  = AccessAdvisorSlot(cd);
+  advisor_t *jp  = AccessAdvisorSlot(jd);
   int        err = errno;        // To preserve errno
   
-    if (cp->in_use == 0) return; /*!!! In fact, an internal error */
+    if (jp->in_use == 0) return; /*!!! In fact, an internal error */
     
-    cp->in_use = 0;
+    jp->in_use = 0;
     
     ////////////
-    if (cp->fhandle >= 0) fdio_deregister(cp->fhandle);
-    if (cp->fd      >= 0) close          (cp->fd);
+    if (jp->fhandle >= 0) fdio_deregister(jp->fhandle);
+    if (jp->fd      >= 0) close          (jp->fd);
     
     errno = err;
 }
@@ -644,8 +644,8 @@ static void InteractWithAdvisor(int uniq, void *unsdptr,
     do {                                                      \
         logline(LOGF_SYSTEM, LOGL_ERR,                        \
                 "%s(:%d): "format, __FUNCTION__, jp->instance, ##params);   \
-        RlsAdvisorSlot(jd);                                   \
         if (jp->instance >= 0) ForgetAdvisorDb(jp->instance); \
+        RlsAdvisorSlot(jd);                                   \
         return;                                               \
     } while (0)
 
@@ -1386,7 +1386,7 @@ static cxsd_gchnid_t cpid2gcid(cxsd_cpntid_t  cpid)
     do {                                                           \
         rpycsize = CXV4_CHUNK_CEIL(sizeof(CxV4Chunk));             \
         if (GrowReplyPacket(cp, replydatasize + rpycsize) != 0)    \
-            /*!!!*/;                                               \
+            {/*!!!*/}                                              \
         rpy = (void*)(cp->replybuf->data + replydatasize);         \
         rpy->OpCode   = clnt_u32(cp, CXC_CVT_TO_RPY(OpCode));      \
         rpy->ByteSize = clnt_u32(cp, rpycsize);                    \
@@ -1472,7 +1472,7 @@ static size_t PutDataChunkReply(v4clnt_t *cp, size_t replydatasize,
 #endif
     rpycsize = CXV4_CHUNK_CEIL(sizeof(*rslt) + datasize);
     if (GrowReplyPacket(cp, replydatasize + rpycsize) != 0)
-        /*!!!*/;
+        {/*!!!*/}
 
     rslt = (void*)(cp->replybuf->data + replydatasize);
     rslt->ck.OpCode   = clnt_u32(cp, info_int);
@@ -1608,7 +1608,7 @@ static size_t PutFrAgChunkReply(v4clnt_t *cp, size_t replydatasize,
 
     rpycsize = CXV4_CHUNK_CEIL(sizeof(*frsh));
     if (GrowReplyPacket(cp, replydatasize + rpycsize) != 0)
-        /*!!!*/;
+        {/*!!!*/}
 
     frsh = (void*)(cp->replybuf->data + replydatasize);
     frsh->ck.OpCode   = clnt_u32(cp, CXC_CVT_TO_RPY(CXC_FRH_AGE));
@@ -1650,7 +1650,7 @@ static size_t PutQuantChunkReply(v4clnt_t *cp, size_t replydatasize,
 
     rpycsize = CXV4_CHUNK_CEIL(sizeof(*qunt));
     if (GrowReplyPacket(cp, replydatasize + rpycsize) != 0)
-        /*!!!*/;
+        {/*!!!*/}
 
     qunt = (void*)(cp->replybuf->data + replydatasize);
     qunt->ck.OpCode   = clnt_u32(cp, CXC_CVT_TO_RPY(CXC_QUANT));
@@ -2007,7 +2007,7 @@ static void ServeIORequest(v4clnt_t *cp, CxV4Header *hdr, size_t inpktsize)
 
                     rpycsize = CXV4_CHUNK_CEIL(sizeof(CxV4CpointPropsChunk));
                     if (GrowReplyPacket(cp, replydatasize + rpycsize) != 0)
-                        /*!!!*/;
+                        {/*!!!*/}
                     rpy = (void*)(cp->replybuf->data + replydatasize);
                     rpy->OpCode   = clnt_u32(cp, CXC_CVT_TO_RPY(OpCode));
                     rpy->ByteSize = clnt_u32(cp, rpycsize);
@@ -2493,7 +2493,16 @@ static int  cx_init_f (int server_instance)
     return 0;
 }
 
-static int TermIterator(v4clnt_t *cp, void *privptr __attribute__((unused)))
+static int TermAdvisorIterator(advisor_t *jp, void *privptr __attribute__((unused)))
+{
+  int  jd = jp - advisors_list; // "jp2jd()"
+
+    if (jp->instance >= 0) ForgetAdvisorDb(jp->instance);
+    RlsAdvisorSlot(jd);
+
+    return 0;
+}
+static int TermV4connIterator (v4clnt_t  *cp, void *privptr __attribute__((unused)))
 {
     DisconnectClient(cp, ERR_KILLED, CXT4_DISCONNECT);
 
@@ -2503,10 +2512,10 @@ static void cx_term_f (void)
 {
     sl_deq_tout(guru_takeover_hbt_tid); guru_takeover_hbt_tid = -1;
     DestroyServSockets(1);
-    DestroyGuruSockets(1); DestroyAdvisorSlotArray();
+    DestroyGuruSockets(1); 
     DestroyInfoSockets(1);
-    ForeachV4connSlot(TermIterator, NULL);
-    DestroyV4connSlotArray();
+    ForeachAdvisorSlot(TermAdvisorIterator, NULL); DestroyAdvisorSlotArray();
+    ForeachV4connSlot (TermV4connIterator,  NULL); DestroyV4connSlotArray ();
 }
 
 static int IfIsPerCycleMonRecordIt(moninfo_t *mp, void *privptr)
@@ -2572,6 +2581,9 @@ static int SendEndC(v4clnt_t *cp, void *privptr __attribute__((unused)))
   int         r;
 
   size_t      replydatasize;
+
+    /* Don't mess with not-yet-handshaken clients */
+    if (cp->state < CS_USABLE) return 0;
 
     if (cp->per_cycle_monitors_some_modified)
     {

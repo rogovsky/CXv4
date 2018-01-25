@@ -1,0 +1,10 @@
+include(`triadatv_um.devtype')
+
+dev um1	triadatv_um ~ - 192.168.250.101
+dev um2	triadatv_um ~ - 192.168.250.102
+dev um3	triadatv_um ~ - 192.168.250.103
+dev um4	triadatv_um ~ - 192.168.250.104
+dev um5	triadatv_um ~ - 192.168.250.105
+dev um6	triadatv_um ~ - 192.168.250.106
+dev um7	triadatv_um ~ - 192.168.250.107
+dev um8	triadatv_um ~ - 192.168.250.108

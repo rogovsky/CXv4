@@ -38,7 +38,7 @@ grouping main blm "Beam Loss Monitor" \
 }
 
 sysname   blm
-defserver linac1:18
+defserver cxhw:18
 wintitle  main "Beam Loss Monitor"
 winname   main blm
 winclass  main blm

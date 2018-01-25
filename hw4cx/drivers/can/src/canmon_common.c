@@ -476,5 +476,7 @@ int main (int argc, char *argv[])
     fprintf(stderr, "    kKID/PRIO[.RESV]:byte0,byte1,...\n");
     fprintf(stderr, "  or\n");
     fprintf(stderr, "    :[milliseconds-to-wait]\n");
+    fprintf(stderr, "\n");
+    fprintf(stderr, "  PRIO is either a digit 0-7 or 'b' (=5), 'u' (=6) or 'r' (=7)\n");
     exit(0);
 }

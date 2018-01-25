@@ -26,7 +26,7 @@ grouping main ionchamber "Ion Chamber Monitor" \
 }
 
 sysname   ionchamber
-defserver linac1:15
+defserver cxhw:15
 wintitle  main "Ion Chamber Monitor"
 winname   main ionchamber
 winclass  main ionchamber

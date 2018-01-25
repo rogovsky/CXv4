@@ -39,7 +39,7 @@ grouping main sukhpanel "SukhPanel" lrtb content:3 {
 }
 
 sysname   sukhpanel
-defserver linac1:15
+defserver cxhw:15
 wintitle  main "Sukhanov\x27s Phase Measurements - direct access panel"
 winname   main sukhpanel
 winclass  main sukhpanel

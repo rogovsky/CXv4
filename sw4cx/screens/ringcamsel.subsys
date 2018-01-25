@@ -3,7 +3,7 @@ winname   main ringcamsel
 winclass  main RingCamSel
 winopts   main nostatusline
 wintitle  main "Ring Camera Selector"
-defserver ring1:21.ringcamsel
+defserver canhw:21.ringcamsel
 
 #
 define(`ONE_LIMIT_SW', `

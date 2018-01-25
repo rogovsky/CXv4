@@ -52,6 +52,9 @@ typedef struct
 typedef struct
 {
     cda_srvconn_t  sid;
+    int            being_processed;
+    int            being_destroyed;
+
     int            fd;
     fdio_handle_t  iohandle;
     int            state;
@@ -89,6 +92,26 @@ static void RlsHwrSlot(cda_hwcnref_t hwr, cda_d_vcas_privrec_t *me)
     hi->in_use = 0;
 
     safe_free(hi->name);
+}
+
+//--------------------------------------------------------------------
+
+static int DestroyVcas_HwrIterator(hwrinfo_t *hi, void *privptr)
+{
+  cda_d_vcas_privrec_t *me  = privptr;
+  cda_hwcnref_t         hwr = hi - me->hwrs_list; /* "hi2hwr()" */
+
+    RlsHwrSlot(hwr, me);
+
+    return 0;
+}
+static void DestroyVcasPrivrec(cda_d_vcas_privrec_t *me)
+{
+    ForeachHwrSlot(DestroyVcas_HwrIterator, me, me); DestroyHwrSlotArray(me);
+    if (me->fd >= 0)       close          (me->fd);       me->fd       = -1;
+    if (me->iohandle >= 0) fdio_deregister(me->iohandle); me->iohandle = -1;
+    sl_deq_tout(me->rcn_tid);                             me->rcn_tid  = -1;
+    sl_deq_tout(me->cyc_tid);                             me->cyc_tid  = -1;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -274,7 +297,7 @@ static int determine_name_type(const char *name,
     /* Check than EVERYTHING preceding ':' can constitute a hostname */
     for (p = name;  p < colon_p;  p++)
         if (*p == '\0'  ||
-            (!isalnum(*p)  &&  *p != '.')  &&  *p != '-') goto DO_RET;
+            (!isalnum(*p)  &&  *p != '.'  &&  *p != '-')) goto DO_RET;
     /* Okay, skip ':' */
     p++;
     /* ':' should be followed by a digit */
@@ -315,7 +338,7 @@ static int  cda_d_vcas_new_chan(cda_dataref_t ref, const char *name,
 
   char                 *p;
 
-fprintf(stderr, "CCC %s(%s)\n", __FUNCTION__, name);
+////fprintf(stderr, "CCC %s(%s)\n", __FUNCTION__, name);
 
     if (!determine_name_type(name, srvrspec, sizeof(srvrspec), &channame))
     {
@@ -323,7 +346,7 @@ fprintf(stderr, "CCC %s(%s)\n", __FUNCTION__, name);
         return CDA_DAT_P_ERROR;
     }
 
-    me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(vcas), srvrspec);
+    me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(vcas), srvrspec, CDA_DAT_P_GET_SERVER_OPT_NONE);
     if (me == NULL) return CDA_DAT_P_ERROR;
 
     /* Alloc and fill a slot */
@@ -353,6 +376,37 @@ fprintf(stderr, "CCC %s(%s)\n", __FUNCTION__, name);
     return CDA_DAT_P_NOTREADY;
 }
 
+static void cda_d_vcas_del_chan(void *pdt_privptr, cda_hwcnref_t hwr)
+{
+  cda_d_vcas_privrec_t *me = pdt_privptr;
+  hwrinfo_t            *hi = AccessHwrSlot(hwr, me);
+
+  static const char *prefix = "name:";
+  static const char *suffix = "|method:release\n";
+
+    if (hwr < 0  ||  hwr >= me->hwrs_list_allocd  ||
+        hi->in_use == 0)
+    {
+        /*!!!Bark? */
+        return;
+    }
+
+    if (me->state == CDA_DAT_P_OPERATING)
+    {
+        /* Send "release" */
+        /*!!! Note: no use to send "release" upon cda_del_context(),
+                    but as of now there is no way to know. */
+        if (fdio_lock_send  (me->iohandle) < 0                              ||
+            fdio_send       (me->iohandle, prefix,   strlen(prefix))   < 0  ||
+            fdio_send       (me->iohandle, hi->name, strlen(hi->name)) < 0  ||
+            fdio_send       (me->iohandle, suffix,   strlen(suffix))   < 0  ||
+            fdio_unlock_send(me->iohandle) < 0)
+            FailureProc(me, FDIO_R_IOERR);
+    }
+
+    RlsHwrSlot(hwr, me);
+}
+
 static int  cda_d_vcas_snd_data(void *pdt_privptr, cda_hwcnref_t hwr,
                                 cxdtype_t dtype, int nelems, void *value)
 {
@@ -366,7 +420,7 @@ static int  cda_d_vcas_snd_data(void *pdt_privptr, cda_hwcnref_t hwr,
   static const char *s2 = "||method:set|val:";
   static const char *s3 = "\n";
 
-fprintf(stderr, "%s(hwr=%d, dtype=%d nelems=%d)\n", __FUNCTION__, hwr, dtype, nelems);
+////fprintf(stderr, "%s(hwr=%d, dtype=%d nelems=%d)\n", __FUNCTION__, hwr, dtype, nelems);
     /* A safety net */
     if (hwr < 0  ||  hwr >= me->hwrs_list_allocd  ||
         hi->in_use == 0)
@@ -512,7 +566,7 @@ static void ProcessInData(cda_d_vcas_privrec_t *me,
 
   static const char *not_found = " not found";
 
-fprintf(stderr, "<%s>\n", (char*)inpkt);
+////fprintf(stderr, "<%s>\n", (char*)inpkt);
     for (p = inpkt;  *p != '\0'  &&  isspace(*p);  p++);
     if (*p == '\0') return;
 
@@ -618,7 +672,7 @@ fprintf(stderr, "<%s>\n", (char*)inpkt);
                    dscstr_p + dscstr_len - strlen(not_found),
                    strlen(not_found)) == 0)
         {
-            fprintf(stderr, "CH(%s) NOTFOUND\n", hi->name);
+////            fprintf(stderr, "CH(%s) NOTFOUND\n", hi->name);
             cda_dat_p_set_notfound(hi->dataref);
             return;
         }
@@ -799,6 +853,8 @@ static void ProcessFdioEvent(int uniq, void *unsdptr,
 {
   cda_d_vcas_privrec_t *me = privptr;
 
+    me->being_processed++;
+
     switch (reason)
     {
         case FDIO_R_DATA:
@@ -825,6 +881,13 @@ static void ProcessFdioEvent(int uniq, void *unsdptr,
             FailureProc(me, reason);
             break;
     }
+
+    me->being_processed--;
+    if (me->being_processed == 0  &&  me->being_destroyed)
+    {
+        DestroyVcasPrivrec(me);
+        cda_dat_p_del_server_finish(me->sid);
+    }
 }
 
 static void ReconnectProc(int uniq, void *unsdptr,
@@ -834,10 +897,19 @@ static void ReconnectProc(int uniq, void *unsdptr,
 
     me->rcn_tid = -1;
 
+    me->being_processed++;
+
     if (initiate_connect(me,
                          cda_dat_p_suniq_of_sid(me->sid), NULL,
                          ProcessFdioEvent,                me) < 0)
         FailureProc(me, FDIO_R_CONNERR);
+
+    me->being_processed--;
+    if (me->being_processed == 0  &&  me->being_destroyed)
+    {
+        DestroyVcasPrivrec(me);
+        cda_dat_p_del_server_finish(me->sid);
+    }
 }
 
 static void CycleProc(int uniq, void *unsdptr,
@@ -847,8 +919,18 @@ static void CycleProc(int uniq, void *unsdptr,
 
     me->cyc_tid = -1;
 
+    me->being_processed++;
+
     if (me->state == CDA_DAT_P_OPERATING)
         cda_dat_p_update_server_cycle(me->sid);
+
+    me->being_processed--;
+    if (me->being_processed == 0  &&  me->being_destroyed)
+    {
+        DestroyVcasPrivrec(me);
+        cda_dat_p_del_server_finish(me->sid);
+        return;
+    }
 
     me->cyc_tid = sl_enq_tout_after(cda_dat_p_suniq_of_sid(me->sid), NULL,
                                     EMULATED_BASECYCLESIZE,
@@ -864,7 +946,7 @@ static int  cda_d_vcas_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
   int                   r;
   int                   ec;
 
-fprintf(stderr, "ZZZ %s(%s)\n", __FUNCTION__, srvrspec);
+////fprintf(stderr, "ZZZ %s(%s)\n", __FUNCTION__, srvrspec);
     me->sid     = sid;
     /* Just precaution, for case if cda_core would someday call del_srv() on undercreated srvs */
     me->fd       = -1;
@@ -896,14 +978,20 @@ fprintf(stderr, "ZZZ %s(%s)\n", __FUNCTION__, srvrspec);
     return me->state;
 }
 
-static void cda_d_vcas_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
+static int  cda_d_vcas_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 {
   cda_d_vcas_privrec_t *me = pdt_privptr;
-  
-    if (me->fd >= 0)
-        close(me->fd);
-    sl_deq_tout(me->rcn_tid); me->rcn_tid = -1;
-    sl_deq_tout(me->cyc_tid); me->cyc_tid = -1;
+
+    if (me->being_processed)
+    {
+        me->being_destroyed = 1;
+        return CDA_DAT_P_DEL_SRV_DEFERRED;
+    }
+    else
+    {
+        DestroyVcasPrivrec(me);
+        return CDA_DAT_P_DEL_SRV_SUCCESS;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -912,6 +1000,6 @@ CDA_DEFINE_DAT_PLUGIN(vcas, "VCAS data-access plugin",
                       NULL, NULL,
                       sizeof(cda_d_vcas_privrec_t),
                       '.', ':', '@',
-                      cda_d_vcas_new_chan, NULL,
+                      cda_d_vcas_new_chan, cda_d_vcas_del_chan,
                       cda_d_vcas_snd_data, NULL,
                       cda_d_vcas_new_srv,  cda_d_vcas_del_srv);

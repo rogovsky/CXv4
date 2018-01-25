@@ -1,4 +1,4 @@
-SUBDIRS=        can cpci serial eth camac
+SUBDIRS=        can cpci serial eth camac vme
 
 ######################################################################
 PRJDIR=		..

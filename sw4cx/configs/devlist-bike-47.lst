@@ -1,0 +1,25 @@
+# bike:47 -- weld control, CXv4-based version
+
+include(`senkov_vip.devtype')
+include(`weld02.devtype')
+include(`cac208.devtype')
+include(`ceac124.devtype')
+include(`frolov_bfp.devtype')
+include(`frolov_bfp2.devtype')
+include(`dds300.devtype')
+include(`dds500.devtype')
+
+
+layerinfo cangw-vch300:0 1
+
+dev vip    senkov_vip/remdrv  ~ 0,10 b:cangw-vch300
+dev gun    weld02/remdrv      ~ 0,12 b:cangw-vch300
+dev vac    cac208/remdrv      ~ 0,14 b:cangw-vch300 beg=0 end=1
+dev mag1   cac208/remdrv      ~ 0,15 b:cangw-vch300 beg=0 end=13
+dev mag2_a ceac124/remdrv     ~ 0,62 b:cangw-vch300
+dev mag2_b ceac124/remdrv     ~ 0,63 b:cangw-vch300
+
+dev o_m    frolov_bfp/remdrv  ~ 2    b:ppc-weldsyn
+dev mod    frolov_bfp2/remdrv ~ 7    b:ppc-weldsyn
+dev o_d    dds500/remdrv      ~ 4    b:ppc-weldsyn
+dev dds    dds500/remdrv      ~ 12   b:ppc-weldsyn

@@ -16,7 +16,7 @@ define(`LINSLBPM_LINE', `
 ')
 
 sysname   linslbpms
-defserver linac1:16
+defserver cxhw:16
 wintitle  main "Linac BPMS"
 winname   main linslbpms
 winclass  main LinSlBpms

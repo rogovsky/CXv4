@@ -492,7 +492,7 @@ static int  cda_d_v2cx_new_chan(cda_dataref_t ref, const char *name,
 
         if (w_srv)
         {
-            me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(v2cx), srvrspec);
+            me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(v2cx), srvrspec, CDA_DAT_P_GET_SERVER_OPT_NONE);
             if (me == NULL) return CDA_DAT_P_ERROR;
         }
         else
@@ -571,7 +571,7 @@ static int  cda_d_v2cx_new_chan(cda_dataref_t ref, const char *name,
  REGISTER_SCALAR_CHAN:
     if (w_srv)
     {
-        me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(v2cx), srvrspec);
+        me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(v2cx), srvrspec, CDA_DAT_P_GET_SERVER_OPT_NONE);
         if (me == NULL) return CDA_DAT_P_ERROR;
     }
     else
@@ -1230,7 +1230,7 @@ static int  cda_d_v2cx_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
     return CDA_DAT_P_NOTREADY;
 }
 
-static void cda_d_v2cx_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
+static int  cda_d_v2cx_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 {
   cda_d_v2cx_privrec_t *me = pdt_privptr;
 
@@ -1241,6 +1241,8 @@ static void cda_d_v2cx_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
     if (me->cd >= 0)
         cx_close(me->cd);
     sl_deq_tout(me->rcn_tid); me->rcn_tid = -1;
+
+    return CDA_DAT_P_DEL_SRV_SUCCESS;
 }
 
 //////////////////////////////////////////////////////////////////////

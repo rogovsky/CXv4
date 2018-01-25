@@ -1,0 +1,4 @@
+devtype frolov_k4x1_2x2x1 w2i {
+	comm1	0
+	comm2	1
+}

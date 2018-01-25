@@ -1,0 +1,29 @@
+devtype kurrez_cac208 w50i,r50i {
+	Uset		0
+	Iexc		1
+	Finj		2
+	FTun		3
+
+	switch_on	8
+	switch_off	9
+	reset_state	10
+
+	Umes		50
+	Imes		51
+	PWRmes		52
+	Fmes		53
+	bias1		57
+	bias2		58
+	Uincd1		59
+	Urefl1		60
+	Uincd2		61
+	Urefl2		62
+	Udiff		63
+
+	is_on		74
+	is_ready	75
+
+	ilk		82
+
+	vdev_state	99
+}

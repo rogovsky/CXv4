@@ -1,0 +1,61 @@
+devtype adc4x250 r1i3132674,r9i,w30i,r100i {
+	data		0
+	marker		9
+
+	shot		10
+	stop		11
+	istart		12
+	waittime	13
+	calibrate	14
+	fgt_clb		15
+	visible_clb	16
+	calc_stats	17
+
+	ptsofs		20
+	numpts		21
+	timing		22
+	frqdiv		23
+	range		24
+	trig_type	28
+	trig_input	29
+
+	device_id	40
+	base_sw_ver	41
+	pga_sw_ver	42
+	base_hw_ver	43
+	pga_hw_ver	44
+	pga_var		45
+	base_uniq_id	46
+	pga_uniq_id	47
+
+	elapsed		50
+	clb_state	51
+	xs_per_point	52
+	xs_divisor	53
+	xs_factor	54
+	cur_ptsofs	55
+	cur_numpts	56
+	cur_timing	57
+	cur_frqdiv	58
+        # unused 59
+	cur_range	60
+	overflow	64
+
+	on		70
+	rangemin	74
+	rangemax	78
+
+	clb_fail<0-3>	82
+	clb_dyn<0-3>	86
+	clb_zero<0-3>	90
+	clb_gain<0-3>	94
+
+	min		100
+	max		104
+	avg		108
+	int		112
+
+	totalmin	116
+	totalmax	110
+	num_lines	114
+}

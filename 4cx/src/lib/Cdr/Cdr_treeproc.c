@@ -1874,7 +1874,7 @@ int   CdrLoadSubsystemMode(DataSubsys subsys,
 
     fclose(fp);
 
-    return -1;
+    return 0;
 }
 
 int   CdrStatSubsystemMode(const char *filespec,

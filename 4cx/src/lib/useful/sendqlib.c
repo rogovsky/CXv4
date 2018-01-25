@@ -241,6 +241,9 @@ sq_status_t  sq_enq     (sq_q_t *q, sq_eprops_t *e, sq_enqcond_t how, void *m)
         if (e->timeout_us > 0  &&  q->tout_set == 0)
             enq_tout(q, e->timeout_us);
 
+        if (e->callback != NULL  &&  r == 0)
+            e->callback(q->privptr, e, SQ_TRY_LAST);
+
         return r == 0? SQ_NOTFOUND : SQ_ERROR;
     }
 
@@ -381,7 +384,7 @@ static void perform_sendnext_in_queue(sq_q_t *q)
         else if (epp->tries_done == epp->tries) try_n = SQ_TRY_LAST; // Note: this check implies epp->tries>0, so that is omitted
         else                                    try_n = SQ_TRY_NONE;
         
-        if (epp->callback != NULL  && try_n != SQ_TRY_NONE)
+        if (epp->callback != NULL  &&  try_n != SQ_TRY_NONE)
             epp->callback(q->privptr, epp, try_n);
 
         /* Is it a oneshot-with-pause? */

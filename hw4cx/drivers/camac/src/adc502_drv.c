@@ -177,11 +177,6 @@ static int   InitParams(pzframe_drv_t *pdr)
 
   int               n;
 
-    for (n = 0;  n < countof(chinfo);  n++)
-        if (chinfo[n].chtype == PZFRAME_CHTYPE_AUTOUPDATED  ||
-            chinfo[n].chtype == PZFRAME_CHTYPE_STATUS)
-            SetChanReturnType(me->devid, n, 1, IS_AUTOUPDATED_TRUSTED);
-
     me->nxt_args[ADC502_CHAN_NUMPTS] = 1024;
     me->nxt_args[ADC502_CHAN_TIMING] = ADC502_TIMING_INT;
     me->nxt_args[ADC502_CHAN_TMODE]  = ADC502_TMODE_HF;

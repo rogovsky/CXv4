@@ -35,7 +35,7 @@ static void formula_evproc(int            devid,
   cx_time_t   timestamp;
   void       *val_p = &val;
 
-fprintf(stderr, "%s ref=%d\n", __FUNCTION__, ref);
+////fprintf(stderr, "%s ref=%d\n", __FUNCTION__, ref);
     cda_process_ref (me->rd_ref, CDA_OPT_RD_FLA | CDA_OPT_DO_EXEC,
                      NAN,
                      NULL, 0);

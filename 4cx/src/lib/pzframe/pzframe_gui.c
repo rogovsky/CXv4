@@ -468,6 +468,22 @@ Widget PzframeGuiMkparknob (pzframe_gui_t *gui,
   int                  options = gui->pfr->cfg.readonly? SIMPLEKNOB_OPT_READONLY
                                                        : 0;
 
+    if (cn >= ftd->chan_count)
+    {
+        fprintf(stderr, "%s(type_name=\"%s\"): request for invalid cn=%d (chan_count=%d)\n",
+                __FUNCTION__, ftd->type_name, cn, ftd->chan_count);
+        return XtVaCreateManagedWidget("", widgetClass, parent,
+                                       XmNwidth,       10,
+                                       XmNheight,      10,
+                                       XmNborderWidth, 0,
+                                       XmNbackground,  XhGetColor(XH_COLOR_JUST_RED),
+                                       NULL);
+    }
+
+    if (ftd->chan_dscrs[cn].name == NULL)
+        fprintf(stderr, "%s(type_name=\"%s\"): WARNING: request for unused cn=%d\n",
+                __FUNCTION__, ftd->type_name, cn);
+
     if ((ftd->chan_dscrs[cn].chan_type & PZFRAME_CHAN_RW_ONLY_MASK) != 0
         &&
         gui->pfr->cfg.readonly)

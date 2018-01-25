@@ -119,6 +119,7 @@ typedef struct
     int              nth;              // used-sid # inside context
 
     char             srvrspec[200];    /*!!! Replace '200' with what?  Or do strdup()? */
+    int              options;          // Saves cda_dat_p_get_server(.options)
     int              state;
 
     cda_dat_p_rec_t *metric;
@@ -142,6 +143,8 @@ typedef struct
 {
     int              in_use;
     cda_context_t    cid;               // Backreference to itself -- for fast ci2cid()
+    int              being_processed;
+    int              being_destroyed;
 
     int              options;           // Saves cda_new_context(.options)
 
@@ -159,7 +162,7 @@ typedef struct
     char             opt_ch;            // '@'
 
     ctx_nthsidrec_t *sids_list;         /* Is maintained from find_or_add_a_server() */
-    int              sids_list_allocd;
+    int              sids_list_allocd;  /* Note: this is NOT a complete lost of cid's sids, since some may be flagged CDA_DAT_P_GET_SERVER_OPT_NOLIST and hence not added here */
 
     CxKnobParam_t   *varparm_list;
     int              varparm_list_allocd;
@@ -225,12 +228,26 @@ GENERIC_SLOTARRAY_DEFINE_GROWING(static, Ref, refinfo_t,
 static void RlsRefSlot(cda_dataref_t ref)
 {
   refinfo_t *ri = AccessRefSlot(ref);
+  srvinfo_t *si;
 
     if (ri->in_use == 0) return; /*!!! In fact, an internal error */
     ri->in_use = 0;
 
-    /*!!!RLS: should also call AccessSrvSlot(ri->sid)->metric->del_chan()
-         or ri->fla_vmt->destroy() (if vmt!=NULL) */
+    // Call appropriate "destructor"
+    if      (ri->in_use == REF_TYPE_CHN)
+    {
+        /* Nothing to do: del_chan() is guaranteed by RlsRefSlot() caller */
+    }
+    else if (ri->in_use == REF_TYPE_FLA)
+    {
+        if (ri->fla_vmt          != NULL  &&
+            ri->fla_vmt->destroy != NULL)
+            ri->fla_vmt->destroy(ri->fla_privptr);
+    }
+    else if (ri->in_use == REF_TYPE_REG)
+    {
+        /* Do nothing */
+    }
 
     DestroyRefCbSlotArray(ri);
 
@@ -264,6 +281,12 @@ static void RlsSrvSlot(cda_srvconn_t sid)
 
     if (si->in_use == 0) return; /*!!! In fact, an internal error */
     si->in_use = 0;
+
+    /* Note: we do NOT call a "destructor" del_srv(),
+       since that should be done explicitly by RlsSrvSlot() caller
+       in an appropriate place.
+       (because the "destructor" can return a "wait, not now, but later!"
+        (DEFERRED) result) */
 
     if (si->pdt_privptr != NULL) free(si->pdt_privptr);
     if (si->hwr_arr_buf != NULL) free(si->hwr_arr_buf);
@@ -336,6 +359,21 @@ GENERIC_SLOTARRAY_DEFINE_GROWING(static, Ctx, ctxinfo_t,
                                  CTX_MIN_VAL, CTX_ALLOC_INC, CTX_MAX_COUNT,
                                  , , void)
 
+static int RlsCtx_RefIterator    (refinfo_t     *ri, void *privptr)
+{
+    if (ri->cid == ptr2lint(privptr)) RlsRefSlot(ri - refs_list); /* "ri2ref()" */
+    return 0;
+}
+static int RlsCtx_SrvIterator    (srvinfo_t     *si, void *privptr)
+{
+    if (si->cid == ptr2lint(privptr)) RlsSrvSlot(si - srvs_list); /* "si2sid()" */
+    return 0;
+}
+static int RlsCtx_VarparmIterator(CxKnobParam_t *p,  void *privptr)
+{
+    safe_free(p->ident); p->ident = NULL;
+    return 0;
+}
 static void RlsCtxSlot(cda_context_t cid)
 {
   ctxinfo_t *ci = AccessCtxSlot(cid);
@@ -343,9 +381,12 @@ static void RlsCtxSlot(cda_context_t cid)
     if (ci->in_use == 0) return; /*!!! In fact, an internal error */
     ci->in_use = 0;
 
-    DestroyCtxCbSlotArray(ci);
-    /*!!! ->sids should be freed too;
-          AFTER freeing all channels/formulae, via Foreach() */
+    ForeachRefSlot    (RlsCtx_RefIterator,     lint2ptr(cid));
+    ForeachSrvSlot    (RlsCtx_SrvIterator,     lint2ptr(cid));
+    ForeachVarparmSlot(RlsCtx_VarparmIterator, NULL, ci);
+    DestroyVarparmSlotArray(ci);
+    DestroyCtxCbSlotArray  (ci);
+    safe_free(ci->sids_list);
 }
 
 static int CheckCid(cda_context_t cid)
@@ -359,7 +400,7 @@ static int CheckCid(cda_context_t cid)
 }
 
 /*
- *  si2sid
+ *  ci2cid
  *      Converts a "context pointer", used internally by the library,
  *      into "context id", accepted by public cda_XXX() calls
  *      and suitable for error/debug messages.
@@ -369,34 +410,6 @@ static inline cda_context_t ci2cid(ctxinfo_t *ci)
 {
     return ci->cid;
 }
-
-//////////////////////////////////////////////////////////////////////
-
-#if 0
-{ // Engineering->Operator
-    n   = ri->phys_count;
-    rdp = ri->alc_phys_rds;
-    if (rdp == NULL) rdp = ri->imm_phys_rds;
-    while (n > 0)
-    {
-        v = v / rdp[0] - rdp[1];
-        rdp += 2;
-        n--;
-    }
-}
-{ // Operator->Engineering
-    n   = ri->phys_count;
-    rdp = ri->alc_phys_rds;
-    if (rdp == NULL) rdp = ri->imm_phys_rds;
-    rdp += (n-1)*2;
-    while (n > 0)
-    {
-        v = (v + rdp[1]) * rdp[0]
-        rdp -= 2;
-        n--;
-    }
-}
-#endif
 
 //////////////////////////////////////////////////////////////////////
 
@@ -710,7 +723,6 @@ cda_context_t  cda_new_context(int                   uniq,   void *privptr1,
 {
   cda_context_t     cid;
   ctxinfo_t        *ci;
-  int               r;
 
   char             *slash;
 
@@ -747,6 +759,7 @@ cda_context_t  cda_new_context(int                   uniq,   void *privptr1,
 
     /* ...and fill it with data */
     ci = AccessCtxSlot(cid);
+    ci->cid      = cid;
     strzcpy(ci->defpfx, defpfx, sizeof(ci->defpfx));
     strzcpy(ci->argv0,  argv0,  sizeof(ci->argv0));
     ci->uniq     = uniq;
@@ -775,15 +788,95 @@ cda_context_t  cda_new_context(int                   uniq,   void *privptr1,
     return cid;
 }
 
+typedef struct
+{
+    cda_context_t  cid;
+    int            count;
+} del_srvs_info_t;
+
+static int DelSids_Iterator(srvinfo_t     *si, void *privptr)
+{
+  del_srvs_info_t *info_p = privptr;
+  cda_srvconn_t    sid;
+  int              r;
+
+    if (si->cid == info_p->cid)
+    {
+        sid = si - srvs_list; /* "si2sid()" */
+        if (si->metric          != NULL  &&
+            si->metric->del_srv != NULL)
+            r = si->metric->del_srv(sid, si->pdt_privptr);
+        else
+            r = CDA_DAT_P_DEL_SRV_SUCCESS;
+
+        if (r == CDA_DAT_P_DEL_SRV_SUCCESS)
+        {
+            si->metric = NULL;
+            RlsSrvSlot(sid);
+        }
+        else
+        {
+            info_p->count++;
+            si->being_destroyed = 1;
+        }
+    }
+    return 0;
+}
+static void TryToReleaseContext(ctxinfo_t *ci)
+{
+  del_srvs_info_t  info;
+
+    info.cid   = ci2cid(ci);
+    info.count = 0;
+    ForeachSrvSlot(DelSids_Iterator, &info);
+////fprintf(stderr, "%s count=%d\n", __FUNCTION__, info.count);
+    if (info.count == 0) RlsCtxSlot(ci2cid(ci));
+}
+
 int            cda_del_context(cda_context_t         cid)
 {
   ctxinfo_t   *ci = AccessCtxSlot(cid);
 
     if (CheckCid(cid) != 0) return -1;
+////fprintf(stderr, "%s(%d): processed=%d destroyed=%d\n", __FUNCTION__, cid, ci->being_processed, ci->being_destroyed);
+    if (ci->being_destroyed)
+    {
+        errno = EINPROGRESS;
+        return -1;
+    }
 
-    RlsCtxSlot(cid);
+    ci->being_destroyed = 1;
+
+    if (ci->being_processed == 0) TryToReleaseContext(ci);
 
     return 0;
+}
+
+static int CountSids_Iterator    (srvinfo_t     *si, void *privptr)
+{
+  del_srvs_info_t *info_p = privptr;
+
+    if (si->cid == info_p->cid) info_p->count++;
+    return 0;
+}
+void  cda_dat_p_del_server_finish  (cda_srvconn_t  sid)
+{
+  srvinfo_t       *si = AccessSrvSlot(sid);
+  cda_context_t    cid;
+  del_srvs_info_t  info;
+
+    if (CheckSid(sid) != 0) return;
+    if (si->being_destroyed == 0) return;
+
+    /* a. Release that sid */
+    cid = si->cid;
+    RlsSrvSlot(sid);
+
+    /* Check if it was the last sid */
+    info.cid   = cid;
+    info.count = 0;
+    ForeachSrvSlot(CountSids_Iterator, &info);
+    if (info.count == 0) RlsCtxSlot(cid);
 }
 
 static int ctx_evproc_checker(ctx_cbrec_t *p, void *privptr)
@@ -870,6 +963,7 @@ static int ctx_ref_checker(refinfo_t *ri, void *privptr)
         ri->in_use     == REF_TYPE_CHN                    &&
         (ri->options & CDA_DATAREF_OPT_PRIVATE) == 0      &&
         strcasecmp(ri->reference, model->reference) == 0  &&
+        ri->options    == model->options                  &&
         ri->dtype      == model->dtype                    &&
         ri->max_nelems == model->max_nelems;
 }
@@ -927,15 +1021,12 @@ cda_dataref_t  cda_add_chan   (cda_context_t         cid,
     {
         ref_cmp_info.cid        = cid;
         ref_cmp_info.reference  = nameptr;
+        ref_cmp_info.options    = options;
         ref_cmp_info.dtype      = dtype;
         ref_cmp_info.max_nelems = max_nelems;
         ref = ForeachRefSlot(ctx_ref_checker, &ref_cmp_info);
         if (ref >= 0)
-        {
-            if (options & CDA_DATAREF_OPT_SHY)
-                AccessRefSlot(ref)->options |= CDA_DATAREF_OPT_SHY;
             goto DO_RETURN;
-        }
     }
 
     /* Find-only? */
@@ -1036,10 +1127,20 @@ cda_dataref_t  cda_add_chan   (cda_context_t         cid,
 
 int            cda_del_chan   (cda_dataref_t ref)
 {
-    if      (ref == CDA_DATAREF_NONE) return 0;
-    else if (ref < 0)                 return -1;
+  refinfo_t   *ri = AccessRefSlot(ref);
+  srvinfo_t   *si;
 
-    /*!!!*/
+    if (ref == CDA_DATAREF_NONE) return 0;
+    else if (CheckRef(ref) != 0) return -1;
+
+    /* Call the destructor, since RlsRefSlot() wouldn't to it */
+    if (ri->in_use == REF_TYPE_CHN  &&  ri->sid > 0)
+    {
+        si = AccessSrvSlot(ri->sid);
+        if (si->metric           != NULL  &&
+            si->metric->del_chan != NULL)
+            si->metric->del_chan(si->pdt_privptr, ri->hwr);
+    }
 
     RlsRefSlot(ref);
 
@@ -1756,6 +1857,7 @@ typedef struct
     cda_context_t    cid;
     cda_dat_p_rec_t *metric;
     const char      *srvrspec;
+    int              options;
 } srv_cmp_info_t;
 
 static int srv_checker(srvinfo_t *p, void *privptr)
@@ -1765,11 +1867,19 @@ static int srv_checker(srvinfo_t *p, void *privptr)
     return
         p->cid    == model->cid     &&
         p->metric == model->metric  &&
-        strcasecmp(p->srvrspec, model->srvrspec) == 0;
+        strcasecmp(p->srvrspec, model->srvrspec) == 0  &&
+        /* Note: could have used
+               ((p->options ^ model->options) & CDA_DAT_P_GET_SERVER_OPT_SRVTYPE_mask) == 0
+           but that would be a perfect example of bad style */
+        (
+         (    p->options & CDA_DAT_P_GET_SERVER_OPT_SRVTYPE_mask) == 
+         (model->options & CDA_DAT_P_GET_SERVER_OPT_SRVTYPE_mask)
+        );
 }
-static int find_or_add_a_server(cda_context_t  cid,
+static int find_or_add_a_server(cda_context_t    cid,
                                 cda_dat_p_rec_t *metric,
-                                const char      *srvrspec)
+                                const char      *srvrspec,
+                                int              options)
 {
   ctxinfo_t       *ci;
   srv_cmp_info_t   srv_cmp_info;
@@ -1785,6 +1895,7 @@ static int find_or_add_a_server(cda_context_t  cid,
     srv_cmp_info.cid      = cid;
     srv_cmp_info.metric   = metric;
     srv_cmp_info.srvrspec = srvrspec;
+    srv_cmp_info.options  = options;
     
     sid = ForeachSrvSlot(srv_checker, &srv_cmp_info);
     if (sid > 0)
@@ -1800,19 +1911,20 @@ static int find_or_add_a_server(cda_context_t  cid,
     si = AccessSrvSlot(sid);
     si->cid    = cid;
     strzcpy(si->srvrspec, srvrspec, sizeof(si->srvrspec));
-    si->state = CDA_DAT_P_ERROR;
-    si->metric = metric;
-    if (si->metric->privrecsize != 0)
+    si->options = options;
+    si->state   = CDA_DAT_P_ERROR;
+    if (metric->privrecsize != 0)
     {
-        if ((si->pdt_privptr = malloc(si->metric->privrecsize)) == NULL)
+        if ((si->pdt_privptr = malloc(metric->privrecsize)) == NULL)
         {
             cda_set_err("unable to malloc privrec for \"%s::\"",
-                        si->metric->mr.name);
+                        metric->mr.name);
             RlsSrvSlot(sid);
             return CDA_SRVCONN_ERROR;
         }
-        bzero(si->pdt_privptr, si->metric->privrecsize);
+        bzero(si->pdt_privptr, metric->privrecsize);
     }
+    si->metric = metric;
 
     ci = AccessCtxSlot(cid);
     r = si->metric->new_srv(sid, si->pdt_privptr,
@@ -1820,130 +1932,69 @@ static int find_or_add_a_server(cda_context_t  cid,
     if (r < 0)
     {
 ////fprintf(stderr, "%s!\n", __FUNCTION__);
+        /* Call del_srv(), ignoring the result */
+        if (si->metric          != NULL  &&
+            si->metric->del_srv != NULL)
+            si->metric->del_srv(sid, si->pdt_privptr);
         RlsSrvSlot(sid);
         return CDA_SRVCONN_ERROR;
     }
     si->state = r;
 
-    nth = GetNthSidSlot(ci);
+    if ((options & CDA_DAT_P_GET_SERVER_OPT_NOLIST) != 0)
+        nth = -1;
+    else
+        nth = GetNthSidSlot(ci);
     /* Note: unlikely case nth<0 causes only malfunctioning of "status" calls */
     if (nth >= 0)
     {
         nth_p      = AccessNthSidSlot(nth, ci);
         nth_p->sid = sid;
-        si->nth    = nth;
     }
+    si->nth    = nth; // nth<0 => no CDA_CTX_-events are generated for that sid
 
     /* Notify client about new server connection */
-    call_info.uniq     = ci->uniq;
-    call_info.privptr1 = ci->privptr1;
-    call_info.cid      = si->cid;
-    call_info.reason   = CDA_CTX_R_NEWSRV;
-    call_info.evmask   = 1 << call_info.reason;
-    call_info.info_int = si->nth;
-    ForeachCtxCbSlot(ctx_evproc_caller, &call_info, ci);
+    if (si->nth >= 0)
+    {
+        ci->being_processed++;
+
+        call_info.uniq     = ci->uniq;
+        call_info.privptr1 = ci->privptr1;
+        call_info.cid      = si->cid;
+        call_info.reason   = CDA_CTX_R_NEWSRV;
+        call_info.evmask   = 1 << call_info.reason;
+        call_info.info_int = si->nth;
+        ForeachCtxCbSlot(ctx_evproc_caller, &call_info, ci);
+
+        ci->being_processed--;
+        if (ci->being_processed == 0  &&  ci->being_destroyed)
+        {
+            TryToReleaseContext(ci);
+            return CDA_SRVCONN_ERROR;
+        }
+    }
 
     return sid;
 }
 
 void *cda_dat_p_get_server         (cda_dataref_t    source_ref,
                                     cda_dat_p_rec_t *metric,
-                                    const char      *srvrspec)
+                                    const char      *srvrspec,
+                                    int              options)
 {
   refinfo_t       *ri = AccessRefSlot(source_ref);
-#if 1
   cda_srvconn_t    sid;
   srvinfo_t       *si;
 
     if (CheckRef(source_ref) != 0) return NULL;
 
-    sid = find_or_add_a_server(ri->cid, metric, srvrspec);
+    sid = find_or_add_a_server(ri->cid, metric, srvrspec, options);
     if (sid < 0) return NULL;
 
     ri->sid = sid;
 
     si = AccessSrvSlot(sid);
     return si->pdt_privptr;
-#else
-  ctxinfo_t       *ci;
-  srv_cmp_info_t   srv_cmp_info;
-  cda_srvconn_t    sid;
-  srvinfo_t       *si;
-  int              r;
-  int              nth;
-  ctx_nthsidrec_t *nth_p;
-  ctx_call_info_t  call_info;
-
-    if (CheckRef(source_ref) != 0) return NULL;
-
-    if (srvrspec == NULL) srvrspec = "";
-
-    srv_cmp_info.cid      = ri->cid;
-    srv_cmp_info.metric   = metric;
-    srv_cmp_info.srvrspec = srvrspec;
-    
-    sid = ForeachSrvSlot(srv_checker, &srv_cmp_info);
-    if (sid > 0)
-    {
-        si = AccessSrvSlot(sid);
-        ri->sid = sid;
-        return si->being_destroyed? NULL : si->pdt_privptr;
-    }
-
-    /* Okay, allocate a new one... */
-    sid = GetSrvSlot();
-    if (sid < 0) return NULL;
-
-    si = AccessSrvSlot(sid);
-    si->cid    = ri->cid;
-    strzcpy(si->srvrspec, srvrspec, sizeof(si->srvrspec));
-    si->state = CDA_DAT_P_ERROR;
-    si->metric = metric;
-    if (si->metric->privrecsize != 0)
-    {
-        if ((si->pdt_privptr = malloc(si->metric->privrecsize)) == NULL)
-        {
-            cda_set_err("unable to malloc privrec for \"%s::\"",
-                        si->metric->mr.name);
-            RlsSrvSlot(sid);
-            return NULL;
-        }
-        bzero(si->pdt_privptr, si->metric->privrecsize);
-    }
-
-    ci = AccessCtxSlot(ri->cid);
-    r = si->metric->new_srv(sid, si->pdt_privptr,
-                            ci->uniq, srvrspec, ci->argv0);
-    if (r < 0)
-    {
-////fprintf(stderr, "%s!\n", __FUNCTION__);
-        RlsSrvSlot(sid);
-        return NULL;
-    }
-    si->state = r;
-
-    nth = GetNthSidSlot(ci);
-    /* Note: unlikely case nth<0 causes only malfunctioning of "status" calls */
-    if (nth >= 0)
-    {
-        nth_p      = AccessNthSidSlot(nth, ci);
-        nth_p->sid = sid;
-        si->nth    = nth;
-    }
-
-    ri->sid = sid;
-
-    /* Notify client about new server connection */
-    call_info.uniq     = ci->uniq;
-    call_info.privptr1 = ci->privptr1;
-    call_info.cid      = si->cid;
-    call_info.reason   = CDA_CTX_R_NEWSRV;
-    call_info.evmask   = 1 << call_info.reason;
-    call_info.info_int = si->nth;
-    ForeachCtxCbSlot(ctx_evproc_caller, &call_info, ci);
-
-    return si->pdt_privptr;
-#endif
 }
 
 int                 cda_add_server_conn  (cda_context_t  cid,
@@ -1968,7 +2019,7 @@ int                 cda_add_server_conn  (cda_context_t  cid,
         return -1;
     }
 
-    sid = find_or_add_a_server(cid, pdt, target);
+    sid = find_or_add_a_server(cid, pdt, target, CDA_DAT_P_GET_SERVER_OPT_NONE);
     if (sid < 0) return -1;
 
     return 0;
@@ -2009,13 +2060,25 @@ void  cda_dat_p_set_server_state   (cda_srvconn_t  sid, int state)
     if (!chg) return;
     ci = AccessCtxSlot(si->cid);
 
-    call_info.uniq     = ci->uniq;
-    call_info.privptr1 = ci->privptr1;
-    call_info.cid      = si->cid;
-    call_info.reason   = CDA_CTX_R_SRVSTAT;
-    call_info.evmask   = 1 << call_info.reason;
-    call_info.info_int = si->nth;
-    ForeachCtxCbSlot(ctx_evproc_caller, &call_info, ci);
+    if (si->nth >= 0)
+    {
+        ci->being_processed++;
+
+        call_info.uniq     = ci->uniq;
+        call_info.privptr1 = ci->privptr1;
+        call_info.cid      = si->cid;
+        call_info.reason   = CDA_CTX_R_SRVSTAT;
+        call_info.evmask   = 1 << call_info.reason;
+        call_info.info_int = si->nth;
+        ForeachCtxCbSlot(ctx_evproc_caller, &call_info, ci);
+
+        ci->being_processed--;
+        if (ci->being_processed == 0  &&  ci->being_destroyed)
+        {
+            TryToReleaseContext(ci);
+            return;
+        }
+    }
 }
 
 static int on_cycle_otherop_dropper(refinfo_t *ri, void *privptr)
@@ -2036,13 +2099,25 @@ void  cda_dat_p_update_server_cycle(cda_srvconn_t  sid)
 
     ci = AccessCtxSlot(si->cid);
 
-    call_info.uniq     = ci->uniq;
-    call_info.privptr1 = ci->privptr1;
-    call_info.cid      = si->cid;
-    call_info.reason   = CDA_CTX_R_CYCLE;
-    call_info.evmask   = 1 << call_info.reason;
-    call_info.info_int = si->nth;
-    ForeachCtxCbSlot(ctx_evproc_caller, &call_info, ci);
+    if (si->nth >= 0)
+    {
+        ci->being_processed++;
+
+        call_info.uniq     = ci->uniq;
+        call_info.privptr1 = ci->privptr1;
+        call_info.cid      = si->cid;
+        call_info.reason   = CDA_CTX_R_CYCLE;
+        call_info.evmask   = 1 << call_info.reason;
+        call_info.info_int = si->nth;
+        ForeachCtxCbSlot(ctx_evproc_caller, &call_info, ci);
+
+        ci->being_processed--;
+        if (ci->being_processed == 0  &&  ci->being_destroyed)
+        {
+            TryToReleaseContext(ci);
+            return;
+        }
+    }
     if ((ci->options & CDA_CONTEXT_OPT_NO_OTHEROP) == 0)
         ForeachRefSlot(on_cycle_otherop_dropper, lint2ptr(sid));
 }
@@ -2416,6 +2491,9 @@ void  cda_dat_p_update_dataset     (cda_srvconn_t  sid,
         if (CheckRef(ref) != 0)
             goto NEXT_TO_CALL;
         ri = AccessRefSlot(ref);
+
+        ci->being_processed++;
+
         if (is_update)
         {
             update_info.ref = ref;
@@ -2425,6 +2503,13 @@ void  cda_dat_p_update_dataset     (cda_srvconn_t  sid,
         {
             curval_info.ref = ref;
             ForeachRefCbSlot(ref_evproc_caller, &curval_info, ri);
+        }
+
+        ci->being_processed--;
+        if (ci->being_processed == 0  &&  ci->being_destroyed)
+        {
+            TryToReleaseContext(ci);
+            return;
         }
 
  NEXT_TO_CALL:;
@@ -2486,8 +2571,17 @@ void  cda_dat_p_defunct_dataset    (cda_srvconn_t  sid,
         }
         ri = AccessRefSlot(ref);
 
+        ci->being_processed++;
+
         call_info.ref = ref;
         ForeachRefCbSlot(ref_evproc_caller, &call_info, ri);
+
+        ci->being_processed--;
+        if (ci->being_processed == 0  &&  ci->being_destroyed)
+        {
+            TryToReleaseContext(ci);
+            return;
+        }
 
  NEXT_TO_CALL:;
     }
@@ -2538,6 +2632,8 @@ void  cda_fla_p_update_fla_result  (cda_dataref_t  ref,
     /* Call who requested */
     ci = AccessCtxSlot(ri->cid);
 
+    ci->being_processed++;
+
     call_info.uniq     = ci->uniq;
     call_info.privptr1 = ci->privptr1;
     call_info.reason   = CDA_REF_R_UPDATE;
@@ -2545,6 +2641,13 @@ void  cda_fla_p_update_fla_result  (cda_dataref_t  ref,
     call_info.info_ptr = NULL;
     call_info.ref      = ref;
     ForeachRefCbSlot(ref_evproc_caller, &call_info, ri);
+
+    ci->being_processed--;
+    if (ci->being_processed == 0  &&  ci->being_destroyed)
+    {
+        TryToReleaseContext(ci);
+        return;
+    }
 }
 
 void  cda_dat_p_set_hwr            (cda_dataref_t  ref, cda_hwcnref_t hwr)
@@ -2607,6 +2710,8 @@ void  cda_dat_p_set_notfound       (cda_dataref_t  ref)
     /* Notify interested */
     ci = AccessCtxSlot(ri->cid);
 
+    ci->being_processed++;
+
     call_info.uniq     = ci->uniq;
     call_info.privptr1 = ci->privptr1;
     call_info.reason   = CDA_REF_R_RSLVSTAT;
@@ -2614,6 +2719,13 @@ void  cda_dat_p_set_notfound       (cda_dataref_t  ref)
     call_info.info_ptr = NULL;
     call_info.ref      = ref;
     ForeachRefCbSlot(ref_evproc_caller, &call_info, ri);
+
+    ci->being_processed--;
+    if (ci->being_processed == 0  &&  ci->being_destroyed)
+    {
+        TryToReleaseContext(ci);
+        return;
+    }
 }
 
 void  cda_dat_p_set_ready          (cda_dataref_t  ref, int is_ready)
@@ -2692,6 +2804,8 @@ void  cda_dat_p_set_phys_rds       (cda_dataref_t  ref,
     /* Notify who requested */
     ci = AccessCtxSlot(ri->cid);
 
+    ci->being_processed++;
+
     call_info.uniq     = ci->uniq;
     call_info.privptr1 = ci->privptr1;
     call_info.reason   = CDA_REF_R_RDSCHG;
@@ -2699,6 +2813,13 @@ void  cda_dat_p_set_phys_rds       (cda_dataref_t  ref,
     call_info.info_ptr = NULL;
     call_info.ref      = ref;
     ForeachRefCbSlot(ref_evproc_caller, &call_info, ri);
+
+    ci->being_processed--;
+    if (ci->being_processed == 0  &&  ci->being_destroyed)
+    {
+        TryToReleaseContext(ci);
+        return;
+    }
 }
 
 void  cda_dat_p_set_fresh_age      (cda_dataref_t  ref, cx_time_t fresh_age)
@@ -2729,6 +2850,8 @@ void  cda_dat_p_set_fresh_age      (cda_dataref_t  ref, cx_time_t fresh_age)
     /* Notify who requested */
     ci = AccessCtxSlot(ri->cid);
 
+    ci->being_processed++;
+
     call_info.uniq     = ci->uniq;
     call_info.privptr1 = ci->privptr1;
     call_info.reason   = CDA_REF_R_FRESHCHG;
@@ -2736,6 +2859,13 @@ void  cda_dat_p_set_fresh_age      (cda_dataref_t  ref, cx_time_t fresh_age)
     call_info.info_ptr = NULL;
     call_info.ref      = ref;
     ForeachRefCbSlot(ref_evproc_caller, &call_info, ri);
+
+    ci->being_processed--;
+    if (ci->being_processed == 0  &&  ci->being_destroyed)
+    {
+        TryToReleaseContext(ci);
+        return;
+    }
 }
 
 void  cda_dat_p_set_quant          (cda_dataref_t  ref,
@@ -2767,6 +2897,8 @@ void  cda_dat_p_set_quant          (cda_dataref_t  ref,
     /* Notify who requested */
     ci = AccessCtxSlot(ri->cid);
 
+    ci->being_processed++;
+
     call_info.uniq     = ci->uniq;
     call_info.privptr1 = ci->privptr1;
     call_info.reason   = CDA_REF_R_QUANTCHG;
@@ -2774,6 +2906,13 @@ void  cda_dat_p_set_quant          (cda_dataref_t  ref,
     call_info.info_ptr = NULL;
     call_info.ref      = ref;
     ForeachRefCbSlot(ref_evproc_caller, &call_info, ri);
+
+    ci->being_processed--;
+    if (ci->being_processed == 0  &&  ci->being_destroyed)
+    {
+        TryToReleaseContext(ci);
+        return;
+    }
 }
 
 void  cda_dat_p_set_strings        (cda_dataref_t  ref,
@@ -2855,6 +2994,8 @@ void  cda_dat_p_set_strings        (cda_dataref_t  ref,
     /* Notify who requested */
     ci = AccessCtxSlot(ri->cid);
 
+    ci->being_processed++;
+
     call_info.uniq     = ci->uniq;
     call_info.privptr1 = ci->privptr1;
     call_info.reason   = CDA_REF_R_STRSCHG;
@@ -2862,6 +3003,13 @@ void  cda_dat_p_set_strings        (cda_dataref_t  ref,
     call_info.info_ptr = NULL;
     call_info.ref      = ref;
     ForeachRefCbSlot(ref_evproc_caller, &call_info, ri);
+
+    ci->being_processed--;
+    if (ci->being_processed == 0  &&  ci->being_destroyed)
+    {
+        TryToReleaseContext(ci);
+        return;
+    }
 }
 
 void *cda_dat_p_privp_of_sid(cda_srvconn_t  sid)
@@ -3267,7 +3415,6 @@ int cda_process_ref(cda_dataref_t ref, int options,
   int            ret = CDA_PROCESS_DONE;
 
   refinfo_t     *ri = AccessRefSlot(ref);
-  srvinfo_t     *si;
   ctxinfo_t     *ci;
   CxKnobParam_t *p;
 
@@ -3342,7 +3489,6 @@ int cda_process_ref(cda_dataref_t ref, int options,
                 
             
             /* Send */
-            si = AccessSrvSlot(ri->sid);
             if ((options & CDA_OPT_READONLY) == 0)
                 ret = SendOrStore(ri, ri->dtype, 1, vp, 0);
         }

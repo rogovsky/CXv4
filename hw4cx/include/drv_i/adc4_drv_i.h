@@ -28,7 +28,7 @@ enum
     ADC4_CHAN_ZERO2         = 24,
     ADC4_CHAN_ZERO3         = 25,
 
-    /* 30-69: status */
+    /* 30-99: status */
     ADC4_CHAN_ELAPSED       = 30,
     ADC4_CHAN_XS_PER_POINT  = 31,
     ADC4_CHAN_XS_DIVISOR    = 32,

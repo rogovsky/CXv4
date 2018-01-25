@@ -1,0 +1,48 @@
+#!/bin/bash
+# Network Interface Configuration System
+# Copyright (c) 1996-2005 Red Hat, Inc. all rights reserved.
+#
+# This software may be freely redistributed under the terms of the GNU
+# public license.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+. /etc/init.d/functions
+
+cd /etc/sysconfig/network-scripts
+. ./network-functions
+
+[ -f ../network ] && . ../network
+
+CONFIG=${1}
+
+need_config ${CONFIG}
+
+source_config
+
+# load the module associated with that device
+# /sbin/modprobe ${REALDEVICE}
+# and check if device is really present
+is_available ${REALDEVICE} ||
+{
+      echo $"Device ${DEVICE} does not seem to be present, delaying initialization."
+      exit 1
+}
+
+# Set baud rate
+if [ -n "${BAUDRATE}" ]; then
+    #echo "${BAUDRATE}" >/sys/class/net/${DEVICE}/can_bittiming/bitrate
+    ip link set ${DEVICE} type can bitrate "${BAUDRATE}"
+fi
+
+# Set restart-after-bus-{off,passive} interval
+if [ -n "${RESTART_MS}" ]; then
+    #echo "${RESTART_MS}" >/sys/class/net/${DEVICE}/can_restart_ms
+    ip link set ${DEVICE} type can restart-ms "${RESTART_MS}"
+fi
+
+/sbin/ip link set dev ${DEVICE} up
+
+exit 0

@@ -6,7 +6,7 @@ grouping main v5adc200_grp1 "Grouper RF measurements (1/2)" \
 }
 
 sysname   v5adc200_grp1
-defserver linac1:15
+defserver cxhw:15
 wintitle  main "Grouper RF measurements (1/2)"
 winname   main v5adc200_grp1
 winclass  main v5adc200_grp1

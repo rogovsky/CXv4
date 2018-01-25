@@ -1,16 +1,61 @@
-include(`subsys_magx_macros.m4')
+
+# 1:id 2:label 3:"Off" 4:"On" 5:c_state 5:c_off 6:c_on
+define(`RGSWCH',
+       `knob/ign_otherop $1 $2 choicebs nolabel items:"#T$3\b\blit=red\t$4\b\blit=green" \
+               r:$5 w:"_all_code; qryval; putchan $7; \
+               push 1; qryval; sub; putchan $6; ret;"')
 
 sysname ringrf
-defserver ring1:12
+defserver canhw:19
 wintitle main "ВЧ-система накопителя"
 winname  main ringrf
 winclass main RingRF
 
-grouping main RINGRF_grouping "ВЧ-система" grid "noshadow,notitle" \
-        str1:"Задано, A\tИзм., A\td/dT\t\t" \
-        param1:6 content:eval(6*4) {
-    MAGX_MPS20_CEAC124_LINE(ic_ring_kls_sol_c5, `"Катушка 5"',   "ВЧ-блок",   25,   1, vch_mps5, 1, 1)
-    MAGX_MPS20_CEAC124_LINE(ic_ring_kls_sol_c4, `"Катушка 4"',   "ВЧ-блок",   16,   1, vch_mps4, 1)
-    MAGX_MPS20_CEAC124_LINE(ic_ring_kls_sol_c3, `"Катушки 3,2"', "ВЧ-блок",   12.5, 1, vch_mps3, 1)
-    MAGX_MPS20_CEAC124_LINE(ic_ring_kls_sol_c1, `"Катушка 1"',   "ВЧ-блок",   9.5,  1, vch_mps1, 1)
+grouping main RINGRF_grouping "ВЧ-система" lrtb "" \
+        content:2 {
+    container kurkin "Rezonator" grid "nocoltitles" base:rezonator \
+            ncols:2 nattl:3 content:eval(3+9*2) {
+
+        disp   ilk       "!"   led color=red       r:ilk        tip:"Interlock!"
+        disp   rez_state "R_S" text dpyfmt:"%3.0f" r:vdev_state
+        button rst       "R"   button              r:reset_state
+
+        RGSWCH(onoff, "", Off, On, is_on, switch_off, switch_on)
+        disp rdy   "Rdy"   led shape=circle,offcol=red r:is_ready
+
+        knob Uset  "Uset"  text "" kV     %4.2f uset
+        disp Umes  "Umes"  text "" kV     %4.2f umes
+
+        knob Iexc  "Iexc"  text "" A      %4.2f iexc
+        disp Imes  "Imes"  text "" A      %4.2f imes
+
+        knob Finj  "Finj"  text "" "\xb0" %4.2f finj
+        disp Fmes  "Fmes"  text "" "\xb0" %4.2f fmes
+
+        noop - "\r1" hlabel
+        noop - "\r2" hlabel
+
+        disp Bias1 "Bias"  text "" A      %4.2f bias1
+        disp Bias2 ""      text "" A      %4.2f bias2
+
+        disp Incd1 "Pad"   text "" V      %4.2f uincd1
+        disp Incd2 ""      text "" V      %4.2f uincd2
+
+        disp Refl1 "Otr"   text "" V      %4.2f urefl1
+        disp Refl2 ""      text "" V      %4.2f urefl2
+
+        disp KSV1  "KSV"   text "" ""     %5.3f \
+                "_all_code;
+                 getchan Uincd1; getchan Urefl1; add;
+                 getchan Uincd1; getchan Urefl1; sub;
+                 div; ret"
+        disp KSV2  ""      text "" ""     %5.3f \
+                "_all_code;
+                 getchan Uincd2; getchan Urefl2; add;
+                 getchan Uincd2; getchan Urefl2; sub;
+                 div; ret"
+    }
+    container ":" "" canvas nodecor base:rez208 content:1 {
+        include(`cac208.subsys')
+    }
 }

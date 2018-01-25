@@ -1,9 +1,11 @@
-SRVHOSTS=	linac1 ring1 foxy v2k-k500-1 vepp4-pult6 \
+SRVHOSTS=	linac1 ring1 cxhw canhw foxy v2k-k500-1 vepp4-pult6 \
 		rack0 rack1
-CLNHOSTS=	linac3 worker1 camilla2 io io2 vepp4-pult6
+CLNHOSTS=	linac3 worker1 camilla2 io io2 vepp4-pult6 PULT
 
 linac1_SERVERS=		11 13 14 15 16 17 18 19 22
 ring1_SERVERS=		12 21
+cxhw_SERVERS=		15 16 17 18
+canhw_SERVERS=		11 12 13 14 19 21 22
 foxy_SERVERS=		20
 v2k-k500-1_SERVERS=	23
 vepp4-pult6_SERVERS=	0 2

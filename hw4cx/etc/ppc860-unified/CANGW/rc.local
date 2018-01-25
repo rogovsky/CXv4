@@ -1,0 +1,11 @@
+#!/bin/sh
+# Note:
+#     This file is designed to be called from mounthost.sh
+
+echo "Starting CAN gateway..."
+/usr/bin/can4lgw &
+
+sleep 2
+
+echo "Starting canserver"
+$HOMEDIR/v4c4lcanserver 8002 -d -e disable_log_frame >/dev/null 2>/dev/null &

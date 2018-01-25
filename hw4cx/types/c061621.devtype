@@ -1,5 +1,6 @@
 devtype c061621 r1i4096,r9i,w20i,r19i,r1t20 {
 	data		0
+	marker		9	# Note: just for compatibility with others
 
 	shot		10
 	stop		11

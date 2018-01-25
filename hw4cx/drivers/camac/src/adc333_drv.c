@@ -222,11 +222,6 @@ static int   InitParams(pzframe_drv_t *pdr)
 
   int               n;
 
-    for (n = 0;  n < countof(chinfo);  n++)
-        if (chinfo[n].chtype == PZFRAME_CHTYPE_AUTOUPDATED  ||
-            chinfo[n].chtype == PZFRAME_CHTYPE_STATUS)
-            SetChanReturnType(me->devid, n, 1, IS_AUTOUPDATED_TRUSTED);
-
     Init1Param(me, ADC333_CHAN_PTSOFS, 0);
     Init1Param(me, ADC333_CHAN_NUMPTS, 1024);
     Init1Param(me, ADC333_CHAN_TIMING, ADC333_T_500NS);

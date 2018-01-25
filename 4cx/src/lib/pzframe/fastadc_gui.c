@@ -49,7 +49,7 @@ static void UpdateRepers(fastadc_gui_t *gui)
         is_r = nr < FASTADC_GUI_2_REPERS;
         x = gui->rpr_at[nr];
 
-        rpr_xs[nr] = is_r? atd->x2xs(gui->a.pfr.cur_data, x)
+        rpr_xs[nr] = is_r? FastadcDataX2XS(&(gui->a.mes), x)
                          : rpr_xs[1] - rpr_xs[0];
         snprintf(buf, sizeof(buf), "%c:%d%s",
                  is_r? '1' + nr : 'd',
@@ -283,7 +283,7 @@ static Widget fastadc_gui_mkstdctl (pzframe_gui_t *pzframe_gui,
     else if (kind == FASTADC_GUI_CTL_REPER_TIME)
     {
         sprintf(spec, "1:%d%s",
-                atd->x2xs(gui->a.pfr.cur_data, atd->max_numpts - 1) + 1, atd->xs);
+                FastadcDataX2XS(&(gui->a.mes), atd->max_numpts - 1) + 1, atd->xs);
         return gui->rpr_time[nr] =
             XtVaCreateManagedWidget("text_o", xmTextWidgetClass, parent,
                                     XmNcolumns,               strlen(spec) + 1,
@@ -417,7 +417,8 @@ static int         gui_x2xs   (void *privptr, int x)
 {
   fastadc_gui_t *gui = privptr;
 
-    return gui->a.atd->x2xs(gui->a.pfr.cur_data, x);
+    return FastadcDataX2XS(&(gui->a.mes), x);
+//    return gui->a.atd->x2xs(gui->a.pfr.cur_data, x);
 }
 
 static const char *gui_xs     (void *privptr)

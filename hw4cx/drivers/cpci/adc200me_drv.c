@@ -213,8 +213,8 @@ static psp_paramdescr_t adc200me_params[] =
     PSP_P_FLAG  ("calcs",    adc200me_privrec_t, nxt_args[ADC200ME_CHAN_CALC_STATS], 1, 0),
     PSP_P_FLAG  ("nocalcs",  adc200me_privrec_t, nxt_args[ADC200ME_CHAN_CALC_STATS], 0, 1),
 
-    PSP_P_FLAG("notiming", adc200me_privrec_t, timing_alwd, 0, 1),
-    PSP_P_FLAG("timing",   adc200me_privrec_t, timing_alwd, 1, 0),
+    PSP_P_FLAG("fbd_timing", adc200me_privrec_t, timing_alwd, 0, 1),
+    PSP_P_FLAG("alw_timing", adc200me_privrec_t, timing_alwd, 1, 0),
     PSP_P_END()
 };
 
@@ -339,11 +339,6 @@ static int   InitParams(pzframe_drv_t *pdr)
 
   int                 n;
   int32               saved_data[SAVED_DATA_COUNT];
-
-    for (n = 0;  n < countof(chinfo);  n++)
-        if (chinfo[n].chtype == PZFRAME_CHTYPE_AUTOUPDATED  ||
-            chinfo[n].chtype == PZFRAME_CHTYPE_STATUS)
-            SetChanReturnType(me->devid, n, 1, IS_AUTOUPDATED_TRUSTED);
 
     /* HLT device first */
     me->lvmt->WriteBar0(me->handle, ADC200ME_REG_CSR,  ADC200ME_CSR_HLT);

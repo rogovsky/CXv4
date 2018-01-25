@@ -1,6 +1,7 @@
 FASTADCS=	adc200me adc812me \
 		adc200 adc502 adc333 adc4 c061621 \
-		vsdc2_1 vsdc2_2
+		vsdc2_1 vsdc2_2 \
+		adc4x250 #adc1000
 VCAMIMGS=	ottcam
 WIREBPMS=	u0632
 
@@ -21,6 +22,8 @@ adc4_COMPONENTS=	$(call DEVNNN_FILES_F,adc4)
 c061621_COMPONENTS=	$(call DEVNNN_FILES_F,c061621)
 vsdc2_2_COMPONENTS=	$(call DEVNNN_FILES_F,vsdc2_2)
 vsdc2_1_COMPONENTS=	$(call DEVNNN_FILES_F,vsdc2_1)
+adc4x250_COMPONENTS=	$(call DEVNNN_FILES_F,adc4x250)
+adc1000_COMPONENTS=	$(call DEVNNN_FILES_F,adc1000)
 # CCDs
 ottcam_COMPONENTS=	$(call DEVNNN_FILES_F,ottcam)
 # Misc

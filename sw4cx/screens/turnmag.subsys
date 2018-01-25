@@ -3,7 +3,7 @@ winname   main turnmag
 winclass  main TurnMag
 winopts   main nostatusline
 wintitle  main "Turning Magnet"
-defserver ring1:21.turnmag
+defserver canhw:21.turnmag
 
 grouping  main TurnMag "Turning Magnet" lrtb content:2 {
     container control "Control" grid notitle,noshadow,nocoltitles \

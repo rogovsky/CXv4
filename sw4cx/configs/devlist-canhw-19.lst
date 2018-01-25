@@ -1,0 +1,13 @@
+# :19 -- linac/ring RF system
+#### 0. Includes #####################################################
+include(`cac208.devtype')
+include(`kurrez_cac208.devtype')
+
+#### 1. Hardware #####################################################  
+
+# Rezonator
+dev rez208 cac208/remdrv ~ 0,23 b:cangw-rst1:8002
+
+#### 2. Cpoints and virtual hardware #################################
+
+dev rezonator kurrez_cac208 ~ - rez208

@@ -1,7 +1,7 @@
 include(`subsys_magx_macros.m4')
 
 sysname ringmag
-defserver ring1:12
+defserver canhw:12
 wintitle main "Магнитная система накопителя"
 winname  main ringmag
 winclass main RingMag

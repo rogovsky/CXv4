@@ -34,7 +34,7 @@ static void refs_evproc(int            devid,
     cda_get_ref_dval(ref, me->vals + x, NULL, NULL, me->rfls + x, NULL);
 
     val = me->vals[0] + me->vals[1];
-    rfl = me->rfls[0] + me->rfls[1];
+    rfl = me->rfls[0] | me->rfls[1];
     ReturnDataSet(devid, 1, 
                   &n0, &dt_double, &nel1,
                   &val_p, &rfl, NULL);

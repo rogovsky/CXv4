@@ -75,4 +75,4 @@ defserver     v2k-k500-1:23
 wintitle main "K500 GID25s"
 winname  main k500gid25s
 winclass main K500GID25s
-winopts  main "maxitoolbar,with_save_btn,with_load_btn"
+#winopts  main "maxitoolbar,with_save_btn,with_load_btn"

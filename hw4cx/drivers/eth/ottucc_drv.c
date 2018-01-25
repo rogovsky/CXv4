@@ -34,6 +34,22 @@ enum
     UCCRPY_ERRS = 0x53727265, // "errS"
 };
 
+enum
+{
+    ALIVE_USECS = 10*1000000,     // 10s keepalive ping period
+};
+
+enum
+{
+    UCCRQH_SIZE = 20, /*!!!*/
+};
+typedef struct
+{
+    uint8 b[UCCRQH_SIZE];
+} ottucc_rqh_t;
+
+enum {DEFAULT_OTTUCC_PORT = 4001};
+
 typedef int16 OTTUCC_DATUM_T;
 enum         {OTTUCC_DTYPE = CXDTYPE_INT16};
 
@@ -65,35 +81,35 @@ typedef struct
 static pzframe_chinfo_t chinfo[] =
 {
     /* data */
-    [OTTCAM_CHAN_DATA]          = {PZFRAME_CHTYPE_BIGC,        0},
+    [OTTUCC_CHAN_DATA]          = {PZFRAME_CHTYPE_BIGC,        0},
 
     /* controls */
-    [OTTCAM_CHAN_SHOT]          = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
-    [OTTCAM_CHAN_ISTART]        = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
-    [OTTCAM_CHAN_WAITTIME]      = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
-    [OTTCAM_CHAN_STOP]          = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
+    [OTTUCC_CHAN_SHOT]          = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
+    [OTTUCC_CHAN_ISTART]        = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
+    [OTTUCC_CHAN_WAITTIME]      = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
+    [OTTUCC_CHAN_STOP]          = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
 
-    [OTTCAM_CHAN_X]             = {PZFRAME_CHTYPE_VALIDATE,    0},
-    [OTTCAM_CHAN_Y]             = {PZFRAME_CHTYPE_VALIDATE,    0},
-    [OTTCAM_CHAN_W]             = {PZFRAME_CHTYPE_VALIDATE,    0},
-    [OTTCAM_CHAN_H]             = {PZFRAME_CHTYPE_VALIDATE,    0},
-    [OTTCAM_CHAN_K]             = {PZFRAME_CHTYPE_VALIDATE,    0},
-    [OTTCAM_CHAN_T]             = {PZFRAME_CHTYPE_VALIDATE,    0},
-    [OTTCAM_CHAN_SYNC]          = {PZFRAME_CHTYPE_VALIDATE,    0},
-    [OTTCAM_CHAN_RRQ_MSECS]     = {PZFRAME_CHTYPE_VALIDATE,    0},
+    [OTTUCC_CHAN_X]             = {PZFRAME_CHTYPE_VALIDATE,    0},
+    [OTTUCC_CHAN_Y]             = {PZFRAME_CHTYPE_VALIDATE,    0},
+    [OTTUCC_CHAN_W]             = {PZFRAME_CHTYPE_VALIDATE,    0},
+    [OTTUCC_CHAN_H]             = {PZFRAME_CHTYPE_VALIDATE,    0},
+    [OTTUCC_CHAN_K]             = {PZFRAME_CHTYPE_VALIDATE,    0},
+    [OTTUCC_CHAN_T]             = {PZFRAME_CHTYPE_VALIDATE,    0},
+    [OTTUCC_CHAN_SYNC]          = {PZFRAME_CHTYPE_VALIDATE,    0},
+    [OTTUCC_CHAN_RRQ_MSECS]     = {PZFRAME_CHTYPE_VALIDATE,    0},
 
     /* status */
-    [OTTCAM_CHAN_MISS]          = {PZFRAME_CHTYPE_STATUS,      -1},
-    [OTTCAM_CHAN_ELAPSED]       = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
+    [OTTUCC_CHAN_MISS]          = {PZFRAME_CHTYPE_STATUS,      -1},
+    [OTTUCC_CHAN_ELAPSED]       = {PZFRAME_CHTYPE_PZFRAME_STD, 0},
 
-    [OTTCAM_CHAN_CUR_X]         = {PZFRAME_CHTYPE_STATUS,      OTTCAM_CHAN_X},
-    [OTTCAM_CHAN_CUR_Y]         = {PZFRAME_CHTYPE_STATUS,      OTTCAM_CHAN_Y},
-    [OTTCAM_CHAN_CUR_W]         = {PZFRAME_CHTYPE_STATUS,      OTTCAM_CHAN_W},
-    [OTTCAM_CHAN_CUR_H]         = {PZFRAME_CHTYPE_STATUS,      OTTCAM_CHAN_H},
-    [OTTCAM_CHAN_CUR_K]         = {PZFRAME_CHTYPE_STATUS,      OTTCAM_CHAN_K},
-    [OTTCAM_CHAN_CUR_T]         = {PZFRAME_CHTYPE_STATUS,      OTTCAM_CHAN_T},
-    [OTTCAM_CHAN_CUR_SYNC]      = {PZFRAME_CHTYPE_STATUS,      OTTCAM_CHAN_SYNC},
-    [OTTCAM_CHAN_CUR_RRQ_MSECS] = {PZFRAME_CHTYPE_STATUS,      OTTCAM_CHAN_RRQ_MSECS},
+    [OTTUCC_CHAN_CUR_X]         = {PZFRAME_CHTYPE_STATUS,      OTTUCC_CHAN_X},
+    [OTTUCC_CHAN_CUR_Y]         = {PZFRAME_CHTYPE_STATUS,      OTTUCC_CHAN_Y},
+    [OTTUCC_CHAN_CUR_W]         = {PZFRAME_CHTYPE_STATUS,      OTTUCC_CHAN_W},
+    [OTTUCC_CHAN_CUR_H]         = {PZFRAME_CHTYPE_STATUS,      OTTUCC_CHAN_H},
+    [OTTUCC_CHAN_CUR_K]         = {PZFRAME_CHTYPE_STATUS,      OTTUCC_CHAN_K},
+    [OTTUCC_CHAN_CUR_T]         = {PZFRAME_CHTYPE_STATUS,      OTTUCC_CHAN_T},
+    [OTTUCC_CHAN_CUR_SYNC]      = {PZFRAME_CHTYPE_STATUS,      OTTUCC_CHAN_SYNC},
+    [OTTUCC_CHAN_CUR_RRQ_MSECS] = {PZFRAME_CHTYPE_STATUS,      OTTUCC_CHAN_RRQ_MSECS},
 };
 
 //--------------------------------------------------------------------
@@ -112,10 +128,10 @@ typedef struct
     int               fd;
     int               is_sim;
 
-    int32             cur_args[OTTCAM_NUMCHANS];
-    int32             nxt_args[OTTCAM_NUMCHANS];
-    int32             prv_args[OTTCAM_NUMCHANS];
-    OTTCAM_DATUM_T    retdata[OTTCAM_MAX_W * OTTCAM_MAX_H];
+    int32             cur_args[OTTUCC_NUMCHANS];
+    int32             nxt_args[OTTUCC_NUMCHANS];
+    int32             prv_args[OTTUCC_NUMCHANS];
+    OTTUCC_DATUM_T    retdata[OTTUCC_MAX_W * OTTUCC_MAX_H];
 
     //// For simulation
     int               sim_x;
@@ -131,7 +147,7 @@ typedef struct
     int               rrq_rest;
     sl_tid_t          rrq_tid;
     int               smth_rcvd;
-    uint8             is_rcvd[OTTCAM_MAX_H];
+    uint8             is_rcvd[OTTUCC_MAX_H];
 
     ////
     sq_q_t            q;
@@ -143,27 +159,27 @@ typedef struct
     int                data_rqd;
     struct
     {
-        int            addrs [OTTCAM_NUMCHANS];
-        cxdtype_t      dtypes[OTTCAM_NUMCHANS];
-        int            nelems[OTTCAM_NUMCHANS];
-        void          *val_ps[OTTCAM_NUMCHANS];
-        rflags_t       rflags[OTTCAM_NUMCHANS];
+        int            addrs [OTTUCC_NUMCHANS];
+        cxdtype_t      dtypes[OTTUCC_NUMCHANS];
+        int            nelems[OTTUCC_NUMCHANS];
+        void          *val_ps[OTTUCC_NUMCHANS];
+        rflags_t       rflags[OTTUCC_NUMCHANS];
     }                  r;
-} ottcam_privrec_t;
+} ottucc_privrec_t;
 
-#define PDR2ME(pdr) ((ottcam_privrec_t*)pdr) //!!! Should better sufbtract offsetof(pz)
+#define PDR2ME(pdr) ((ottucc_privrec_t*)pdr) //!!! Should better sufbtract offsetof(pz)
 
-static int GET_RRQ_USECS(ottcam_privrec_t *me)
+static int GET_RRQ_USECS(ottucc_privrec_t *me)
 {
   int  ret;
 
-    ret = me->cur_args[OTTCAM_CHAN_RRQ_MSECS] * 1000;
+    ret = me->cur_args[OTTUCC_CHAN_RRQ_MSECS] * 1000;
     if (ret <= 0) ret = RRQ_USECS;
 
     return ret;
 }
 
-static inline void DropRrqTout(ottcam_privrec_t *me)
+static inline void DropRrqTout(ottucc_privrec_t *me)
 {
     if (me->rrq_tid >= 0)
     {
@@ -172,17 +188,17 @@ static inline void DropRrqTout(ottcam_privrec_t *me)
     }
 }
 
-static void SendReset(ottcam_privrec_t *me)
+static void SendReset(ottucc_privrec_t *me)
 {
 }
 
 //////////////////////////////////////////////////////////////////////
 
-static int  ottcam_sender     (void *elem, void *devptr)
+static int  ottucc_sender     (void *elem, void *devptr)
 {
-  ottcam_privrec_t *me = devptr;
+  ottucc_privrec_t *me = devptr;
   uccqelem_t       *qe = elem;
-//  ottcam_hdr_t      hdr;
+  ottucc_rqh_t      hdr;
   int               r;
 
 //    hdr.id   = htonl(qe->hdr.id);
@@ -195,7 +211,7 @@ static int  ottcam_sender     (void *elem, void *devptr)
     return r > 0? 0 : -1;
 }
 
-static int  ottcam_eq_cmp_func(void *elem, void *ptr)
+static int  ottucc_eq_cmp_func(void *elem, void *ptr)
 {
   ottucc_req_t *a = &(((uccqelem_t *)elem)->req);
   ottucc_req_t *b = &(((uccqelem_t *)ptr )->req);
@@ -207,7 +223,7 @@ static void tout_proc   (int devid, void *devptr,
                          sl_tid_t tid,
                          void *privptr)
 {
-  ottcam_privrec_t *me = devptr;
+  ottucc_privrec_t *me = devptr;
   
     me->sq_tid = -1;
     sq_timeout(&(me->q));
@@ -215,7 +231,7 @@ static void tout_proc   (int devid, void *devptr,
 
 static int  tim_enqueuer(void *devptr, int usecs)
 {
-  ottcam_privrec_t *me = devptr;
+  ottucc_privrec_t *me = devptr;
 
 ////fprintf(stderr, "%s(%d)\n", __FUNCTION__, usecs);
     if (me->sq_tid >= 0)
@@ -229,7 +245,7 @@ static int  tim_enqueuer(void *devptr, int usecs)
 
 static void tim_dequeuer(void *devptr)
 {
-  ottcam_privrec_t  *me = devptr;
+  ottucc_privrec_t  *me = devptr;
   
     if (me->sq_tid >= 0)
     {
@@ -238,6 +254,191 @@ static void tim_dequeuer(void *devptr)
     }
 }
 
+static sq_status_t enq_pkt(ottucc_privrec_t *me)
+{
+}
+
+static sq_status_t esn_pkt(ottucc_privrec_t *me)
+{
+}
+
+//////////////////////////////////////////////////////////////////////
+
+static int32 ValidateParam(pzframe_drv_t *pdr, int n, int32 v)
+{
+  ottucc_privrec_t *me = PDR2ME(pdr);
+
+    return v;
+}
+
+static void  InitParams(pzframe_drv_t *pdr)
+{   
+  ottucc_privrec_t *me = PDR2ME(pdr);
+
+  int               n;
+
+    for (n = 0;  n < countof(chinfo);  n++)
+        if (chinfo[n].chtype == PZFRAME_CHTYPE_AUTOUPDATED  ||
+            chinfo[n].chtype == PZFRAME_CHTYPE_STATUS)
+            SetChanReturnType(me->devid, n, 1, IS_AUTOUPDATED_TRUSTED);
+}
+
+static int  StartMeasurements(pzframe_drv_t *pdr)
+{
+  ottucc_privrec_t *me = PDR2ME(pdr);
+
+    /* "Actualize" requested parameters */
+    memcpy(me->cur_args, me->nxt_args, sizeof(me->cur_args));
+    return PZFRAME_R_DOING;
+}
+
+static int  TrggrMeasurements(pzframe_drv_t *pdr)
+{
+  ottucc_privrec_t *me = PDR2ME(pdr);
+
+    return PZFRAME_R_DOING;
+}
+
+static int  AbortMeasurements(pzframe_drv_t *pdr)
+{
+  ottucc_privrec_t *me = PDR2ME(pdr);
+
+    sq_clear(&(me->q));
+    SendReset(me);
+    me->state = STATE_READY;
+    DropRrqTout(me);
+
+    return PZFRAME_R_READY;
+}
+
+static rflags_t ReadMeasurements(pzframe_drv_t *pdr)
+{
+  ottucc_privrec_t *me = PDR2ME(pdr);
+
+    /* In fact, at this point data is always ready (to some extent) */
+    me->state = STATE_READY;
+    DropRrqTout(me);
+
+    return 0;
+}
+
+static void PrepareRetbufs     (pzframe_drv_t *pdr, rflags_t add_rflags)
+{
+  ottucc_privrec_t *me = PDR2ME(pdr);
+  int               l;
+
+  int               n;
+  int               x;
+
+}
+
+static void ottucc_fd_p(int devid, void *devptr,
+                        sl_fdh_t fdhandle, int fd, int mask,
+                        void *privptr)
+{
+}
+
+static void ottucc_alv(int devid, void *devptr,
+                       sl_tid_t tid,
+                       void *privptr)
+{
+  ottucc_privrec_t   *me = (ottucc_privrec_t *) devptr;
+//  ottcam_hdr_t        hdr;
+  int                 r;
+
+    me->alv_tid = sl_enq_tout_after(me->devid, devptr, ALIVE_USECS, ottucc_alv, NULL);
+
+    if (1)
+    {
+//        hdr.id   = htonl(OTTREQ_COMM);
+//        hdr.seq  = htons(me->curframe);
+//        hdr.cmd  = htons(OTTPING_CMD);
+//        hdr.par1 = htons(OTTPING_REG);
+//        r = send(me->fd, &hdr, sizeof(hdr), 0);
+    }
+}
+
+//////////////////////////////////////////////////////////////////////
+
+enum
+{
+    SIMSQ_W = 60,
+    SIMSQ_H = 50,
+    SIM_PERIOD = 200*1000, // 200ms
+    SIMFR_W = OTTUCC_MIN_W,
+    SIMFR_H = OTTUCC_MIN_H,
+};
+
+static void sim_heartbeat(int devid, void *devptr,
+                          sl_tid_t tid,
+                          void *privptr)
+{
+  ottucc_privrec_t *me = (ottucc_privrec_t *) devptr;
+  int               x;
+  int               y;
+  OTTUCC_DATUM_T   *p;
+  pzframe_drv_t    *pdr;
+
+    me->sq_tid = -1;
+
+    memcpy(me->cur_args, me->nxt_args, sizeof(me->cur_args));
+  
+    me->cur_args[OTTUCC_CHAN_X]    = 0;
+    me->cur_args[OTTUCC_CHAN_Y]    = 0;
+    me->cur_args[OTTUCC_CHAN_W]    = SIMFR_W;
+    me->cur_args[OTTUCC_CHAN_H]    = SIMFR_H;
+    me->cur_args[OTTUCC_CHAN_MISS] = 0;
+
+    me->sim_x += me->sim_vx;
+    me->sim_y += me->sim_vy;
+
+    if (me->sim_x < 0)
+    {
+        me->sim_x  = -me->sim_x;
+        me->sim_vx = -me->sim_vx;
+    }
+    if (me->sim_y < 0)
+    {
+        me->sim_y  = -me->sim_y;
+        me->sim_vy = -me->sim_vy;
+    }
+    if (me->sim_x > SIMFR_W-SIMSQ_W)
+    {
+        me->sim_x  = (SIMFR_W-SIMSQ_W) - (me->sim_x - (SIMFR_W-SIMSQ_W));
+        me->sim_vx = -me->sim_vx;
+    }
+    if (me->sim_y > SIMFR_H-SIMSQ_H)
+    {
+        me->sim_y  = (SIMFR_H-SIMSQ_H) - (me->sim_y - (SIMFR_H-SIMSQ_H));
+        me->sim_vy = -me->sim_vy;
+    }
+
+    bzero(me->retdata, sizeof(me->retdata[0] * SIMFR_W * SIMFR_H));
+    for (y = 0;  y < SIMSQ_H;  y++)
+        for (x = 0,  p = me->retdata + (me->sim_y + y) * SIMFR_W + me->sim_x;
+             x < SIMSQ_W;
+             x++,    p++)
+            *p = (me->cur_args[OTTUCC_CHAN_T] +
+                  me->cur_args[OTTUCC_CHAN_K] +
+                  x * 4 + y * 4) & 1023;
+
+#if 1 /*!!! No simulation for now... */
+    me->data_rqd = 1;
+    pdr = &(me->pz);
+    PrepareRetbufs(pdr, 0);
+    ReturnDataSet(devid,
+                  pdr->retbufs.count,
+                  pdr->retbufs.addrs,  pdr->retbufs.dtypes, pdr->retbufs.nelems,
+                  pdr->retbufs.values, pdr->retbufs.rflags, pdr->retbufs.timestamps);
+//    ReturnBigc(devid, 0, me->cur_args, OTTUCC_NUM_PARAMS,
+//               me->retdata, sizeof(me->retdata), OTTUCC_DATAUNITS,
+//               0);
+#endif
+    
+    me->sq_tid = sl_enq_tout_after(devid, devptr, SIM_PERIOD, sim_heartbeat, NULL);
+}
+
+//////////////////////////////////////////////////////////////////////
 
 static int ottucc_init_d(int devid, void *devptr, 
                          int businfocount, int businfo[],
@@ -342,7 +543,7 @@ static int ottucc_init_d(int devid, void *devptr,
 
         /* Init queue */
         r = sq_init(&(me->q), NULL,
-                    OTTUCC_SENDQ_SIZE, sizeof(ottqelem_t),
+                    OTTUCC_SENDQ_SIZE, sizeof(uccqelem_t),
                     OTTUCC_SENDQ_TOUT, me,
                     ottucc_sender,
                     ottucc_eq_cmp_func,

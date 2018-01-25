@@ -1,0 +1,5 @@
+# Note:
+#     This file is designed to be called from mounthost.sh
+
+echo "Starting rrund"
+$HOMEDIR/rrund -p 8002 $HOMEDIR/cm5307_ .drvlet -d >/dev/null 2>/dev/null &

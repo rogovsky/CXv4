@@ -1108,6 +1108,52 @@ int  cx_setmon(int cd, int count, int *hwids, int *param1s, int *param2s,
     return 0;
 }
 
+/* A carbon copy of cx_setmon() with only CXC_DELMON instead of CXC_SETMON */
+int  cx_delmon(int cd, int count, int *hwids, int *param1s, int *param2s,
+               int on_update)
+{
+  v4conn_t       *cp = AccessV4connSlot(cd);
+  int             r;
+  size_t          addsize;
+  uint8          *ptr;
+  CxV4MonitorChunk *mnrq;
+  int             cn;
+
+    if ((r = CheckCd(cd, CS_CHUNKING)) != 0) return r;
+
+    if (count == 0) return 0;
+    if (count <  0) return -1;
+    if (count > 1000000) /* An arbitrary limit. */
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    addsize = CXV4_CHUNK_CEIL(sizeof(*mnrq)) * count;
+    if (GrowSendBuf(cp, cp->sendbuf->DataSize + addsize) != 0) return -1;
+
+    ptr = cp->sendbuf->data + cp->sendbuf->DataSize;
+    bzero(ptr, addsize);
+
+    cp->sendbuf->DataSize += addsize;
+    cp->sendbuf->NumChunks+= count;
+
+    for (cn = 0;  cn < count;  cn++, ptr += mnrq->ck.ByteSize)
+    {
+        mnrq = ptr;
+        mnrq->ck.OpCode      = CXC_DELMON;
+        mnrq->ck.ByteSize    = CXV4_CHUNK_CEIL(sizeof(*mnrq));
+        mnrq->ck.param1      = (param1s != NULL)? param1s[cn] : 0;
+        mnrq->ck.param2      = (param2s != NULL)? param2s[cn] : 0;
+        mnrq->cpid           = hwids  [cn];
+        mnrq->dtype_and_cond = (CXDTYPE_UNKNOWN) |
+                               ((on_update? CX_MON_COND_ON_UPDATE
+                                          : CX_MON_COND_ON_CYCLE) << 8);
+    }
+
+    return 0;
+}
+
 static int do_rq_read(int OpCode,
                       int cd, int count, int *hwids, int *param1s, int *param2s)
 {

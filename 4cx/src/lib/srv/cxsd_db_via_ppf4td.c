@@ -453,10 +453,10 @@ static int dev_parser(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db)
         if (GetToken(argv0, ctx, tokbuf, sizeof(tokbuf), loc) < 0)
             return -1;
         
-        /* "-" means "no channels" */
+        /* "-" means "no bus info" */
         if (dline.businfocount == 0  &&  strcmp(tokbuf, "-") == 0) break;
         
-        dline.businfo[dline.businfocount] = strtol(tokbuf, &endptr, 10);
+        dline.businfo[dline.businfocount] = strtol(tokbuf, &endptr, 0);
         if (endptr == tokbuf  ||  *endptr != '\0')
             return BARK("invalid bus-id-%d specification \"%s\"",
                         dline.businfocount, tokbuf);
@@ -1305,7 +1305,7 @@ static int layerinfo_parser(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db)
         ppf4td_nextc(ctx, &ch);
         if (ParseAName(argv0, ctx, "bus-number",
                        numbuf, sizeof(numbuf)) < 0) return -1;
-        bus_n = strtol(numbuf, &endptr, 10);
+        bus_n = strtol(numbuf, &endptr, 0);
         if (endptr == numbuf  ||  *endptr != '\0')
             return BARK("invalid bus-number specification \"%s\"", numbuf);
     }

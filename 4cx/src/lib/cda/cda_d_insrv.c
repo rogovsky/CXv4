@@ -56,21 +56,29 @@ static int        lcns_list_allocd;
 
 //--------------------------------------------------------------------
 
+static void InsrvCycleEvproc(int   uniq,
+                             void *privptr1,
+                             int   reason,
+                             void *privptr2);
+
 // GetLcnSlot()
 GENERIC_SLOTARRAY_DEFINE_GROWING(static, Lcn, lcninfo_t,
                                  lcns, fd, LCN_VAL_UNUSED, LCN_VAL_USED,
-                                 0, 2, 0,
+                                 LCN_MIN_VAL, LCN_ALLOC_INC, LCN_MAX_COUNT,
                                  , , void)
 
+static void UnRegisterInsrvSid(insrv_lcn_t lcn); /*!!! BAD-BAD-BAD!!!*/
 static void RlsLcnSlot(int n)
 {
   lcninfo_t *p = AccessLcnSlot(n);
 
+    CxsdHwDelCycleEvproc(p->uniq, NULL, InsrvCycleEvproc, lint2ptr(n));
     if (p->fd > 0)        close          (p->fd);
     if (p->iohandle >= 0) fdio_deregister(p->iohandle);
     safe_free(p->periodics);
 
     p->fd = LCN_VAL_UNUSED;
+    UnRegisterInsrvSid(n);
 }
 
 //#### Internal API ##################################################
@@ -100,7 +108,7 @@ static void InsrvCycleEvproc(int   uniq,
     else if (reason == CXSD_HW_CYCLE_R_END)
         fdio_send(p->iohandle, &val_cycle, sizeof(val_cycle));
 }
-static int RegisterInsrvSid(int uniq, int fd)
+static int  RegisterInsrvSid  (int uniq, int fd)
 {
   insrv_lcn_t  lcn;
   lcninfo_t   *p;
@@ -125,10 +133,23 @@ static int RegisterInsrvSid(int uniq, int fd)
     }
     p->uniq     = uniq;
 
-    CxsdHwAddCycleEvproc(uniq, NULL, InsrvCycleEvproc, lint2ptr(lcn));
+    CxsdHwAddCycleEvproc(   uniq, NULL, InsrvCycleEvproc, lint2ptr(lcn));
     
     return lcn;
 }
+
+static void UnRegisterInsrvSid(insrv_lcn_t lcn)
+{
+  lcninfo_t   *p;
+
+    p = AccessLcnSlot(lcn);
+    CxsdHwDelCycleEvproc(p->uniq, NULL, InsrvCycleEvproc, lint2ptr(lcn));
+}
+
+enum {GCN_EVMASK = CXSD_HW_CHAN_EVMASK_UPDATE   |
+                   CXSD_HW_CHAN_EVMASK_STRSCHG  |
+                   CXSD_HW_CHAN_EVMASK_RDSCHG   |
+                   CXSD_HW_CHAN_EVMASK_FRESHCHG};
 
 static void GcnEvproc(int            uniq,
                       void          *privptr1,
@@ -162,8 +183,8 @@ static void GcnEvproc(int            uniq,
         fdio_send(p->iohandle, to_send,   sizeof(to_send));
     }
 }
-static int RegisterInsrvHwr(insrv_lcn_t    lcn,
-                            cxsd_gchnid_t  gcid, cda_hwcnref_t  client_hwr)
+static int  RegisterInsrvHwr  (insrv_lcn_t    lcn,
+                               cxsd_gchnid_t  gcid, cda_hwcnref_t  client_hwr)
 {
   lcninfo_t     *p          = AccessLcnSlot(lcn);
   cxsd_gchnid_t *new_periodics;
@@ -172,10 +193,7 @@ static int RegisterInsrvHwr(insrv_lcn_t    lcn,
 
     CxsdHwAddChanEvproc(p->uniq, lint2ptr(lcn),
                         gcid,
-                        CXSD_HW_CHAN_EVMASK_UPDATE       |
-                            CXSD_HW_CHAN_EVMASK_STRSCHG  |
-                            CXSD_HW_CHAN_EVMASK_RDSCHG   |
-                            CXSD_HW_CHAN_EVMASK_FRESHCHG,
+                        GCN_EVMASK,
                         GcnEvproc, lint2ptr(client_hwr));
 
     if (p->periodics_used >= p->periodics_allocd)
@@ -184,11 +202,23 @@ static int RegisterInsrvHwr(insrv_lcn_t    lcn,
             safe_realloc(p->periodics,
                          sizeof(*new_periodics) * (p->periodics_allocd + CHANS_ALLOC_INCREMENT));
         if (new_periodics == NULL) return 0; /*!!! In fact, an error! */
-        p->periodics = new_periodics;
+        p->periodics         = new_periodics;
+        p->periodics_allocd += CHANS_ALLOC_INCREMENT;
     }
     p->periodics[p->periodics_used++] = gcid;
 
     return 0;
+}
+
+static void UnRegisterInsrvHwr(insrv_lcn_t    lcn,
+                               cxsd_gchnid_t  gcid, cda_hwcnref_t  client_hwr)
+{
+  lcninfo_t     *p          = AccessLcnSlot(lcn);
+
+    CxsdHwDelChanEvproc(p->uniq, lint2ptr(lcn),
+                        gcid,
+                        GCN_EVMASK,
+                        GcnEvproc, lint2ptr(client_hwr));
 }
 
 //#### Data-access plugin ############################################
@@ -241,8 +271,28 @@ static void RlsHwrSlot(cda_hwcnref_t hwr, cda_d_insrv_privrec_t *me)
 
     if (hi->in_use == 0) return; /*!!! In fact, an internal error */
     hi->in_use = 0;
+    UnRegisterInsrvHwr(me->lcn, hi->gcid, hwr);
 }
 
+
+//--------------------------------------------------------------------
+
+static int DestroyInsrv_HwrIterator(hwrinfo_t *hi, void *privptr)
+{
+  cda_d_insrv_privrec_t *me  = privptr;
+  cda_hwcnref_t          hwr = hi - me->hwrs_list; /* "hi2hwr()" */
+
+    RlsHwrSlot(hwr, me);
+
+    return 0;
+}
+static void DestroyInsrvPrivrec(cda_d_insrv_privrec_t *me)
+{
+    ForeachHwrSlot(DestroyInsrv_HwrIterator, me, me); DestroyHwrSlotArray(me);
+    if (me->read_fd  >= 0)           close     (me->read_fd);  me->read_fd  = -1;
+    if (me->fdhandle >= 0)           sl_del_fd (me->fdhandle); me->fdhandle = -1;
+    if (me->lcn      >= LCN_MIN_VAL) RlsLcnSlot(me->lcn);      me->lcn      = -1;
+}
 
 //--------------------------------------------------------------------
 
@@ -300,8 +350,9 @@ static void insrv_fd_p(int uniq, void *privptr1,
                     goto END_PROCESSED;
                 }
 
-                /*!!! Check hwr */
                 hi = AccessHwrSlot(hwr, me);
+                if (hwr < 0  ||  hwr >= me->hwrs_list_allocd  ||
+                    hi->in_use == 0) goto END_PROCESSED;
                 chn_p = cxsd_hw_channels + hi->gcid;
                 if      (opcode == HWR_VAL_STRSCHG)
                 {
@@ -329,8 +380,9 @@ static void insrv_fd_p(int uniq, void *privptr1,
         }
         else
         {
-            /*!!! Check hwr */
             hi = AccessHwrSlot(hwr, me);
+            if (hwr < 0  ||  hwr >= me->hwrs_list_allocd  ||
+                hi->in_use == 0) goto END_PROCESSED;
             chn_p = cxsd_hw_channels + hi->gcid;
             cda_dat_p_update_dataset(me->sid,
                                      1, &(hi->dataref),
@@ -350,7 +402,9 @@ static void insrv_fd_p(int uniq, void *privptr1,
         me->being_processed--;
         if (me->being_processed == 0  &&  me->being_destroyed)
         {
-            /*!!!*/
+            DestroyInsrvPrivrec(me);
+            cda_dat_p_del_server_finish(me->sid);
+            return;
         }
     }
 }
@@ -388,7 +442,7 @@ static int  cda_d_insrv_new_chan(cda_dataref_t ref, const char *name,
         return CDA_DAT_P_ERROR;
     }
 
-    me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(insrv), NULL);
+    me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(insrv), NULL, CDA_DAT_P_GET_SERVER_OPT_NONE);
     if (me == NULL) return CDA_DAT_P_ERROR;
 
     hwr = GetHwrSlot(me);
@@ -440,6 +494,21 @@ static int  cda_d_insrv_new_chan(cda_dataref_t ref, const char *name,
                                                    ? 1 : 0);
 
     return CDA_DAT_P_OPERATING;
+}
+
+static void cda_d_insrv_del_chan(void *pdt_privptr, cda_hwcnref_t hwr)
+{
+  cda_d_insrv_privrec_t *me = pdt_privptr;
+  hwrinfo_t             *hi = AccessHwrSlot(hwr, me);
+
+    if (hwr < 0  ||  hwr >= me->hwrs_list_allocd  ||
+        hi->in_use == 0)
+    {
+        /*!!!Bark? */
+        return;
+    }
+
+    RlsHwrSlot(hwr, me);
 }
 
 static int  cda_d_insrv_snd_data(void *pdt_privptr, cda_hwcnref_t hwr,
@@ -502,10 +571,20 @@ static int  cda_d_insrv_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
     return CDA_DAT_P_ERROR;
 }
 
-static void cda_d_insrv_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
+static int  cda_d_insrv_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 {
   cda_d_insrv_privrec_t *me = pdt_privptr;
-  
+
+    if (me->being_processed)
+    {
+        me->being_destroyed = 1;
+        return CDA_DAT_P_DEL_SRV_DEFERRED;
+    }
+    else
+    {
+        DestroyInsrvPrivrec(me);
+        return CDA_DAT_P_DEL_SRV_SUCCESS;
+    }
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -524,6 +603,6 @@ CDA_DEFINE_DAT_PLUGIN(insrv, "Insrv (inserver) data-access plugin",
                       cda_d_insrv_init_m, cda_d_insrv_term_m,
                       sizeof(cda_d_insrv_privrec_t),
                       '.', ':', '\0',
-                      cda_d_insrv_new_chan, NULL,
+                      cda_d_insrv_new_chan, cda_d_insrv_del_chan,
                       cda_d_insrv_snd_data, NULL,
                       cda_d_insrv_new_srv,  cda_d_insrv_del_srv);

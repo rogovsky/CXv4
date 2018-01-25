@@ -1,0 +1,8 @@
+include(`cdac20.devtype')
+include(`cac208.devtype')
+include(`candac16.devtype')
+
+#dev icd cdac20@sktcankoz ~ 1,15 spd=-300000 tac=20
+#dev icd cdac20@sktcankoz ~ 1,15 spd=-1000000 tac=30
+dev icd cac208@sktcankoz ~ 1,31 spd=-1000000 tac=10
+#dev icd candac16@sktcankoz ~ 1,63 spd=-1000000 tac=10

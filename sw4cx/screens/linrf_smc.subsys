@@ -68,4 +68,4 @@ wintitle main "Linac RF Stepper Motors"
 winname  main linrf_smc
 winclass main LinRF_SMC
 winopts  main "nostatusline"
-defserver linac1:22
+defserver canhw:22
