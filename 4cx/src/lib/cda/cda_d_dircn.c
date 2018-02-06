@@ -563,8 +563,9 @@ static void PerformCycleUpdate(void *pdt_privptr)
 
 static int  cda_d_dircn_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
                                  int            uniq,
-                                 const char    *srvrspec,
-                                 const char    *argv0)
+                                 const char    *srvrspec __attribute((unused)),
+                                 const char    *argv0    __attribute((unused)),
+                                 int            srvtype  __attribute((unused)))
 {
   cda_d_dircn_privrec_t *me = pdt_privptr;
   lcninfo_t             *p;

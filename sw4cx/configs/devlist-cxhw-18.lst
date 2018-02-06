@@ -2,11 +2,20 @@ include(`adc333.devtype')
 include(`adc200.devtype')
 include(`v0308.devtype')
 include(`frolov_k4x1_2x2x1.devtype')
+include(`cac208.devtype')
 
 # Dissector
 dev bal333_1 adc333/remdrv ~ 18 b:ppc-dissector:8002
 dev bal333_2 adc333/remdrv ~ 19 b:ppc-dissector:8002 range0=off range1=off range2=off range3=8192 timing=0.5 numpts=65535
 dev bal333_3 adc333/remdrv ~ 20 b:ppc-dissector:8002
+dev diss208  cac208/remdrv ~ 0,63 b:cangw-dissector:8002
+
+cpoint e_diss.profile		bal333_2.line3
+cpoint e_diss.length		bal333_2.numpts
+cpoint e_diss.offset		bal333_2.ptsofs
+cpoint e_diss.RFampl.set	diss208.out1
+cpoint e_diss.RFphase.set	diss208.out0
+cpoint e_diss.light.swc		diss208.outrb0
 
 # Beam Loss Monitor
 dev adc200_blm1 adc200/remdrv ~ 10 b:ppc-blm:8002

@@ -7,11 +7,12 @@
 
 CDA_UTILS=		cdaclient das-experiment dataset-save
 EXES=			drvinfo ppf4td_test \
-			cxclient $(CDA_UTILS)
+			cxclient cx-chan-search $(CDA_UTILS)
 
 drvinfo_COMPONENTS=	drvinfo.o drvinfo_publics.o
 ppf4td_test_COMPONENTS=	ppf4td_test.o
 cxclient_COMPONENTS=	cxclient.o
+cx-chan-search_COMPONENTS=	cx-chan-search.o
 
 cdaclient_COMPONENTS=		cdaclient.o        console_cda_util.o
 das-experiment_COMPONENTS=	das-experiment.o   console_cda_util.o
@@ -31,6 +32,9 @@ drvinfo:		$(LIBCXSD) \
 ppf4td_test:		$(LIBUSEFUL) $(LIBMISC)
 
 cxclient:		$(LIBCX_SYNC) \
+			$(LIBUSEFUL) $(LIBCXSCHEDULER) $(LIBMISC)
+
+cx-chan-search:		$(LIBCX_SYNC) \
 			$(LIBUSEFUL) $(LIBCXSCHEDULER) $(LIBMISC)
 
 $(CDA_UTILS):		$(LIBCDA) $(LIBCX_ASYNC) \

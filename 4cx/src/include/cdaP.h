@@ -75,7 +75,8 @@ typedef int  (*cda_dat_p_lock_op_f) (void *pdt_privptr,
 typedef int  (*cda_dat_p_new_srv_f) (cda_srvconn_t  sid, void *pdt_privptr,
                                      int            uniq,
                                      const char    *srvrspec,
-                                     const char    *argv0);
+                                     const char    *argv0,
+                                     int            srvtype);
 typedef int  (*cda_dat_p_del_srv_f) (cda_srvconn_t  sid, void *pdt_privptr);
 
 

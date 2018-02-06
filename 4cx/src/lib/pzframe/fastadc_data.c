@@ -520,8 +520,8 @@ int  FastadcDataLoad       (fastadc_data_t *adc, const char *filespec)
   int          np;
   cxdtype_t    dtype;
   int          max_nelems;
-  int          ival;
-  double       fval;
+  int          ival = 0;  // Only to prevent "may be used uninitialized"
+  double       fval = 0;  // Only to prevent "may be used uninitialized"
   int          x;
   int          nl;
 

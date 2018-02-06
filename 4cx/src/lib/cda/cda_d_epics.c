@@ -99,7 +99,8 @@ static int  cda_d_epics_new_chan(cda_dataref_t ref, const char *name,
 static int  cda_d_epics_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
                                  int            uniq,
                                  const char    *srvrspec,
-                                 const char    *argv0)
+                                 const char    *argv0,
+                                 int            srvtype  __attribute((unused)))
 {
   cda_d_epics_privrec_t *me = pdt_privptr;
   int                    ec;

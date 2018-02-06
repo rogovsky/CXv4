@@ -669,6 +669,7 @@ int     CxsdDbResolveName(CxsdDb      db,
   int                    chan;
   int                    devid;
 
+////fprintf(stderr, "\t<%s>\n", name);
     /* 0. Perform checks */
 
     /* Forbid NULL names... */
@@ -704,6 +705,8 @@ int     CxsdDbResolveName(CxsdDb      db,
             last = 1;
         }
         len = dot_p - p;
+        /* Skip consecutive '.'s, if any */
+        while (dot_p[1] == '.') dot_p++;
 
         r = CxsdDbClvlFindItem(db, parent_clvl_id, p, len, &item_data);
 ////fprintf(stderr, "rslv<%.*s>, last=%d: lvlid=%d r=%d, type=%d\n", len, p, last, parent_clvl_id, r, r<0?-9:item_data.type);
@@ -788,6 +791,8 @@ int     CxsdDbResolveName(CxsdDb      db,
 
     first_dot = strchr(name, '.');
     after_d   = first_dot == NULL? NULL : first_dot + 1;
+    /* Skip consecutive '.'s, if any */
+    while (after_d != NULL  &&  *after_d == '.') after_d++;
 
     /* a. A direct reference to channel N? */
     if (only_digits(name))

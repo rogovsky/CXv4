@@ -11,7 +11,7 @@ enum
     SODC_USET,
     SODC_IEXC,
     SODC_FINJ,
-    SODC_FTUN, // Currently unused
+    SODC_POLARITY,
 
     SODC_UMES,
     SODC_IMES,
@@ -40,7 +40,7 @@ static vdev_sodc_dsc_t sodc2ourc_mapping[SUBORD_NUMCHANS] =
     [SODC_USET]       = {"out0",   VDEV_IMPR,             -1},
     [SODC_IEXC]       = {"out1",   VDEV_IMPR,             -1},
     [SODC_FINJ]       = {"out2",               VDEV_TUBE, KURREZ_CAC208_CHAN_FINJ},
-    [SODC_FTUN]       = {"out3",               VDEV_TUBE, KURREZ_CAC208_CHAN_FTUN},
+    [SODC_POLARITY]   = {"out3",   VDEV_PRIV*0+VDEV_IMPR,             -1},
 
     [SODC_UMES]       = {"adc0",               VDEV_TUBE, KURREZ_CAC208_CHAN_UMES},
     [SODC_IMES]       = {"adc1",               VDEV_TUBE, KURREZ_CAC208_CHAN_IMES},
@@ -88,7 +88,7 @@ static struct {int chn; double r;} chan_rs[] =
   {KURREZ_CAC208_CHAN_USET,       -1000000.0*(5.6/9.5)},
   {KURREZ_CAC208_CHAN_IEXC,       -1000000.0*(2.0/5.56)},
   {KURREZ_CAC208_CHAN_FINJ,       +1000000.0*(3.0/25.6)},
-  {KURREZ_CAC208_CHAN_FTUN,       +1000000.0},
+  {KURREZ_CAC208_CHAN_POLARITY,          1.0},
   {KURREZ_CAC208_CHAN_UMES,       +1000000.0*(3.35/9.5)},
   {KURREZ_CAC208_CHAN_IMES,       +1000000.0*(2.46/11.3)},
   {KURREZ_CAC208_CHAN_PWRMES,     +1000000.0*(1.0/4.0)},
@@ -103,11 +103,15 @@ static struct {int chn; double r;} chan_rs[] =
   {KURREZ_CAC208_CHAN_UINCD2,      1000000.0},
   {KURREZ_CAC208_CHAN_UREFL2,      1000000.0},
   {KURREZ_CAC208_CHAN_UDIFF,       1000000.0},
+
+  /* Rs are identical to corresponding non-_MIN ones */
+  {KURREZ_CAC208_CHAN_USET_MIN,   -1000000.0*(5.6/9.5)},
+  {KURREZ_CAC208_CHAN_IEXC_MIN,   -1000000.0*(2.0/5.56)},
 };
 
 enum
 {
-    USET_LO = -5600000, USET_HI =  0,
+    USET_LO = -5600000, USET_HI =  0, USET_MIN = -1768421 /* 3kV minimum */,
     IEXC_LO = -4900000, IEXC_HI =  0,
     FINJ_LO = -9370000, FINJ_HI = +9370000,
 };
@@ -126,7 +130,8 @@ typedef struct
     int32               iexc_val;
     int                 uset_val_set;
     int                 iexc_val_set;
-    
+
+    char                errdescr[100];
 } privrec_t;
 
 static inline void SndCVal(privrec_t *me, int sodc, int32 val)
@@ -208,7 +213,7 @@ static int  IsAlwdSW_ON_START (void *devptr, int prev_state __attribute__((unuse
   privrec_t *me = devptr;
 
     return (me->cur[SODC_IS_READY].v.i32 != 0  &&        // "READY" bit is on
-            me->uset_val                 <= -1768421);   // 3kV minimum
+            me->uset_val                 <= USET_MIN);   // 3kV minimum
 }
 
 static void SwchToSW_ON_START (void *devptr, int prev_state __attribute__((unused)))
@@ -356,6 +361,28 @@ static vdev_sr_chan_dsc_t state_related_channels[] =
     {-1,                            -1,                     0, 0},
 };
 
+static void SetErr(privrec_t *me, const char *str, int force)
+{
+  int   len;
+  void *vp;
+
+  static cxdtype_t dt_text     = CXDTYPE_TEXT;
+  static int       ch_errdescr = KURREZ_CAC208_CHAN_ERRDESCR;
+  static rflags_t  zero_rflags = 0;
+
+    if (str == NULL) str = "";
+    if (!force  &&  strcmp(str, me->errdescr) == 0) return;
+    len = strlen(str);
+    if (len > sizeof(me->errdescr) - 1)
+        len = sizeof(me->errdescr) - 1;
+    if (len > 0) memcpy(me->errdescr, str, len);
+    me->errdescr[len] = '\0';
+
+    ReturnDataSet(me->devid,
+                  1,
+                  &ch_errdescr, &dt_text, &len,
+                  &vp, &zero_rflags, NULL);
+}
 static int kurrez_cac208_init_d(int devid, void *devptr,
                                 int businfocount, int businfo[],
                                 const char *auxinfo)
@@ -393,6 +420,11 @@ static int kurrez_cac208_init_d(int devid, void *devptr,
     for (x = 0;  x < countof(chan_rs);  x++)
         SetChanRDs(devid, chan_rs[x].chn, 1, chan_rs[x].r, 0.0);
     SetChanReturnType(devid, KURREZ_CAC208_CHAN_UMES, 24, IS_AUTOUPDATED_YES);
+    SetChanReturnType(devid, KURREZ_CAC208_CHAN_USET_MIN, 1, IS_AUTOUPDATED_TRUSTED);
+    SetChanReturnType(devid, KURREZ_CAC208_CHAN_IEXC_MIN, 1, IS_AUTOUPDATED_TRUSTED);
+    SetChanReturnType(devid, KURREZ_CAC208_CHAN_ERRDESCR, 1, IS_AUTOUPDATED_TRUSTED);
+    ReturnInt32Datum (devid, KURREZ_CAC208_CHAN_USET_MIN, USET_MIN, 0);
+    SetErr(me, "", 1);
 #if 0
     SetChanRDs       (devid, KURREZ_CAC208_CHAN_USET,  1, -1000000.0*(5.6/9.5),  0.0);
     SetChanRDs       (devid, KURREZ_CAC208_CHAN_IEXC,  1, -1000000.0*(2.0/5.56), 0.0);
@@ -420,8 +452,15 @@ static void kurrez_cac208_sodc_cb(int devid, void *devptr,
     /* If not all info is gathered yet, then there's nothing else to do yet */
     if (me->ctx.cur_state == REZ_STATE_UNKNOWN) return;
 
-    if (0)
-        ;
+    if      (sodc == SODC_POLARITY)
+    {
+        if      (val < -5000000) val = -1;
+        else if (val > +5000000) val = +1;
+        else                     val =  0;
+        ReturnInt32DatumTimed(devid, KURREZ_CAC208_CHAN_POLARITY, val,
+                              me->cur[sodc].flgs,
+                              me->cur[sodc].ts);
+    }
     else if (/**/
              sodc == SODC_IS_ON  &&  val == 0  &&
              (me->ctx.cur_state >= REZ_STATE_SW_ON_CHK_ON  &&
@@ -530,6 +569,26 @@ static void kurrez_cac208_rw_p(int devid, void *devptr,
             }
             if (me->iexc_val_set)
                 ReturnInt32Datum(devid, chn, me->iexc_val, 0);
+        }
+        else if (chn == KURREZ_CAC208_CHAN_POLARITY)
+        {
+            sodc = SODC_POLARITY;
+            if (action == DRVA_WRITE)
+            {
+                if (val < 0) val = -9000000;
+                if (val > 0) val = +9000000;
+                SndCVal(me, sodc, val);
+            }
+            else if (me->cur[sodc].rcvd)
+            {
+                val = me->cur[sodc].v.i32;
+                if      (val < -5000000) val = -1;
+                else if (val > +5000000) val = +1;
+                else                     val =  0;
+                ReturnInt32DatumTimed(devid, chn, val,
+                                      me->cur[sodc].flgs,
+                                      me->cur[sodc].ts);
+            }
         }
         /* ?vdev_handle_state_related_rw()? */
         else if ((sdp = find_sdp(chn)) != NULL  &&

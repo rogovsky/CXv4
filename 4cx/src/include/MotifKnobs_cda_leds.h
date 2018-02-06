@@ -40,6 +40,7 @@ int MotifKnobs_oneled_set_status(MotifKnobs_oneled_t *led, int status);
 int MotifKnobs_leds_create      (MotifKnobs_leds_t *leds,
                                  Widget  parent, int size,
                                  cda_context_t cid, int parent_kind);
+int MotifKnobs_leds_destroy     (MotifKnobs_leds_t *leds);
 int MotifKnobs_leds_grow        (MotifKnobs_leds_t *leds);
 int MotifKnobs_leds_update      (MotifKnobs_leds_t *leds);
 

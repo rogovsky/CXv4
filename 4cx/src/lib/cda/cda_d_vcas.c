@@ -940,7 +940,8 @@ static void CycleProc(int uniq, void *unsdptr,
 static int  cda_d_vcas_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
                                 int            uniq,
                                 const char    *srvrspec,
-                                const char    *argv0)
+                                const char    *argv0,
+                                int            srvtype  __attribute((unused)))
 {
   cda_d_vcas_privrec_t *me = pdt_privptr;
   int                   r;

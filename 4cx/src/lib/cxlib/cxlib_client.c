@@ -37,10 +37,18 @@ enum
     DEF_HEARTBEAT_TIME   = 60 * 5,
 };
 
-enum
+typedef enum
+{
+    CT_FREE = 0,        // Isn't initialized
+    CT_ANY  = 1,        // Any type -- for CheckCd() only
+    CT_DATA = 2,        // Data connection
+    CT_SRCH = 3         // Srch resolver
+} conntype_t;
+
+typedef enum
 {
     CS_OPEN_FRESH = 0,  // Just allocated
-    CS_OPEN_RESOLVE,    // Resolving server name to address
+    CS_OPEN_RESOLVE,    // Resolving server name to address (not used)
     CS_OPEN_CONNECT,    // Performing connect()
     CS_OPEN_ENDIANID,   // Have sent CXT4_ENDIANID
     CS_OPEN_LOGIN,      // Have sent CXT4_LOGIN
@@ -51,12 +59,12 @@ enum
     CS_READY,           // Is ready for I/O
 
     CS_CHUNKING,        // Is cx_begin()'d and is being stuffed with chunks
-};
+} connstate_t;
 
 typedef struct
 {
     int               in_use;
-    int               state;
+    connstate_t       state;
     int               isconnected;
     int               errcode;
 
@@ -76,6 +84,7 @@ typedef struct
     uint32            ID;                 /* Identifier */
     uint32            Seq;                /* Sent packets seq. number */
     uint32            syncSeq;            /* Seq of last synchronous pkt */
+    conntype_t        type;
 
     CxV4Header       *sendbuf;
     size_t            sendbufsize;
@@ -168,6 +177,7 @@ static int CXT42CE(uint32 Type)
  *
  *  Args:
  *      cd     connection descriptor to check
+ *      type   required type; if ==CT_ANY, type check isn't performed
  *      state  required state; if cp->state == CS_CLOSED, 'State' is ignored
  *
  *  Result:
@@ -175,13 +185,18 @@ static int CXT42CE(uint32 Type)
  *      -1  something is wrong, 'Errno' contains a CExxx code
  */
 
-static inline int CheckCd(int cd, int state)
+static inline int CheckCd(int cd, conntype_t type, connstate_t state)
 {
   v4conn_t *cp = AccessV4connSlot(cd);
     
     if (!CdIsValid(cd))
     {
         errno = CEBADC;
+        return -1;
+    }
+    if (type != CT_ANY  &&  cp->type != type)
+    {
+        errno = CEINVCONN;
         return -1;
     }
     if (cp->state == CS_CLOSED)
@@ -205,13 +220,13 @@ static inline int CheckCd(int cd, int state)
  *
  *  Args:
  *      cp    connection pointer
- *      type  one of CXT4_xxx constants to assign a packet type to
+ *      Type  one of CXT4_xxx constants to assign a packet type to
  */
 
-static inline void StartNewPacket(v4conn_t *cp, int type)
+static inline void StartNewPacket(v4conn_t *cp, uint32 Type)
 {
     bzero(cp->sendbuf, sizeof(CxV4Header));
-    cp->sendbuf->Type = type;
+    cp->sendbuf->Type = Type;
 
     /* Must also assign values to Seq and ID here */
     cp->sendbuf->ID  = cp->ID;
@@ -233,8 +248,8 @@ static inline int GrowSendBuf(v4conn_t *cp, size_t datasize)
 }
 
 /*
- *  SendRequest
- *      Sends a request prepared in [cd]->sendbuf to server.
+ *  SendDataRequest
+ *      Sends a (DATA_IO) request prepared in [cd]->sendbuf to server.
  *
  *  Args:
  *      cp  connection pointer
@@ -244,7 +259,7 @@ static inline int GrowSendBuf(v4conn_t *cp, size_t datasize)
  *      -1  failure; `errno' contains error code
  */
 
-static int SendRequest(v4conn_t *cp)
+static int SendDataRequest(v4conn_t *cp)
 {
   int             r;
 
@@ -287,110 +302,6 @@ static void cxlib_report(v4conn_t *cp, const char *format, ...)
     fprintf (stderr, "\n");
 #endif
     va_end(ap);
-}
-
-//////////////////////////////////////////////////////////////////////
-
-static int            udp_socket = -1;
-static fdio_handle_t  udp_handle = -1;
-
-static struct sockaddr_in  b_addr_src;
-
-static void HandleResolveReply(int uniq, void *unsdptr,
-                               fdio_handle_t handle, int reason,
-                               void *inpkt, size_t inpktsize,
-                               void *privptr)
-{
-  CxV4Header    *hdr = inpkt;
-  CxV4Chunk     *rpy = hdr->data;
-
-  struct sockaddr  addr;
-  socklen_t        addrlen;
-
-    fprintf(stderr, "%s(): inpktsize=%zd\n", __FUNCTION__, inpktsize);
-    if (fdio_last_src_addr(handle, &addr, &addrlen) < 0)
-        bzero(&addr, sizeof(addr));
-    fprintf(stderr, "\t\"%s\" is at %s:%d\n", rpy->data, inet_ntoa(((struct sockaddr_in *)(&addr))->sin_addr), rpy->rs4);
-}
-
-static int CreateResolveSocket(void)
-{
-  int  on = 1; /* "1" for BROADCAST */
-
-    /* Create the socket */
-    udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
-    if (udp_socket < 0)
-        return -1;
-    /* Mark it as non-blocking */
-    set_fd_flags(udp_socket, O_NONBLOCK, 1);
-    /* ...and broadcasting */
-    if (setsockopt(udp_socket, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0)
-    {
-        fprintf(stderr, "setsockopt(udp_socket, , SO_BROADCAST): %s\n", strerror(errno));
-        close(udp_socket); udp_socket = -1;
-        return -1;
-    }
-
-    udp_handle = fdio_register_fd(0, NULL, /*!!!uniq*/
-                                  udp_socket,          FDIO_DGRAM,
-                                  HandleResolveReply,  NULL,
-                                  CX_V4_MAX_UDP_PKTSIZE, 0, 0, 0, FDIO_LEN_LITTLE_ENDIAN, 0, 0);
-    if (udp_handle < 0)
-    {
-        close(udp_socket); udp_socket = -1;
-        return -1;
-    }
-
-    /* Here may check for any environment specs and even perform gethostbyname() */
-    b_addr_src.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-
-    return 0;
-}
-
-int  cx_resolve(const char *name)
-{
-  struct
-  {
-      CxV4Header  hdr;
-      CxV4Chunk   req;
-      char        name[CX_V4_MAX_UDP_DATASIZE-sizeof(CxV4Chunk)];
-  }                   pkt;
-  size_t              namesize;
-  size_t              chunksize;
-  struct sockaddr_in  b_addr;
-
-    if (udp_socket < 0) CreateResolveSocket();
-    if (udp_socket < 0) return -1;
-
-    namesize = strlen(name) + 1;
-    if (namesize > sizeof(pkt.name))
-        namesize = sizeof(pkt.name);
-
-    chunksize = CXV4_CHUNK_CEIL(sizeof(pkt.req) + namesize);
-
-    bzero(&(pkt.hdr), sizeof(pkt.hdr));
-    pkt.hdr.DataSize  = chunksize;
-    pkt.hdr.Type      = CXT4_RESOLVE;
-    pkt.hdr.ID        = 0;
-    pkt.hdr.Seq       = 0;
-    pkt.hdr.NumChunks = 1;
-    pkt.hdr.Status    = 0;
-    pkt.hdr.var1      = CXV4_VAR1_ENDIANNESS_SIG;
-    pkt.hdr.var2      = CX_V4_PROTO_VERSION;
-    bzero(&pkt.req, sizeof(pkt.req));
-    pkt.req.ByteSize  = chunksize;
-    memcpy(pkt.name, name, namesize);
-
-    b_addr.sin_family      = AF_INET;
-    b_addr.sin_addr.s_addr = b_addr_src.sin_addr.s_addr;
-    b_addr.sin_port        = htons(CX_V4_INET_RESOLVER);
-
-    if (0)
-    fdio_send_to(udp_handle, &pkt, sizeof(pkt.hdr) + chunksize,
-                 (struct sockaddr *)&b_addr, sizeof(b_addr));
-//fprintf(stderr, "%s(\"%s\") \"%s\" namesize=%zd chunksize=%zd\n", __FUNCTION__, name, pkt.name, namesize, chunksize);
-
-    return 0;
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -528,6 +439,70 @@ static void ProcessFdioEvent(int uniq, void *unsdptr,
 
 
 //////////////////////////////////////////////////////////////////////
+static int create_a_cd(int            uniq,     void *privptr1,
+                       const char    *spec,     int flags,
+                       const char    *argv0,    const char *username,
+                       cx_notifier_t  notifier, void *privptr2,
+                       conntype_t     type,     size_t INIT_SENDBUFSIZE)
+{
+  int                 cd;
+  v4conn_t           *cp;
+
+  const char         *shrtname;
+
+    /* Sanitize supplied credentials */
+    /* User name... */
+    if (username == NULL  ||  username[0] == '\0')
+        username = getenv("LOGNAME");
+    if (username == NULL)
+        username = "";
+    /* ...and program name */
+    shrtname = "???";
+    if (argv0 != NULL  &&  argv0[0] != '\0')
+    {
+        shrtname = strrchr(argv0, '/');
+        if (shrtname == NULL) shrtname = argv0;
+    }
+    /* With GNU libc+ld we can determine the true argv[0] */
+#if OPTION_HAS_PROGRAM_INVOCATION_NAME
+    shrtname = program_invocation_short_name;
+#endif /* OPTION_HAS_PROGRAM_INVOCATION_NAME */
+    if (cxlib_progname[0] == '\0')
+        strzcpy(cxlib_progname, shrtname, sizeof(cxlib_progname));
+    
+    /* Allocate a free slot... */
+    if ((cd = GetV4connSlot()) < 0) return cd;
+
+    /* ...and fill it with data */
+    cp = AccessV4connSlot(cd);
+    cp->state    = CS_OPEN_FRESH;
+    cp->fd       = -1;
+    cp->fhandle  = -1;
+    cp->clp_tid  = -1;
+    cp->hbt_tid  = -1;
+    strzcpy(cp->progname, shrtname, sizeof(cp->progname));
+    strzcpy(cp->username, username, sizeof(cp->username));
+    cp->notifier = notifier;
+    cp->uniq     = uniq;
+    cp->privptr1 = privptr1;
+    cp->privptr2 = privptr2;
+    cp->type     = type;
+
+    /* Store server-spec for future debug use */
+    if (spec != NULL) strzcpy(cp->srvrspec, spec, sizeof(cp->srvrspec));
+
+    /* Alloc buffer(s) */
+    cp->sendbufsize = INIT_SENDBUFSIZE;
+    cp->sendbuf     = malloc(cp->sendbufsize);
+    if (cp->sendbuf == NULL)
+    {
+        RlsV4connSlot(cd);
+        return -1;
+    }
+
+    return cd;
+}
+//////////////////////////////////////////////////////////////////////
 
 static int GetSrvSpecParts(const char *spec,
                            char       *hostbuf, size_t hostbufsize,
@@ -625,6 +600,14 @@ int  cx_open  (int            uniq,     void *privptr1,
         fastest  = 0;
     }
 
+#if 1
+    if ((cd = create_a_cd(uniq,     privptr1,
+                          spec,     flags,
+                          argv0,    username,
+                          notifier, privptr2,
+                          CT_DATA,  INIT_SENDBUFSIZE)) < 0) return cd;
+    cp = AccessV4connSlot(cd);
+#else
     /* Sanitize supplied credentials */
     /* User name... */
     if (username == NULL  ||  username[0] == '\0')
@@ -668,6 +651,7 @@ int  cx_open  (int            uniq,     void *privptr1,
     cp->sendbuf     = malloc(cp->sendbufsize);
     if (cp->sendbuf == NULL)
         goto CLEANUP_ON_ERROR;
+#endif
 
     /* Resolve host:N */
     cp->state    = CS_OPEN_RESOLVE;
@@ -744,7 +728,7 @@ int  cx_open  (int            uniq,     void *privptr1,
 
     /* Set Close-on-exec:=1 */
     fcntl(s, F_SETFD, 1);
-    
+
     /* Set buffers */
     setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *) &bsize, sizeof(bsize));
     setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *) &bsize, sizeof(bsize));
@@ -967,7 +951,221 @@ static void async_CS_OPEN_LOGIN   (v4conn_t *cp, CxV4Header *rcvd, size_t rcvdsi
     }
 }
 
+//////////////////////////////////////////////////////////////////////
 
+static void HandleSrchReply(int uniq, void *unsdptr,
+                            fdio_handle_t handle, int reason,
+                            void *inpkt, size_t inpktsize,
+                            void *privptr)
+{
+  int         cd  = ptr2lint(privptr);
+  v4conn_t   *cp; /* Note: NO initialization! Immediately before use only! */
+  CxV4Header *hdr = inpkt;
+
+  int        numcns;          // # of chunks in reply
+  uint8     *ptr;
+  CxV4Chunk *rpy;
+  int        rpycn;           // RePlY chunk #
+  size_t     rpycsize;        // RePlY chunk size in bytes
+  size_t     rpylen;          // RePlY *data* LENgth in bytes
+  size_t     rpy_total;       // TOTAL size of previous chunks in bytes
+
+  struct sockaddr  addr;
+  socklen_t        addrlen;
+
+  char            srv_addr_buf[100];
+  cx_srch_info_t  sri;
+
+    if (reason != FDIO_R_DATA) return;
+
+    /* Check packet Type, size, ...  */
+    /* 1. Packet type */
+    if (hdr->Type != CXT4_SEARCH_RESULT) return;
+    /* 2. Packet size */
+    /*    Note: no reason to check "inpktsize <= CX_V4_MAX_UDP_PKTSIZE",
+                because that is not crucial */
+    if (hdr->DataSize + sizeof(*hdr) != inpktsize)
+    {
+        return;
+    }
+
+    _cxlib_break_wait();
+
+    addrlen = sizeof(addr);
+    fdio_last_src_addr(handle, &addr, &addrlen);
+    strzcpy(srv_addr_buf,
+            inet_ntoa(((struct sockaddr_in *)(&addr))->sin_addr),
+            sizeof(srv_addr_buf));
+
+    numcns = hdr->NumChunks;
+
+    /* Walk through the request */
+    for (rpycn = 0, ptr = hdr->data, rpy_total = sizeof(CxV4Header);
+         rpycn < numcns;
+         rpycn++,   ptr += rpycsize, rpy_total += rpycsize)
+    {
+        /* Check if we MAY access chunk */
+        if (rpy_total + sizeof(CxV4Chunk) > inpktsize)
+        {
+            return;
+        }
+
+        rpy = (void *)ptr;
+        rpycsize = rpy->ByteSize;
+        rpylen   = rpycsize - sizeof(CxV4Chunk);
+
+        /* Check: */
+        /* I. Size validity */
+        /* 1. Is rpycsize sane at all? */
+        if (rpycsize < sizeof(*rpy) + 1)
+        {
+            return;
+        }
+        /* 2. Does this chunk have appropriate alignment? */
+        if (rpycsize != CXV4_CHUNK_CEIL(rpycsize))
+        {
+            return;
+        }
+        /* 3. Okay, does this chunk still fit into packet? */
+        if (rpy_total + rpycsize > inpktsize)
+        {
+            return;
+        }
+        /* II. Name */
+        /* 1. Is there a meaningful string
+              ("2" means non-empty, for at least 1 char besides NUL) */
+        if (rpylen < 2) continue;
+        /* 2. Is the name NUL-terminated? */
+        rpy->data[rpylen-1] = '\0';
+
+        if (rpy->OpCode == CXC_CVT_TO_RPY(CXC_SEARCH))
+        {
+            sri.param1   = rpy->param1;
+            sri.param2   = rpy->param2;
+            sri.name     = rpy->data;
+            sri.srv_addr = srv_addr_buf;
+            sri.srv_n    = rpy->rs4;
+            cp = AccessV4connSlot(cd);
+            CallNotifier(cp, CAR_SRCH_RESULT, &sri);
+        }
+    }
+}
+int  cx_seeker(int            uniq,     void *privptr1,
+               const char    *argv0,    const char *username,
+               cx_notifier_t  notifier, void *privptr2)
+{
+  int                 cd;
+  v4conn_t           *cp;
+  int                 on = 1; /* "1" for BROADCAST */
+
+    if ((cd = create_a_cd(uniq,     privptr1,
+                          NULL,     0,
+                          argv0,    username,
+                          notifier, privptr2,
+                          CT_SRCH,  CX_V4_MAX_UDP_PKTSIZE)) < 0) return cd;
+
+    cp = AccessV4connSlot(cd);
+
+    /* Create a socket */
+    cp->fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (cp->fd < 0) goto CLEANUP_ON_ERROR;
+    /* Set Close-on-exec:=1 */
+    fcntl(cp->fd, F_SETFD, 1);
+    /* Mark it as non-blocking */
+    set_fd_flags(cp->fd, O_NONBLOCK, 1);
+    /* ...and broadcasting */
+    if (setsockopt(cp->fd, SOL_SOCKET, SO_BROADCAST, &on, sizeof(on)) < 0)
+    {
+        ////fprintf(stderr, "setsockopt(udp_socket, , SO_BROADCAST): %s\n", strerror(errno));
+        goto CLEANUP_ON_ERROR;
+    }
+
+    /* Register with fdiolib */
+    cp->fhandle = fdio_register_fd(uniq, NULL,
+                                   cp->fd,          FDIO_DGRAM,
+                                   HandleSrchReply, lint2ptr(cd),
+                                   CX_V4_MAX_UDP_PKTSIZE,
+                                   sizeof(CxV4Header), 0, 0,
+                                   FDIO_LEN_LITTLE_ENDIAN, 0, 0);
+    if (cp->fhandle < 0) goto CLEANUP_ON_ERROR;
+
+    /* Everything is okay */
+    cp->state       = CS_READY;
+    cp->isconnected = 1;
+
+    return cd;
+
+ CLEANUP_ON_ERROR:
+    RlsV4connSlot(cd);
+    return -1;
+}
+
+int  cx_srch  (int cd, const char *name,      int  param1,  int  param2)
+{
+  v4conn_t       *cp = AccessV4connSlot(cd);
+  int             r;
+  size_t          bytesize;
+  CxV4Chunk      *req;
+
+    if ((r = CheckCd(cd, CT_SRCH, CS_CHUNKING)) != 0) return r;
+
+    bytesize = CXV4_CHUNK_CEIL(sizeof(*req) + strlen(name) + 1);
+    if (cp->sendbuf->DataSize + bytesize > CX_V4_MAX_UDP_DATASIZE) return +1;
+    if (GrowSendBuf(cp, cp->sendbuf->DataSize + bytesize) != 0) return -1;
+
+    req  = cp->sendbuf->data + cp->sendbuf->DataSize;
+    bzero(req,  bytesize);
+
+    cp->sendbuf->DataSize += bytesize;
+    cp->sendbuf->NumChunks++;
+
+    req->OpCode   = CXC_SEARCH;
+    req->ByteSize = bytesize;
+    req->param1   = param1;
+    req->param2   = param2;
+    strcpy(req->data, name);
+
+    return 0;
+}
+
+/*
+ *  SendSrchRequest
+ *      Sends a SEARCH request prepared in [cd]->sendbuf to server.
+ *
+ *  Args:
+ *      cp  connection pointer
+ *
+ *  Result:
+ *      0   success
+ *      -1  failure; `errno' contains error code
+ */
+
+static int SendSrchRequest(v4conn_t *cp)
+{
+  int             r;
+  struct sockaddr_in  b_addr;
+
+    /* Required additions for connectionless handshake/identification */
+    cp->sendbuf->var1 = CXV4_VAR1_ENDIANNESS_SIG;
+    cp->sendbuf->var2 = CX_V4_PROTO_VERSION;
+
+    /* Prepare an address... */
+    b_addr.sin_family      = AF_INET;
+    b_addr.sin_addr.s_addr = htonl(INADDR_BROADCAST); /*!!! Note: maybe should prepare that address beforehand, to be able to check for any environment specs and even perform gethostbyname(). What about MULTIPLE addresses? */
+    b_addr.sin_port        = htons(CX_V4_INET_RESOLVER);
+
+    /* ...and send */
+    r = fdio_send_to(cp->fhandle, cp->sendbuf,
+                     sizeof(CxV4Header) + cp->sendbuf->DataSize,
+                     (struct sockaddr *)&b_addr, sizeof(b_addr));
+    if (r < 0)  return -1;
+
+    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////
 /*####################################################################
 #                                                                    #
 #  Transport                                                         #
@@ -1003,10 +1201,21 @@ int  cx_begin (int cd)
 {
   v4conn_t       *cp = AccessV4connSlot(cd);
   int             r;
+  uint32          Type;
 
-    if ((r = CheckCd(cd, CS_READY)) != 0) return r;
+    if ((r = CheckCd(cd, CT_ANY, CS_READY)) != 0) return r;
 
-    StartNewPacket(cp, 0);
+    if      (cp->type == CT_DATA)
+        Type = CXT4_DATA_IO;
+    else if (cp->type == CT_SRCH)
+        Type = CXT4_SEARCH;
+    else
+    {
+        errno = CEINVCONN;
+        return -1;
+    }
+
+    StartNewPacket(cp, Type);
     cp->state     = CS_CHUNKING;
 
     return 0;
@@ -1017,12 +1226,18 @@ int  cx_run   (int cd)
   v4conn_t       *cp = AccessV4connSlot(cd);
   int             r;
 
-    if ((r = CheckCd(cd, CS_CHUNKING)) != 0) return r;
-
-    cp->sendbuf->Type = CXT4_DATA_IO;
+    if ((r = CheckCd(cd, CT_ANY, CS_CHUNKING)) != 0) return r;
 
     /* Send the packet... */
-    r = SendRequest(cp);
+    if      (cp->type == CT_DATA)
+        r = SendDataRequest(cp);
+    else if (cp->type == CT_SRCH)
+        r = SendSrchRequest(cp);
+    else
+    {
+        errno = CEINVCONN;
+        return -1;
+    }
     if (r < 0)
     {
         MarkAsClosed(cp, errno);
@@ -1043,7 +1258,7 @@ int  cx_rslv  (int cd, const char *name,      int  param1,  int  param2)
   size_t          bytesize;
   CxV4Chunk      *req;
 
-    if ((r = CheckCd(cd, CS_CHUNKING)) != 0) return r;
+    if ((r = CheckCd(cd, CT_DATA, CS_CHUNKING)) != 0) return r;
 
     bytesize = CXV4_CHUNK_CEIL(sizeof(*req) + strlen(name) + 1);
     if (GrowSendBuf(cp, cp->sendbuf->DataSize + bytesize) != 0) return -1;
@@ -1073,7 +1288,7 @@ int  cx_setmon(int cd, int count, int *hwids, int *param1s, int *param2s,
   CxV4MonitorChunk *mnrq;
   int             cn;
 
-    if ((r = CheckCd(cd, CS_CHUNKING)) != 0) return r;
+    if ((r = CheckCd(cd, CT_DATA, CS_CHUNKING)) != 0) return r;
 
     if (count == 0) return 0;
     if (count <  0) return -1;
@@ -1119,7 +1334,7 @@ int  cx_delmon(int cd, int count, int *hwids, int *param1s, int *param2s,
   CxV4MonitorChunk *mnrq;
   int             cn;
 
-    if ((r = CheckCd(cd, CS_CHUNKING)) != 0) return r;
+    if ((r = CheckCd(cd, CT_DATA, CS_CHUNKING)) != 0) return r;
 
     if (count == 0) return 0;
     if (count <  0) return -1;
@@ -1166,7 +1381,7 @@ static int do_rq_read(int OpCode,
 
     ////fprintf(stderr, "%s count=%d hwid=%d cd=%d,%d\n", __FUNCTION__, count, hwids[0], cd, cp->state);
 
-    if ((r = CheckCd(cd, CS_CHUNKING)) != 0) return r;
+    if ((r = CheckCd(cd, CT_DATA, CS_CHUNKING)) != 0) return r;
 
     if (count == 0) return 0;
     if (count <  0) return -1;
@@ -1222,7 +1437,7 @@ int  cx_rq_wr (int cd, int count, int *hwids, int *param1s, int *param2s,
   size_t          reqcsize;        // REQuest chunk size in bytes
   size_t          bytesize;
 
-    if ((r = CheckCd(cd, CS_CHUNKING)) != 0) return r;
+    if ((r = CheckCd(cd, CT_DATA, CS_CHUNKING)) != 0) return r;
 
     if (count == 0) return 0;
     if (count <  0) return -1;
@@ -1324,6 +1539,7 @@ static void async_CXT4_DATA_IO    (v4conn_t *cp, CxV4Header *rcvd, size_t rcvdsi
 
     numcns = rcvd->NumChunks;
 
+////fprintf(stderr, "Type=%08x DataSize=%d inpktsize=%zd\n", rcvd->Type, rcvd->DataSize, rcvdsize);
     /* Walk through the request */
     for (rpycn = 0, ptr = rcvd->data;
          rpycn < numcns;
@@ -1333,7 +1549,7 @@ static void async_CXT4_DATA_IO    (v4conn_t *cp, CxV4Header *rcvd, size_t rcvdsi
         rpycsize = rpy->ByteSize;
         rpylen   = rpycsize - sizeof(CxV4Chunk);
         /*!!! Any checks? */
-////fprintf(stderr, "\top=%08x\n", rpy->OpCode);
+////fprintf(stderr, "\top=%08x sz=%zd\n", rpy->OpCode, rpycsize);
 
         switch (rpy->OpCode)
         {

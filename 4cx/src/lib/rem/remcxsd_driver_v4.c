@@ -140,7 +140,7 @@ void ReturnDataSet    (int devid,
   uint32               ts2snd[SEGLEN_MAX*3];
   int                  stage;
   int                  x;
-  size_t               valuestotal;
+  size_t               valuestotal = 0;  // Only to prevent "may be used uninitialized"
 
   size_t               size;
   size_t               padsize;

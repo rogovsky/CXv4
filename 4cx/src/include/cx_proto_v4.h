@@ -61,7 +61,8 @@ enum
     CXT4_ENDIANID       = 10 * 0x01010101,
     CXT4_LOGIN          = 11 * 0x01010101,
     CXT4_LOGOUT         = 12 * 0x01010101,
-    CXT4_RESOLVE        = 13 * 0x01010101,
+    CXT4_SEARCH         = 13 * 0x01010101,
+    CXT4_SEARCH_RESULT  = 14 * 0x01010101,
 
     CXT4_READY          = 20 * 0x01010101,
     CXT4_ACCESS_GRANTED = 21 * 0x01010101,
@@ -109,6 +110,8 @@ enum
 
 enum
 {
+    CXC_SEARCH  = CXC_REQ_CMD('S', 'r', 'h'), // For UDP only
+
     CXC_RESOLVE = CXC_REQ_CMD('R', 's', 'l'),
 
     CXC_SETMON  = CXC_REQ_CMD('C', 'M', 's'),

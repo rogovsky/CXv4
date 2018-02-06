@@ -87,6 +87,22 @@ int MotifKnobs_oneled_set_status(MotifKnobs_oneled_t *led, int status)
     return 0;
 }
 
+static void leds_context_evproc(int            uniq,
+                                void          *privptr1,
+                                cda_context_t  cid,
+                                int            reason,
+                                int            info_int,
+                                void          *privptr2)
+{
+  MotifKnobs_leds_t *leds = privptr2;
+
+    if      (reason == CDA_CTX_R_SRVSTAT  &&
+             (info_int >= 0  &&  info_int < leds->count))
+        MotifKnobs_oneled_set_status(leds->leds + info_int, cda_status_of_srv(leds->cid, info_int));
+    else if (reason == CDA_CTX_R_NEWSRV)
+        MotifKnobs_leds_grow(leds);
+}
+
 int MotifKnobs_leds_create      (MotifKnobs_leds_t *leds,
                                  Widget  parent, int size,
                                  cda_context_t cid, int parent_kind)
@@ -97,7 +113,20 @@ int MotifKnobs_leds_create      (MotifKnobs_leds_t *leds,
     leds->parent_kind = parent_kind;
     leds->size        = size;
 
+    cda_add_context_evproc(leds->cid, CDA_CTX_EVMASK_SRVSTAT | CDA_CTX_EVMASK_NEWSRV, 
+                           leds_context_evproc, leds);
+
     return MotifKnobs_leds_grow(leds);
+}
+
+int MotifKnobs_leds_destroy     (MotifKnobs_leds_t *leds)
+{
+    cda_del_context_evproc(leds->cid, CDA_CTX_EVMASK_SRVSTAT | CDA_CTX_EVMASK_NEWSRV, 
+                           leds_context_evproc, leds);
+    safe_free(leds->leds);
+    bzero(leds, sizeof(*leds));
+
+    return 0;
 }
 
 int MotifKnobs_leds_grow        (MotifKnobs_leds_t *leds)

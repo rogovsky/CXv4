@@ -231,7 +231,7 @@ static void Run(void)
             r = read(fd, name + pctr, 1);
             if (r != 1)
             {
-                fprintf(stderr, "read(path): r = %d: %s\n", r,
+                fprintf(stderr, "read(name): r = %d: %s\n", r,
                         (r < 0)? strerror(errno) : "(connection closed?)");
                 close(fd);
                 goto CONTINUE_WHILE;
@@ -243,7 +243,7 @@ static void Run(void)
         name[pctr] = '\0';
 
         if (verbose)
-            fprintf(stderr, "%s: request to run \"%s\"\n", argv0, path);
+            fprintf(stderr, "%s: request to run \"%s\"\n", argv0, name);
 
         /* Prepare name of file to execute */
         if (prefix == NULL) prefix = "";

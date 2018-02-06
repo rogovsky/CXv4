@@ -19,6 +19,9 @@ static int ppf4td_m4_open (ppf4td_ctx_t *ctx, const char *reference)
   size_t             path_len;
   char               Ipath[PATH_MAX];
 
+    /* Check file existence/readability */
+    if (access(reference, R_OK) != 0) return -1;
+
     /*  */
     for (i = 0;  i < countof(model);  i++) cmdline[i] = model[i];
     /* Optional -I DIR */

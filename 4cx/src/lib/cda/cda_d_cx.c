@@ -37,6 +37,12 @@ enum
     RSLV_STATE_DONE    = 3, // Any type resolved to known hwid
 };
 
+enum
+{
+    SRVTYPE_DATA_IO  = 0,
+    SRVTYPE_RESOLVER = 1,
+};
+
 
 typedef struct
 {
@@ -54,17 +60,21 @@ typedef struct
     cda_hwcnref_t  prev;    // Link to previous hwr of sid
 } hwrinfo_t;
 
-typedef struct
+typedef struct _cda_d_cx_privrec_t_struct
 {
     cda_srvconn_t  sid;
     int            being_processed;
     int            being_destroyed;
 
+    int            srvtype;
     int            cd;
     int            is_suffering;
     int            was_data_somewhen;
     int            state;
     sl_tid_t       rcn_tid;
+
+    struct _cda_d_cx_privrec_t_struct
+                  *resolver;
 
     cda_hwcnref_t  frs_hwr;
     cda_hwcnref_t  lst_hwr;
@@ -82,8 +92,6 @@ enum
 
 static hwrinfo_t     *hwrs_list;
 static int            hwrs_list_allocd;
-
-static cda_d_cx_privrec_t  udp_resolver_rec;
 
 //--------------------------------------------------------------------
 
@@ -181,6 +189,8 @@ static int determine_name_type(const char *name,
     /* Okay, skip ':' */
     p++;
     /* ':' should be followed by a digit */
+    /* ...with an optional leading '-' */
+    if (*p == '-') p++;
     if (*p == '\0'  ||  !isdigit(*p)) goto DO_RET;
     /* Okay, skip digits... */
     while (*p != '\0'  &&  isdigit(*p)) p++;
@@ -270,7 +280,9 @@ static int  cda_d_cx_new_chan(cda_dataref_t ref, const char *name,
 
     if (w_srv)
     {
-        me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(cx), srvrspec, CDA_DAT_P_GET_SERVER_OPT_NONE);
+        me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(cx),
+                                  srvrspec,
+                                  SRVTYPE_DATA_IO | CDA_DAT_P_GET_SERVER_OPT_NONE);
         if (me == NULL)
         {
             RlsHwrSlot(hwr);
@@ -305,12 +317,20 @@ static int  cda_d_cx_new_chan(cda_dataref_t ref, const char *name,
     }
     else
     {
-        RlsHwrSlot(hwr);
-        return CDA_DAT_P_ERROR;
+        ////fprintf(stderr, "<%s>\n", hi->name);
+        me = cda_dat_p_get_server(ref, &CDA_DAT_P_MODREC_NAME(cx),
+                                  "RESOLVER",
+                                  SRVTYPE_RESOLVER | CDA_DAT_P_GET_SERVER_OPT_NOLIST);
+        if (me == NULL)
+        {
+            RlsHwrSlot(hwr);
+            return CDA_DAT_P_ERROR;
+        }
+        AddHwrToSrv(me, hwr);
+        cda_dat_p_set_notfound(hi->dataref);
 
         hi->rslv_type  = RSLV_TYPE_GLBL;
         hi->rslv_state = RSLV_STATE_UNKNOWN;
-        cx_resolve(name);
     }
 
     return CDA_DAT_P_NOTREADY;
@@ -378,7 +398,7 @@ static void MarkAllAsDefunct(cda_d_cx_privrec_t *me)
   hwrinfo_t          *hi;
   cda_hwcnref_t       next;
 
-if(0)fprintf(stderr, "%s: %s\n", strcurtime(), __FUNCTION__);
+    if(0)fprintf(stderr, "%s: %s\n", strcurtime(), __FUNCTION__);
     if (me->was_data_somewhen)
     {
         for (hwr = me->frs_hwr;  hwr >= 0;  hwr = next)
@@ -395,6 +415,8 @@ if(0)fprintf(stderr, "%s: %s\n", strcurtime(), __FUNCTION__);
 
 static void ReconnectProc(int uniq, void *unsdptr,
                           sl_tid_t tid, void *privptr);
+
+static void ScheduleSearch(cda_d_cx_privrec_t *me, int usecs);
 
 static void SuccessProc(cda_d_cx_privrec_t *me)
 {
@@ -415,7 +437,8 @@ static void SuccessProc(cda_d_cx_privrec_t *me)
     {
         hi = AccessHwrSlot(hwr);
         next = hi->next;
-        if      (hi->rslv_type == RSLV_TYPE_NAME)
+        if      (hi->rslv_type == RSLV_TYPE_NAME  ||
+                 hi->rslv_type == RSLV_TYPE_GLBL)
         {
             hi->rslv_state = RSLV_STATE_SERVER;
             cx_rslv(me->cd, hi->name, hwr, 0);
@@ -431,6 +454,10 @@ static void SuccessProc(cda_d_cx_privrec_t *me)
     }
     cx_run(me->cd);
 
+    // "Ping" our resolver
+    if (me->resolver != NULL)
+        ScheduleSearch(me->resolver, 1);
+
     cda_dat_p_set_server_state(me->sid, me->state = CDA_DAT_P_OPERATING);
 }
 
@@ -439,6 +466,8 @@ static void FailureProc(cda_d_cx_privrec_t *me, int reason)
   int                 ec = errno;
   int                 us;
   enum {MAX_US_X10 = 2*1000*1000*1000};
+
+  cda_d_cx_privrec_t *rs;
 
   cda_hwcnref_t       hwr;
   hwrinfo_t          *hi;
@@ -464,16 +493,33 @@ static void FailureProc(cda_d_cx_privrec_t *me, int reason)
     cda_dat_p_set_server_state(me->sid, me->state = CDA_DAT_P_NOTREADY);
 
     /* Modify channels' resolve states */
+    rs = me->resolver;
     for (hwr = me->frs_hwr;  hwr >= 0;  hwr = next)
     {
         hi = AccessHwrSlot(hwr);
         next = hi->next;
         if      (hi->rslv_type == RSLV_TYPE_GLBL)
         {
-            DelHwrFromSrv(me,                hwr);
-            AddHwrToSrv  (&udp_resolver_rec, hwr);
+            if (rs == NULL)
+            {
+                rs = cda_dat_p_get_server(hi->dataref, &CDA_DAT_P_MODREC_NAME(cx),
+                                          "RESOLVER",
+                                          SRVTYPE_RESOLVER | CDA_DAT_P_GET_SERVER_OPT_NOLIST);
+                if (rs == NULL)
+                {
+                    /* "Unable to get a resolver" -- probably
+                       an impossible situation, since one MUST exist as
+                       a prerequisite for GLBL channels */
+                    continue;
+                }
+                me->resolver = rs;
+            }
+
+            DelHwrFromSrv(me, hwr);
+            AddHwrToSrv  (rs, hwr);
             hi->rslv_state = RSLV_STATE_UNKNOWN;
             cda_dat_p_set_ready(hi->dataref, 0);
+            cda_dat_p_set_notfound(hi->dataref);
         }
         else if (hi->rslv_type == RSLV_TYPE_NAME)
         {
@@ -502,12 +548,12 @@ static void ProcessCxlibEvent(int uniq, void *unsdptr,
   cda_d_cx_privrec_t *me = (cda_d_cx_privrec_t *)privptr;
   int                 ec = errno;
 
-  cx_newval_info_t   *nvi;
-  cx_rslv_info_t     *rsi;
-  cx_fresh_age_info_t *fai;
-  cx_rds_info_t      *rdi;
-  cx_strs_info_t     *sti;
-  cx_quant_info_t    *qui;
+  const cx_newval_info_t    *nvi;
+  const cx_rslv_info_t      *rsi;
+  const cx_fresh_age_info_t *fai;
+  const cx_rds_info_t       *rdi;
+  const cx_strs_info_t      *sti;
+  const cx_quant_info_t     *qui;
 
   cda_hwcnref_t       hwr;
   hwrinfo_t          *hi;
@@ -699,33 +745,173 @@ static void ReconnectProc(int uniq, void *unsdptr,
     }
 }
 
+static void ProcessSrchEvent(int uniq, void *unsdptr,
+                             int cd, int reason, const void *info,
+                             void *privptr)
+{
+  cda_d_cx_privrec_t   *me  = (cda_d_cx_privrec_t *)privptr;
+  const cx_srch_info_t *sip = info;
+
+  cda_hwcnref_t         hwr;
+  hwrinfo_t            *hi;
+
+  char                  srvrspec[200];
+  cda_d_cx_privrec_t   *ts; // "ts" -- Target Server
+
+////fprintf(stderr, "%s \"%s\" param1=%d param2=%d %s:%d\n", __FUNCTION__, sip->name, sip->param1, sip->param2, sip->srv_addr, sip->srv_n);
+    if (reason != CAR_SRCH_RESULT) return;
+
+    me->being_processed++;
+
+    hwr = sip->param1;
+    hi  = AccessHwrSlot(hwr);
+    if (/* "CheckHwr()" */
+        hwr >= HWR_MIN_VAL  &&  hwr < hwrs_list_allocd  &&
+        hi->in_use                                      &&
+        /*!!! Must check that this hwr belongs to this server */ 1 &&
+        hi->rslv_state == RSLV_STATE_UNKNOWN)
+    {
+        if (strcasecmp(sip->name, hi->name) == 0)
+        {
+            /* Okay, let's transplant it to the server */
+            /* 1. Obtain a server */
+            check_snprintf(srvrspec, sizeof(srvrspec),
+                           "%s:%d", sip->srv_addr, sip->srv_n);
+            ts = cda_dat_p_get_server(hi->dataref, &CDA_DAT_P_MODREC_NAME(cx),
+                                      srvrspec,
+                                      SRVTYPE_DATA_IO | CDA_DAT_P_GET_SERVER_OPT_NONE);
+////fprintf(stderr, "ts=%p\n", ts);
+            if (ts == NULL)
+            {
+                /* Ouch... */
+                /* !!!Print something to stderr? */
+                goto END_PROCESSED;
+            }
+
+            /* 2. Do transfer */
+            DelHwrFromSrv(me, hwr);
+            AddHwrToSrv  (ts, hwr);
+
+            /* 3. Modify state */
+            hi->rslv_state = RSLV_STATE_SERVER;
+////fprintf(stderr, "ts->state=%d\n", ts->state);
+            if (ts->state == CDA_DAT_P_OPERATING)
+            {
+                cx_begin(ts->cd);
+                cx_rslv (ts->cd, hi->name, hwr, 0);
+                cx_run  (ts->cd);
+            }
+        }
+        else
+        {
+            /* Non-matching name? Should we print some diagnostics,
+               or is it just because of UDP-port reuse? */
+        }
+    }
+
+ END_PROCESSED:
+    me->being_processed--;
+    if (me->being_processed == 0  &&  me->being_destroyed)
+    {
+        DestroyCxPrivrec(me);
+        cda_dat_p_del_server_finish(me->sid);
+    }
+}
+
+static void PeriodicSrchProc(int uniq, void *unsdptr,
+                             sl_tid_t tid, void *privptr)
+{
+  cda_d_cx_privrec_t *me = privptr;
+  cda_hwcnref_t       hwr;
+  hwrinfo_t          *hi;
+  int                 r;
+
+    me->rcn_tid = -1;
+
+    if (me->frs_hwr > 0)
+    {
+        cx_begin(me->cd);
+        for (hwr = me->frs_hwr;  hwr >= 0;  hwr = hi->next)
+        {
+            hi = AccessHwrSlot(hwr);
+            /* 1st try... */
+            r = cx_srch(me->cd, hi->name, hwr, 0);
+            /* ...failed? Okay, */
+            if (r != 0)
+            {
+                /* Send current buffer, */
+                cx_run  (me->cd);
+                /* start new packet */
+                cx_begin(me->cd);
+                /* 2nd try */
+                cx_srch(me->cd, hi->name, hwr, 0);
+            }
+        }
+        cx_run  (me->cd);
+    }
+
+    ScheduleSearch(me, 10*1000000);
+}
+static void ScheduleSearch(cda_d_cx_privrec_t *me, int usecs)
+{
+    if (me->rcn_tid >= 0) sl_deq_tout(me->rcn_tid);
+    me->rcn_tid = sl_enq_tout_after(cda_dat_p_suniq_of_sid(me->sid), NULL,
+                                    usecs, PeriodicSrchProc, me);
+
+}
+
 static int  cda_d_cx_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
                               int            uniq,
                               const char    *srvrspec,
-                              const char    *argv0)
+                              const char    *argv0,
+                              int            srvtype)
 {
   cda_d_cx_privrec_t *me = pdt_privptr;
   int                 ec;
 
 ////fprintf(stderr, "ZZZ %s(%s)\n", __FUNCTION__, srvrspec);
+    /* Common initialization */
     me->sid = sid;
     me->state   = CDA_DAT_P_NOTREADY;
     me->rcn_tid = -1;
     me->frs_hwr = -1;
     me->lst_hwr = -1;
 
-    me->cd  = DoConnect(me);
-    if (me->cd < 0)
+    me->srvtype = srvtype;
+
+    /* Type-dependent cations */
+    if (srvtype == SRVTYPE_RESOLVER)
     {
-        if (!IsATemporaryCxError())
+        me->cd = cx_seeker(uniq, NULL,
+                           cda_dat_p_argv0_of_sid(me->sid), NULL,
+                           ProcessSrchEvent,                me);
+        if (me->cd < 0)
         {
             ec = errno;
-            cda_set_err("cx_open(\"%s\"): %s",
+            cda_set_err("cx_seeker(\"%s\"): %s",
                         cda_dat_p_srvrn_of_sid(me->sid), cx_strerror(ec));
             return CDA_DAT_P_ERROR;
         }
-        
-        FailureProc(me, CAR_CONNFAIL);
+
+        /* Periodic timeout for searching;
+           1st time is after 1us, i.e. "immediately after main loop start" */
+        ScheduleSearch(me, 1);
+    }
+    else
+    {
+        me->cd  = DoConnect(me);
+        if (me->cd < 0)
+        {
+            if (!IsATemporaryCxError())
+            {
+                ec = errno;
+                cda_set_err("cx_open(\"%s\"): %s",
+                            cda_dat_p_srvrn_of_sid(me->sid), cx_strerror(ec));
+                return CDA_DAT_P_ERROR;
+            }
+            
+            FailureProc(me, CAR_CONNFAIL);
+        }
     }
 
     return me->state;

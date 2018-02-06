@@ -919,6 +919,7 @@ static int BtnCreator(subsys_t *sr, void *privptr)
                                        l2, 0-15,
                                        sr->ds->cid, MOTIFKNOBS_LEDS_PARENT_GRID);
                 BindServMenus(sys, 0, sr->leds.count-1);
+                sr->oldleds_count = sr->leds.count;
             }
 	}
     }
@@ -992,28 +993,17 @@ static void subsys_evproc(int            uniq,
 
         sr->oldrflags = rflags;
     }
-    else if (reason == CDA_CTX_R_SRVSTAT)
-    {
-        if (info_int < sr->leds.count)
-            MotifKnobs_oneled_set_status(sr->leds.leds + info_int,
-                                         cda_status_of_srv(sr->leds.cid, info_int));
-    }
     else if (reason == CDA_CTX_R_NEWSRV)
     {
+        /* Force leds to grow NOW */
+        MotifKnobs_leds_grow(&(sr->leds));
+        /* Any new-born leds, requiring a meny binding? */
+        if (sr->oldleds_count < sr->leds.count)
+        {
+            BindServMenus(sys, sr->oldleds_count, sr->leds.count-1);
+            sr->oldleds_count = sr->leds.count;
+        }
     }
-}
-
-static int LedsUpdater(subsys_t *sr, void *privptr)
-{
-    if (sr->cfg.kind == SUBSYS_CX) MotifKnobs_leds_update(&(sr->leds));
-    return 0;
-}
-static void KeepaliveProc(XtPointer     closure __attribute__((unused)),
-                          XtIntervalId *id      __attribute__((unused)))
-{
-    //XtAppAddTimeOut(xh_context, 2000, KeepaliveProc, NULL);
-
-    //ForeachSubsysSlot(LedsUpdater, NULL, cur_syslist);
 }
 
 ///////////////////////////////////////////////////////////////////////
@@ -1160,7 +1150,6 @@ int main(int argc, char *argv[])
 
     CreateWindow  ();
     PopulateWindow();
-    //KeepaliveProc (NULL, NULL);
 
     XhShowWindow(onewin);
     XhRunApplication();

@@ -14,7 +14,7 @@ winclass main RingRF
 grouping main RINGRF_grouping "ВЧ-система" lrtb "" \
         content:2 {
     container kurkin "Rezonator" grid "nocoltitles" base:rezonator \
-            ncols:2 nattl:3 content:eval(3+9*2) {
+            ncols:2 nattl:3 content:eval(3+10*2) {
 
         disp   ilk       "!"   led color=red       r:ilk        tip:"Interlock!"
         disp   rez_state "R_S" text dpyfmt:"%3.0f" r:vdev_state
@@ -22,6 +22,13 @@ grouping main RINGRF_grouping "ВЧ-система" lrtb "" \
 
         RGSWCH(onoff, "", Off, On, is_on, switch_off, switch_on)
         disp rdy   "Rdy"   led shape=circle,offcol=red r:is_ready
+
+        knob/ign_otherop Polarity "Plrty" choicebs nolabel \
+                items:"#Te-\b\blit=green\tx\b\blit=gray\te+\b\blit=orange" \
+                tip:"Feedback polarity selection (e-, off, e+)" \
+                r:"_all_code; getchan polarity; add 1; ret;" \
+                w:"_all_code; qryval; sub 1; putchan polarity; ret;"
+        noop - ""
 
         knob Uset  "Uset"  text "" kV     %4.2f uset
         disp Umes  "Umes"  text "" kV     %4.2f umes

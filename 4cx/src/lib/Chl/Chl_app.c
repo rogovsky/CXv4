@@ -194,15 +194,6 @@ static int CmdProc(XhWindow window, const char *cmd, int info_int)
     return ChlHandleStdCommand(window, cmd, info_int);
 }
 
-static void LEDS_KeepaliveProc(XtPointer     closure,
-                               XtIntervalId *id      __attribute__((unused)))
-{
-  DataSubsys  subsys = closure;
-
-    XtAppAddTimeOut(xh_context, 1000, LEDS_KeepaliveProc, closure);
-    MotifKnobs_leds_update(subsys->leds_ptr);
-}
-
 static xh_actdescr_t stdtoolslist[] =
 {
     XhXXX_TOOLCMD(CHL_STDCMD_LOAD_MODE, "Load mode",            btn_open_xpm,  btn_mini_open_xpm),
@@ -362,7 +353,6 @@ int  ChlRunSubsystem(DataSubsys subsys,
         MotifKnobs_leds_create(subsys->leds_ptr,
                                leds_grid, opts.minitoolbar? -15 : 20,
                                subsys->cid, MOTIFKNOBS_LEDS_PARENT_GRID);
-        LEDS_KeepaliveProc((XtPointer)subsys, NULL);
     }
 
     gettimeofday(&cycle_start, NULL);

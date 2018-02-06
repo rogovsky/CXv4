@@ -2,7 +2,7 @@ devtype kurrez_cac208 w50i,r50i {
 	Uset		0
 	Iexc		1
 	Finj		2
-	FTun		3
+	polarity	3
 
 	switch_on	8
 	switch_off	9
@@ -24,6 +24,11 @@ devtype kurrez_cac208 w50i,r50i {
 	is_ready	75
 
 	ilk		82
+
+	Uset_min	90,
+	Iexc_min	91,
+
+	errdescr	98,
 
 	vdev_state	99
 }

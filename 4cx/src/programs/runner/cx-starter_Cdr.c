@@ -192,7 +192,6 @@ static int SubsysRealizer(subsys_t *sr, void *privptr)
             cda_add_context_evproc(sr->ds->cid, 
                                    ((sr->cfg.noprocess)? 0
                                                        : CDA_CTX_EVMASK_CYCLE) |
-                                       CDA_CTX_EVMASK_SRVSTAT |
                                        CDA_CTX_EVMASK_NEWSRV,
                                    info_p->evproc,
                                    lint2ptr(sr - info_p->sl->sys_list/*!!! HACK!!! */));

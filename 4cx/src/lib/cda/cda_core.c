@@ -63,6 +63,7 @@ typedef struct
     cda_srvconn_t    sid;
     cda_hwcnref_t    hwr;              // For varparms is cda_varparm_t
     int              is_ready;
+    int              rds_rcvd;
 
     int              options;          // Saves cda_add_chan(.options)
     cxdtype_t        dtype;            // Data type
@@ -482,7 +483,7 @@ static int kind_of_reference(const char *spec, char **path_p, char **dcln_p)
             p += 2;
             if (dcln_p != NULL) *dcln_p = p;
             // Should also skip [SERVER:N] if any
-            if (*p!= '\0'  &&  isalnum(*p))
+            if (*p != '\0'  &&  isalnum(*p))
             {
                 s = p;
                 while (*s != '\0'  &&  isalnum(*s)) s++;
@@ -1060,6 +1061,7 @@ cda_dataref_t  cda_add_chan   (cda_context_t         cid,
     ri->sid        = CDA_SRVCONN_ERROR; // Initially isn't bound to anything
     ri->hwr        = CDA_HWCNREF_ERROR; // And ref too, until cda_dat_p_set_hwr()
     ri->is_ready   = 0;
+    ri->rds_rcvd   = ((options & CDA_DATAREF_OPT_NO_WR_WAIT) != 0);
 
     ri->options    = options;
     ri->dtype      = ri->current_dtype = dtype;
@@ -1111,7 +1113,7 @@ cda_dataref_t  cda_add_chan   (cda_context_t         cid,
         ri->rflags = CXCF_FLAG_NOTFOUND;
     }
 #endif
-    if (new_chan_r == CDA_DAT_P_NOTREADY  &&  0)
+    if (new_chan_r == CDA_DAT_P_NOTREADY  &&  0 /* With "1" all non-local channels' knobs immediately become black till connect */)
     {
         /* Mark as NOTFOUND */
         ri->rflags |= CXCF_FLAG_NOTFOUND;
@@ -1928,7 +1930,8 @@ static int find_or_add_a_server(cda_context_t    cid,
 
     ci = AccessCtxSlot(cid);
     r = si->metric->new_srv(sid, si->pdt_privptr,
-                            ci->uniq, srvrspec, ci->argv0);
+                            ci->uniq, srvrspec, ci->argv0, 
+                            options & CDA_DAT_P_GET_SERVER_OPT_SRVTYPE_mask);
     if (r < 0)
     {
 ////fprintf(stderr, "%s!\n", __FUNCTION__);
@@ -2034,7 +2037,8 @@ static int snd_rqd_checker(refinfo_t *ri, void *privptr)
     if (ri->sid      != sid  ||
         ri->snd_rqd  == 0    ||
         ri->hwr      <  0    ||
-        ri->is_ready == 0)
+        ri->is_ready == 0    ||
+        ri->rds_rcvd == 0)
         return 0;
 
     CallSndData(ri);
@@ -2496,6 +2500,11 @@ void  cda_dat_p_update_dataset     (cda_srvconn_t  sid,
 
         if (is_update)
         {
+            if (ri->rds_rcvd == 0)
+            {
+                ri->rds_rcvd = 1;
+                if (ri->snd_rqd) /*!!! Call "send with rd-conversion" */;
+            }
             update_info.ref = ref;
             ForeachRefCbSlot(ref_evproc_caller, &update_info, ri);
         }
@@ -2677,8 +2686,9 @@ void  cda_dat_p_set_hwr            (cda_dataref_t  ref, cda_hwcnref_t hwr)
     else
     {
         if (ri->snd_rqd   &&
-            ri->sid > 0   &&
             ri->is_ready  &&
+            ri->rds_rcvd  &&
+            ri->sid > 0   &&
             AccessSrvSlot(ri->sid)->state == CDA_DAT_P_OPERATING)
             CallSndData(ri);
     }
@@ -2749,6 +2759,7 @@ void  cda_dat_p_set_ready          (cda_dataref_t  ref, int is_ready)
     ri->is_ready  = (is_ready != 0);
     if (ri->snd_rqd   &&
         ri->is_ready  &&
+        ri->rds_rcvd  &&
         ri->hwr >= 0  &&
         ri->sid >  0  &&
         AccessSrvSlot(ri->sid)->state == CDA_DAT_P_OPERATING)

@@ -60,7 +60,9 @@ enum {
          CAR_QUANT,
 
          CAR_ECHO,            /* Echo packet */
-         CAR_KILLED           /* Connection was killed by server */
+         CAR_KILLED,          /* Connection was killed by server */
+
+         CAR_SRCH_RESULT      /* Result of broadcast search for channel by name */
      };
 
 
@@ -133,6 +135,17 @@ typedef struct
     CxAnyVal_t q;
 } cx_quant_info_t;
 
+typedef struct
+{
+    int        param1;
+    int        param2;
+    const char*name;
+
+    const char*srv_addr;
+    int        srv_n;
+} cx_srch_info_t;
+
+
 typedef void (*cx_notifier_t)(int uniq, void *privptr1,
                               int cd, int reason, const void *info,
                               void *privptr2);
@@ -160,7 +173,11 @@ int  cx_rq_wr (int cd, int count, int *hwids, int *param1s, int *param2s,
                cxdtype_t *dtypes, int *nelems, void **values);
 
 
-int  cx_resolve(const char *name);
+int  cx_seeker(int            uniq,     void *privptr1,
+               const char    *argv0,    const char *username,
+               cx_notifier_t  notifier, void *privptr2);
+
+int  cx_srch  (int cd, const char *name,      int  param1,  int  param2);
 
 
 void cx_do_cleanup(int uniq);

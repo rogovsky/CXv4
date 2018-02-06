@@ -636,8 +636,9 @@ static int  cda_d_local_snd_data(void *pdt_privptr, cda_hwcnref_t hwr,
 
 static int  cda_d_local_new_srv (cda_srvconn_t  sid, void *pdt_privptr,
                                  int            uniq,
-                                 const char    *srvrspec,
-                                 const char    *argv0)
+                                 const char    *srvrspec __attribute((unused)),
+                                 const char    *argv0    __attribute((unused)),
+                                 int            srvtype  __attribute((unused)))
 {
   cda_d_local_privrec_t *me = pdt_privptr;
 

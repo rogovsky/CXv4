@@ -505,12 +505,17 @@ static void ServeGuruRequest(int uniq, void *unsdptr,
 {
   CxV4Header *hdr  = inpkt;
   int         endianness;
+  uint32      pkdtsz;
+  int32       pktype;
   int         numrqs;          // # of chunks in request
+  uint32      cln_ver;
   uint8      *ptr;
   CxV4Chunk  *req;
   int         reqcn;           // REQuest chunk # (loop ctl var)
+  uint32      reqcode;         // REQuest opCODE
   size_t      reqcsize;        // REQuest chunk size in bytes
   size_t      reqlen;          // REQuest *data* LENgth in bytes
+  size_t      req_total;
 
   int         srv;
   CxsdDb      db;
@@ -521,42 +526,123 @@ static void ServeGuruRequest(int uniq, void *unsdptr,
   struct
   {
       CxV4Header  hdr;
-      CxV4Chunk   rpy;
-      char        name[CX_V4_MAX_UDP_DATASIZE-sizeof(CxV4Chunk)];
-  } reply;
+      uint8       data[CX_V4_MAX_UDP_DATASIZE];
+  } result;
+  size_t      result_DataSize;
+  int         result_NumChunks;
   size_t      rpycsize;
+  CxV4Chunk  *rpy;
+
+#define BeginSearchReply()    \
+    do {                      \
+        result_DataSize  = 0; \
+        result_NumChunks = 0; \
+    } while (0)
+#define SendSearchReply()                                                  \
+    do {                                                                   \
+        result.hdr = *hdr;                                                 \
+        if (endianness == FDIO_LEN_LITTLE_ENDIAN)                          \
+        {                                                                  \
+            result.hdr.DataSize  = h2l_u32(result_DataSize);               \
+            result.hdr.Type      = h2l_u32(CXT4_SEARCH_RESULT);            \
+            result.hdr.NumChunks = h2l_u32(result_NumChunks);              \
+        }                                                                  \
+        else                                                               \
+        {                                                                  \
+            result.hdr.DataSize  = h2b_u32(result_DataSize);               \
+            result.hdr.Type      = h2b_u32(CXT4_SEARCH_RESULT);            \
+            result.hdr.NumChunks = h2b_u32(result_NumChunks);              \
+        }                                                                  \
+        fdio_reply(handle, &result, sizeof(result.hdr) + result_DataSize); \
+    } while (0)
 
     if (reason != FDIO_R_DATA) return;
 
     ////fprintf(stderr, "%s inpktsize=%d\n", __FUNCTION__, inpktsize);
 
+    if (inpktsize < sizeof(*hdr)) return;
+
     if      (l2h_u32(hdr->var1) == CXV4_VAR1_ENDIANNESS_SIG)
+    {
         endianness = FDIO_LEN_LITTLE_ENDIAN;
+        pkdtsz  = l2h_u32(hdr->DataSize);
+        pktype  = l2h_u32(hdr->Type);
+        numrqs  = l2h_u32(hdr->NumChunks);
+        cln_ver = l2h_u32(hdr->var2);
+    }
     else if (b2h_u32(hdr->var1) == CXV4_VAR1_ENDIANNESS_SIG)
+    {
         endianness = FDIO_LEN_BIG_ENDIAN;
+        pkdtsz  = b2h_u32(hdr->DataSize);
+        pktype  = b2h_u32(hdr->Type);
+        numrqs  = b2h_u32(hdr->NumChunks);
+        cln_ver = b2h_u32(hdr->var2);
+    }
     else
         return;
 
-    if (endianness == FDIO_LEN_LITTLE_ENDIAN)
-        numrqs = l2h_u32(hdr->NumChunks);
-    else
-        numrqs = b2h_u32(hdr->NumChunks);
+    /* Pakcet-wide checks */
+    /* 1. Packet type */
+    if (pktype != CXT4_SEARCH) return;
+    /* 1.1. Version */
+    if (!CX_VERSION_IS_COMPATIBLE(cln_ver, CX_V4_PROTO_VERSION)) return;
+    /* 2. Packet size */
+    /*    Note: no reason to check "inpktsize <= CX_V4_MAX_UDP_PKTSIZE",
+                because that is not crucial */
+    if (pkdtsz + sizeof(*hdr) != inpktsize)
+        return;
 
-    for (reqcn = 0, ptr = hdr->data/*, rpycn = 0, replydatasize = 0*/;
+    BeginSearchReply();
+
+    for (reqcn = 0, ptr = hdr->data, req_total = sizeof(CxV4Header);
          reqcn < numrqs;
-         reqcn++,   ptr += reqcsize)
+         reqcn++,   ptr += reqcsize, req_total += reqcsize)
     {
+        /* Check if we MAY access chunk */
+        if (req_total + sizeof(CxV4Chunk) > inpktsize)
+        {
+            return;
+        }
+
         req = (void *)ptr;
         if (endianness == FDIO_LEN_LITTLE_ENDIAN)
+        {
+            reqcode  = l2h_u32(req->OpCode);
             reqcsize = l2h_u32(req->ByteSize);
+        }
         else
-            reqcsize = b2h_u32(req->ByteSize);
+        {
+            reqcode  = l2h_u32(req->OpCode);
+            reqcsize = l2h_u32(req->ByteSize);
+        }
         reqlen   = reqcsize - sizeof(CxV4Chunk);
 
-        /*!!! Should check length!!! */
-
-        if (reqlen == 0) continue;
+        /* Check: */
+        /* I. Size validity */
+        /* 1. Is reqcsize sane at all? */
+        if (reqcsize < sizeof(*req) + 1)
+        {
+            return;
+        }
+        /* 2. Does this chunk have appropriate alignment? */
+        if (reqcsize != CXV4_CHUNK_CEIL(reqcsize))
+        {
+            return;
+        }
+        /* 3. Okay, does this chunk still fit into packet? */
+        if (req_total + reqcsize > inpktsize)
+        {
+            return;
+        }
+        /* II. Name */
+        /* 1. Is there a meaningful string
+              ("2" means non-empty, for at least 1 char besides NUL) */
+        if (reqlen < 2) continue;
+        /* 2. Force NUL-termination */
         req->data[reqlen-1] = '\0';
+
+        if (reqcode != CXC_SEARCH) continue;
+
         ////fprintf(stderr, "Q: [%d]<%s>\n", reqlen, req->data);
 
         for (srv = 0;  srv <= CX_MAX_SERVER;  srv++)
@@ -568,27 +654,34 @@ static void ServeGuruRequest(int uniq, void *unsdptr,
                 res_res == CXSD_DB_RESOLVE_CPOINT
                 /* Note:   CXSD_DB_RESOLVE_GLOBAL is NOT counted */)
             {
-                reply.hdr = *hdr;
-                reply.rpy = *req;
+                rpycsize = sizeof(*rpy) + reqlen;
+                /* Flush buffer if space is over */
+                if (result_DataSize + rpycsize > sizeof(result.data))
+                {
+                    SendSearchReply ();
+                    BeginSearchReply();
+                }
+                rpy = result.data + result_DataSize;
 
-                rpycsize = sizeof(reply.rpy) + reqlen;
+                *rpy = *req;
                 if (endianness == FDIO_LEN_LITTLE_ENDIAN)
                 {
-                    reply.hdr.DataSize  = reply.rpy.ByteSize = h2l_u32(rpycsize);
-                    reply.hdr.NumChunks =                      h2l_u32(1);
-                    reply.rpy.rs4       =                      h2l_u32(srv);
+                    rpy->OpCode    = h2l_u32(CXC_CVT_TO_RPY(reqcode));
+                    rpy->ByteSize  = h2l_u32(rpycsize);
+                    rpy->rs4       = h2l_u32(srv);
                 }
                 else
                 {
-                    reply.hdr.DataSize  = reply.rpy.ByteSize = h2b_u32(rpycsize);
-                    reply.hdr.NumChunks =                      h2b_u32(1);
-                    reply.rpy.rs4       =                      h2b_u32(srv);
+                    rpy->OpCode    = h2b_u32(CXC_CVT_TO_RPY(reqcode));
+                    rpy->ByteSize  = h2b_u32(rpycsize);
+                    rpy->rs4       = h2b_u32(srv);
                 }
 
-                memcpy(reply.name, req->data, reqlen);
+                memcpy(rpy->data, req->data, reqlen);
 
-                fdio_reply(handle, &reply, sizeof(reply.hdr) + rpycsize);
-                fprintf(stderr, "\"%s\" is at :%d\n", req->data, srv);
+                result_DataSize += rpycsize;
+                result_NumChunks++;
+                ////fprintf(stderr, "\"%s\" is at :%d\n", req->data, srv);
 
                 goto NEXT_REQ;
             }
@@ -597,10 +690,12 @@ static void ServeGuruRequest(int uniq, void *unsdptr,
  NEXT_REQ:;
     }
 
-    /*!!! Check for CXT4_RESOLVE */
+    if (result_NumChunks > 0) SendSearchReply();
 
     ////fprintf(stderr, "%s() size=%zd\n", __FUNCTION__, inpktsize);
     ////fdio_reply(handle, inpkt, inpktsize);
+#undef BeginSearchReply
+#undef SendSearchReply
 }
 
 static void ForgetAdvisorDb(int instance)
@@ -931,7 +1026,8 @@ static int TryToBecomeGuru(void)
     inet_guru_handle = fdio_register_fd(0, NULL, /*!!!uniq*/
                                         inet_guru_socket,     FDIO_DGRAM,
                                         ServeGuruRequest,     NULL,
-                                        CX_V4_MAX_UDP_PKTSIZE, 0, 0, 0,
+                                        CX_V4_MAX_UDP_PKTSIZE,
+                                        sizeof(CxV4Header), 0, 0,
                                         FDIO_LEN_LITTLE_ENDIAN,
                                         0, 0);
     if (inet_guru_handle < 0)
@@ -1388,6 +1484,7 @@ static cxsd_gchnid_t cpid2gcid(cxsd_cpntid_t  cpid)
         if (GrowReplyPacket(cp, replydatasize + rpycsize) != 0)    \
             {/*!!!*/}                                              \
         rpy = (void*)(cp->replybuf->data + replydatasize);         \
+        bzero(rpy, sizeof(*rpy));                                  \
         rpy->OpCode   = clnt_u32(cp, CXC_CVT_TO_RPY(OpCode));      \
         rpy->ByteSize = clnt_u32(cp, rpycsize);                    \
         rpy->param1   = req->param1;                               \
@@ -1475,6 +1572,7 @@ static size_t PutDataChunkReply(v4clnt_t *cp, size_t replydatasize,
         {/*!!!*/}
 
     rslt = (void*)(cp->replybuf->data + replydatasize);
+    bzero(rslt, sizeof(*rslt));
     rslt->ck.OpCode   = clnt_u32(cp, info_int);
     rslt->ck.ByteSize = clnt_u32(cp, rpycsize);
     rslt->ck.param1   = param1;
@@ -1532,6 +1630,7 @@ static size_t PutStrsChunkReply(v4clnt_t *cp, size_t replydatasize,
         /*!!!*/return 0;
 
     strd = (void*)(cp->replybuf->data + replydatasize);
+    bzero(strd, sizeof(*strd));
     strd->ck.OpCode   = clnt_u32(cp, CXC_CVT_TO_RPY(CXC_STRS));
     strd->ck.ByteSize = clnt_u32(cp, rpycsize);
     strd->ck.param1   = param1;
@@ -1577,6 +1676,7 @@ static size_t PutRDsChunkReply (v4clnt_t *cp, size_t replydatasize,
         /*!!!*/return 0;
 
     rdsl = (void*)(cp->replybuf->data + replydatasize);
+    bzero(rdsl, sizeof(*rdsl));
     rdsl->ck.OpCode   = clnt_u32(cp, CXC_CVT_TO_RPY(CXC_RDS));
     rdsl->ck.ByteSize = clnt_u32(cp, rpycsize);
     rdsl->ck.param1   = param1;
@@ -1611,6 +1711,7 @@ static size_t PutFrAgChunkReply(v4clnt_t *cp, size_t replydatasize,
         {/*!!!*/}
 
     frsh = (void*)(cp->replybuf->data + replydatasize);
+    bzero(frsh, sizeof(*frsh));
     frsh->ck.OpCode   = clnt_u32(cp, CXC_CVT_TO_RPY(CXC_FRH_AGE));
     frsh->ck.ByteSize = clnt_u32(cp, rpycsize);
     frsh->ck.param1   = param1;
@@ -1642,7 +1743,7 @@ static size_t PutQuantChunkReply(v4clnt_t *cp, size_t replydatasize,
     if (q_dsize > sizeof(qunt->q_data))
     {
         logline(LOGF_HARDWARE, LOGL_ERR,
-                "BUG BUG BUG %s(): cpid=%d/gcid=%d q_dtype=%d, sizeof_cxdtype()=%zd, >sizeof(q_data)=%d",
+                "BUG BUG BUG %s(): cpid=%d/gcid=%d q_dtype=%d, sizeof_cxdtype()=%zd, >sizeof(q_data)=%zd",
                 __FUNCTION__, cpid, gcid,
                 chn_p->q_dtype, q_dsize, sizeof(qunt->q_data));
         return 0;
@@ -1653,6 +1754,7 @@ static size_t PutQuantChunkReply(v4clnt_t *cp, size_t replydatasize,
         {/*!!!*/}
 
     qunt = (void*)(cp->replybuf->data + replydatasize);
+    bzero(qunt, sizeof(*qunt));
     qunt->ck.OpCode   = clnt_u32(cp, CXC_CVT_TO_RPY(CXC_QUANT));
     qunt->ck.ByteSize = clnt_u32(cp, rpycsize);
     qunt->ck.param1   = param1;
@@ -2009,6 +2111,7 @@ static void ServeIORequest(v4clnt_t *cp, CxV4Header *hdr, size_t inpktsize)
                     if (GrowReplyPacket(cp, replydatasize + rpycsize) != 0)
                         {/*!!!*/}
                     rpy = (void*)(cp->replybuf->data + replydatasize);
+                    bzero(rpy, rpycsize);
                     rpy->OpCode   = clnt_u32(cp, CXC_CVT_TO_RPY(OpCode));
                     rpy->ByteSize = clnt_u32(cp, rpycsize);
                     rpy->param1   = req->param1;
@@ -2032,7 +2135,8 @@ static void ServeIORequest(v4clnt_t *cp, CxV4Header *hdr, size_t inpktsize)
 
             case CXC_SETMON:
                 monr = (void*)req;
-                ////fprintf(stderr, "SETMON %d\n", monr->hwid);
+                cpid = monr->cpid;
+                ////fprintf(stderr, "SETMON %d\n", monr->cpid);
                 if (SetMonitor(cp, monr, hdr->Seq) == 0)
                 {
                     rpycsize = PutRDsChunkReply (cp, replydatasize,

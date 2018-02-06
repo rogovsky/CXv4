@@ -564,6 +564,19 @@ static int DgramReadyForRead (fdinfo_t *fr)
         return 0;
     }
 
+    /* Check packet length */
+    /* 1. MAX: No reason to check for "r > fr->maxinppktsize",
+          because we request recv() of no more than that amount. */
+    /* 2. MIN */
+    if (r < fr->hdr_size)
+    {
+        /* Note: we do NOT "close_because(,FDIO_R_INPKT2BIG)",
+                 since a connectionless socket which can receive
+                 any garbage (and treating that condition as fatal
+                 would result in a nice remote DoS possibility). */
+        return 0;
+    }
+
     /* Notify the host program */
     fr->being_processed = 1;
     fr->notifier(fr->uniq, fr->privptr1,

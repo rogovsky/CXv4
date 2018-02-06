@@ -44,6 +44,7 @@ int main(int argc, char *argv[])
   const char   *p_eq; // '='
   const char   *p_sl; // '/'
   const char   *p_cl; // ':'
+  const char   *p_dt; // '.'
 
     set_signal(SIGPIPE, SIG_IGN);
 
@@ -94,6 +95,7 @@ int main(int argc, char *argv[])
         p_eq = strchr(argv[arg_n], '=');
         p_sl = strchr(argv[arg_n], '/');
         p_cl = strchr(argv[arg_n], ':');
+        p_dt = strchr(argv[arg_n], '.');
 
         if      (argv[arg_n][0] == '-')
             pkind = PK_SWITCH;
@@ -106,7 +108,7 @@ int main(int argc, char *argv[])
                 pkind = PK_FILE;
 
             if (p_eq == NULL  &&  p_sl == NULL  &&
-                p_cl != NULL)
+                (p_cl != NULL  ||  p_dt != NULL))
                 pkind = PK_BASE;
         }
 

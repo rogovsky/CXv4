@@ -25,6 +25,7 @@ typedef struct
     rflags_t        oldrflags;
 
     MotifKnobs_leds_t  leds;
+    int             oldleds_count;
 
     struct timeval  last_start_time;
 } subsys_t;
