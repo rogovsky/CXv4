@@ -2512,12 +2512,7 @@ void  cda_dat_p_update_dataset     (cda_srvconn_t  sid,
             if (ri->rds_rcvd == 0)
             {
                 ri->rds_rcvd = 1;
-                if (ri->snd_rqd   &&
-                    ri->is_ready  &&
-                    ri->hwr >= 0  &&
-                    ri->sid >  0  &&
-                    AccessSrvSlot(ri->sid)->state == CDA_DAT_P_OPERATING)
-                    CallSndData(ri);
+                if (ri->snd_rqd) /*!!! Call "send with rd-conversion" */;
             }
             update_info.ref = ref;
             ForeachRefCbSlot(ref_evproc_caller, &update_info, ri);
@@ -3194,25 +3189,44 @@ static int DoStoreWithConv(refinfo_t *ri,
   int        n;
   double    *rdp;
 
-////    fprintf(stderr, "\t%s(what_to_do=%d) flags=%d\n", __FUNCTION__, what_to_do, ri->snd_flags);
-
-    // 1. Select the branch and prepare parameters accordingly
-    if      (what_to_do == DO_STORE_JUST_STORE)
+    if (data == NULL)
     {
-        /* Note: in this branch meaning of terms is a bit mixed:
-                 * 'src' and 'dst' denote what src* and dst* will be
-                   in DO_STORE_CONV_IN_SNDBUF branch;
-                 * copying goes from 'data' to 'src'. */
+        src_dtype = ri->snd_dtype;
+        nelems    = ri->snd_nelems;
+    }
+    else
         src_dtype = dtype;
-        dst_dtype = ((ri->snd_flags & NTVZ_DTYPE) != 0)? ri->dtype
-                                                       : dtype;
-        src_usize = sizeof_cxdtype(src_dtype);
-        dst_usize = sizeof_cxdtype(dst_dtype);
-        src_total = src_usize * nelems;
-        dst_total = dst_usize * nelems;
-        max_total = ((dst_total > src_total ? dst_total : src_total) + 15) &~15U;
 
-        src = &(ri->imm_val2snd);
+    if ((ri->snd_flags & NTVZ_DTYPE) == 0)
+    {
+        dst_dtype = ri->dtype;
+    }
+
+    // Derive parameters
+    src_usize = sizeof_cxdtype(src_dtype);
+    dst_usize = sizeof_cxdtype(dst_dtype);
+    src_total = src_usize * nelems;
+    dst_total = dst_usize * nelems;
+    max_total = ((dst_total > src_total ? dst_total : src_total) + 15) &~15U;
+    
+
+    // Data pointers:
+    /* "data==NULL" means "copy with conversion inside snd_buf",
+       called from CallSndData() */
+    if (data == NULL)
+    {
+        // base on sizeof_cxdtype() and other
+        dst = (ri->sndbuf != NULL)? ri->sndbuf : &(ri->imm_val2snd));
+        src = dst;
+        // Shift src upwards
+        //...no -- place it BACKwards from the end
+    }
+    // otherwise it is "store in snd_buf/imm_val2snd", called from StoreData4Snd()
+    else
+    {
+        src = data;
+        // Allocate/grow buffer if required
+        dst = &(ri->imm_val2snd);
         if (ri->sndbuf != NULL  ||  max_total > sizeof(ri->imm_val2snd))
         {
             if (ri->sndbuf_allocd < max_total)
@@ -3222,68 +3236,19 @@ static int DoStoreWithConv(refinfo_t *ri,
                 ri->sndbuf        = new_sndbuf;
                 ri->sndbuf_allocd = max_total;
             }
-            src = ri->sndbuf;
-        }
-        if (src_usize < dst_usize)  // Src is shifted towards end
-            src += ((dst_total + 15) &~ 15U) - src_total;
-
-        if (src_total != 0) memcpy(src, data, src_total);
-        ri->snd_dtype  = src_dtype;
-        ri->snd_nelems = nelems;
-
-        return 0;
-    }
-    else if (what_to_do == DO_STORE_STORE_WITH_CONV)
-    {
-        src_dtype = dtype;
-        dst_dtype = ((ri->snd_flags & NTVZ_DTYPE) != 0)? ri->dtype
-                                                       : dtype;
-        src_usize = sizeof_cxdtype(src_dtype);
-        dst_usize = sizeof_cxdtype(dst_dtype);
-        src_total = src_usize * nelems;
-        dst_total = dst_usize * nelems;
-
-        src = data;
-        dst = &(ri->imm_val2snd);
-        if (ri->sndbuf != NULL  ||  dst_total > sizeof(ri->imm_val2snd))
-        {
-            if (ri->sndbuf_allocd < dst_total)
-            {
-                new_sndbuf = safe_realloc(ri->sndbuf, dst_total);
-                if (new_sndbuf == NULL) return -1;
-                ri->sndbuf        = new_sndbuf;
-                ri->sndbuf_allocd = dst_total;
-            }
             dst = ri->sndbuf;
         }
+        
+
     }
-    else if (what_to_do == DO_STORE_CONV_IN_SNDBUF)
-    {
-        nelems    = ri->snd_nelems;
 
-        src_dtype = ri->snd_dtype;
-        dst_dtype = ((ri->snd_flags & NTVZ_DTYPE) != 0)? ri->dtype
-                                                       : src_dtype;
-        src_usize = sizeof_cxdtype(src_dtype);
-        dst_usize = sizeof_cxdtype(dst_dtype);
-        src_total = src_usize * nelems;
-        dst_total = dst_usize * nelems;
-
-        dst = (ri->sndbuf != NULL)? ri->sndbuf : &(ri->imm_val2snd);
-        src = dst;
-        if (src_usize < dst_usize)  // Src is shifted towards end
-            src += ((dst_total + 15) &~ 15U) - src_total;
-    }
-    else return -1;
-
-    // 2. Perform copy
+    // ?. Perform copy
     if (nelems != 0)
     {
         if ((ri->snd_flags & (DO_RD_CONV | NTVZ_DTYPE)) == 0)
         {
             // just memcpy()
-            if (src_total != 0) 
-                memcpy(dst, src, src_total); // In this case src_total==dst_total
+            memcpy(dst, src, src_total); // In this case src_total==dst_total
         }
         else
         {
@@ -3293,7 +3258,7 @@ static int DoStoreWithConv(refinfo_t *ri,
                  nels --, src += src_usize, dst += dst_usize)
             {
                 /* 1. Read datum, converting to double */
-                switch (src_dtype)
+                switch (dtype)
                 {
                     case CXDTYPE_INT32:  v = *((  int32*)src);     break;
                     case CXDTYPE_UINT32: v = *(( uint32*)src);     break;
@@ -3307,21 +3272,18 @@ static int DoStoreWithConv(refinfo_t *ri,
                     default:             v = *(( uint8 *)src);     break;
                 }
                 /* 2. Perform conversion */
-                if ((ri->snd_flags & DO_RD_CONV) != 0)
+                n   = ri->phys_count;
+                rdp = ri->alc_phys_rds;
+                if (rdp == NULL) rdp = ri->imm_phys_rds;
+                rdp += (n-1)*2;
+                while (n > 0)
                 {
-                    n   = ri->phys_count;
-                    rdp = ri->alc_phys_rds;
-                    if (rdp == NULL) rdp = ri->imm_phys_rds;
-                    rdp += (n-1)*2;
-                    while (n > 0)
-                    {
-                        v = (v + rdp[1]) * rdp[0];
-                        rdp -= 2;
-                        n--;
-                    }
+                    v = (v + rdp[1]) * rdp[0];
+                    rdp -= 2;
+                    n--;
                 }
                 /* 3. Store datum, converting from double */
-                switch (dst_dtype)
+                switch (dtype)
                 {
                     case CXDTYPE_INT32:      *((  int32*)dst) = v; break;
                     case CXDTYPE_UINT32:     *(( uint32*)dst) = v; break;
@@ -3337,13 +3299,6 @@ static int DoStoreWithConv(refinfo_t *ri,
             }
         }
     }
-
-    // 3. Store properties
-    ri->snd_flags &=~ (DO_RD_CONV | NTVZ_DTYPE);
-    ri->snd_dtype  = dst_dtype;
-    ri->snd_nelems = nelems;
-
-    return 0;
 }
 
 static int  StoreData4Snd(refinfo_t *ri,
@@ -3353,42 +3308,100 @@ static int  StoreData4Snd(refinfo_t *ri,
   size_t  usize = sizeof_cxdtype(dtype);
   size_t  dsize = usize * nelems;
   void   *new_sndbuf;
+  uint8  *src;
   uint8  *dst;
+  uint8  *saved_dst;
+
+  int     nels;
+  double  v;
+  int     n;
+  double *rdp;
+
+    src = data;
+    dst = &(ri->imm_val2snd);
+    if (ri->sndbuf != NULL  ||  dsize > sizeof(ri->imm_val2snd))
+    {
+        if (ri->sndbuf_allocd < dsize)
+        {
+            new_sndbuf = safe_realloc(ri->sndbuf, dsize);
+            if (new_sndbuf == NULL) return -1;
+            ri->sndbuf        = new_sndbuf;
+            ri->sndbuf_allocd = dsize;
+        }
+        dst = ri->sndbuf;
+    }
+    saved_dst = dst;
+
+    if (dsize != 0)
+    {
+        if (
+            (snd_flags & (DO_RD_CONV | NTVZ_DTYPE)) == 0
+            ||
+            (ri->phys_count == 0  &&  ri->rds_rcvd)
+            ||
+            (ri->options & CDA_DATAREF_OPT_NO_RD_CONV) != 0
+            ||
+            (reprof_cxdtype(dtype) != CXDTYPE_REPR_INT  &&
+             reprof_cxdtype(dtype) != CXDTYPE_REPR_FLOAT)
+           )
+        {
+            memcpy(dst, src, dsize);
+            snd_flags &=~ (DO_RD_CONV | NTVZ_DTYPE);
+        }
+        else
+            for (nels = nelems;
+                 nels > 0;
+                 nels --, src += usize, dst += usize)
+            {
+                /* 1. Read datum, converting to double */
+                switch (dtype)
+                {
+                    case CXDTYPE_INT32:  v = *((  int32*)src);     break;
+                    case CXDTYPE_UINT32: v = *(( uint32*)src);     break;
+                    case CXDTYPE_INT16:  v = *((  int16*)src);     break;
+                    case CXDTYPE_UINT16: v = *(( uint16*)src);     break;
+                    case CXDTYPE_DOUBLE: v = *((float64*)src);     break;
+                    case CXDTYPE_SINGLE: v = *((float32*)src);     break;
+                    case CXDTYPE_INT64:  v = *((  int64*)src);     break;
+                    case CXDTYPE_UINT64: v = *(( uint64*)src);     break;
+                    case CXDTYPE_INT8:   v = *((  int8 *)src);     break;
+                    default:             v = *(( uint8 *)src);     break;
+                }
+                /* 2. Perform conversion */
+                n   = ri->phys_count;
+                rdp = ri->alc_phys_rds;
+                if (rdp == NULL) rdp = ri->imm_phys_rds;
+                rdp += (n-1)*2;
+                while (n > 0)
+                {
+                    v = (v + rdp[1]) * rdp[0];
+                    rdp -= 2;
+                    n--;
+                }
+                /* 3. Store datum, converting from double */
+                switch (dtype)
+                {
+                    case CXDTYPE_INT32:      *((  int32*)dst) = v; break;
+                    case CXDTYPE_UINT32:     *(( uint32*)dst) = v; break;
+                    case CXDTYPE_INT16:      *((  int16*)dst) = v; break;
+                    case CXDTYPE_UINT16:     *(( uint16*)dst) = v; break;
+                    case CXDTYPE_DOUBLE:     *((float64*)dst) = v; break;
+                    case CXDTYPE_SINGLE:     *((float32*)dst) = v; break;
+                    case CXDTYPE_INT64:      *((  int64*)dst) = v; break;
+                    case CXDTYPE_UINT64:     *(( uint64*)dst) = v; break;
+                    case CXDTYPE_INT8:       *((  int8 *)dst) = v; break;
+                    default:                 *(( uint8 *)dst) = v; break;
+                }
+            }
+    }
 
     ri->snd_rqd    = 1;
-    if ((snd_flags & (DO_RD_CONV | NTVZ_DTYPE)) == 0)
-    {
-        dst = &(ri->imm_val2snd);
-        if (ri->sndbuf != NULL  ||  dsize > sizeof(ri->imm_val2snd))
-        {
-            if (ri->sndbuf_allocd < dsize)
-            {
-                new_sndbuf = safe_realloc(ri->sndbuf, dsize);
-                if (new_sndbuf == NULL) return -1;
-                ri->sndbuf        = new_sndbuf;
-                ri->sndbuf_allocd = dsize;
-            }
-            dst = ri->sndbuf;
-        }
-
-        if (dsize != 0) memcpy(dst, data, dsize);
-        ri->snd_flags  = snd_flags;
-        ri->snd_dtype  = dtype;
-        ri->snd_nelems = nelems;
-    }
-    else
-    {
-        ri->snd_flags = snd_flags;
-        DoStoreWithConv(ri,
-                        dtype, nelems, data,
-                        (ri->rds_rcvd | ((snd_flags & DO_RD_CONV) == 0))? DO_STORE_STORE_WITH_CONV : DO_STORE_JUST_STORE);
-    }
+    ri->snd_flags  = snd_flags;
+    ri->snd_dtype  = dtype;
+    ri->snd_nelems = nelems;
 
     if (nelems == 1  &&  dtype == ri->dtype)
     {
-        /*!!! How is this concept applicable, with DELAYED {R,D}-conversion?
-              Either NOT applicable or storing to user_raw should be delayed
-              till conversion (or, better, till SENDING). */
         memcpy(&(ri->orange.user_raw), data, sizeof_cxdtype(dtype));
         ri->orange.physmodified  = MODIFIED_USER;
         ri->orange.isinitialized = 1;
@@ -3407,10 +3420,15 @@ static int  CallSndData(refinfo_t *ri)
   int             r  = CDA_PROCESS_DONE;
   struct timeval  timenow;
 
-    if ((ri->snd_flags & (DO_RD_CONV | NTVZ_DTYPE)) != 0)
+#if 0
+    if ((ri->snd_flags))
+    {
         DoStoreWithConv(ri,
                         CXDTYPE_UNKNOWN, 0, NULL,
-                        DO_STORE_CONV_IN_SNDBUF);
+                        ri->snd_flags, DO_STORE_CONV_IN_SNDBUF);
+        ri->snd_flags &=~ (DO_RD_CONV | NTVZ_DTYPE);
+    }
+#endif
 
     gettimeofday(&timenow, NULL);
     ri->snd_time.sec  = timenow.tv_sec;
@@ -3436,19 +3454,9 @@ static int  SendOrStore(refinfo_t *ri,
                         int snd_flags)
 {
   srvinfo_t      *si = AccessSrvSlot(ri->sid);
-  int             repr = reprof_cxdtype(dtype);
+  int             repr;
   int             r;
   struct timeval  timenow;
-
-    /* Check if RD-conversion is sensible */
-    if ((ri->phys_count == 0  &&  ri->rds_rcvd)
-        ||
-        (ri->options & CDA_DATAREF_OPT_NO_RD_CONV) != 0
-        ||
-        (repr != CXDTYPE_REPR_INT  &&  repr != CXDTYPE_REPR_FLOAT)
-        ||
-        nelems == 0)
-        snd_flags &=~ DO_RD_CONV;
 
     /* Check if (deferred) dtype conversion is really needed */
     if ((snd_flags & NTVZ_DTYPE) != 0  &&
@@ -3457,15 +3465,23 @@ static int  SendOrStore(refinfo_t *ri,
          ||
          ri->dtype == CXDTYPE_UNKNOWN  // No way to convert to UNKNOWN
         )
-       )
         snd_flags &=~ NTVZ_DTYPE;
 
+    repr = reprof_cxdtype(dtype);
     if (ri->snd_rqd == 0                  &&  // Was NOT stored earlier
         ri->hwr >= 0  &&  ri->sid > 0     &&  // Is ready for sending
         ri->is_ready                      &&
         si->state == CDA_DAT_P_OPERATING  &&  // ..and connection is ready too
-        (                                     // May be sent w/o RD- and dtype-conversion
-         ((snd_flags & (DO_RD_CONV | NTVZ_DTYPE)) == 0)
+        (                                     // May be sent w/o {r,d}-conversion
+         (snd_flags & (DO_RD_CONV | NTVZ_DTYPE) == 0
+         ||
+         (ri->phys_count == 0  &&  ri->rds_rcvd)
+         ||
+         (ri->options & CDA_DATAREF_OPT_NO_RD_CONV) != 0
+         ||
+         (repr != CXDTYPE_REPR_INT  &&  repr != CXDTYPE_REPR_FLOAT)
+         ||
+         nelems == 0
         )
        )
     {
@@ -3585,6 +3601,18 @@ int cda_process_ref(cda_dataref_t ref, int options,
   CxKnobParam_t *p;
 
   int            repr;
+  size_t         size;
+  void          *vp;
+
+  double         v;
+  int            n;
+  double        *rdp;
+
+  float32        f32;
+  int64          i64;
+  int32          i32;
+  int16          i16;
+  int8           i8;
 
   struct timeval timenow;
   cx_time_t      curtime;
@@ -3594,6 +3622,7 @@ int cda_process_ref(cda_dataref_t ref, int options,
 //fprintf(stderr, "%s(ref=%d, userval=%f)\n", __FUNCTION__, ref, userval);
     if (CheckRef(ref) != 0) return CDA_PROCESS_ERR;
     repr = reprof_cxdtype(ri->dtype);
+    size = sizeof_cxdtype(ri->dtype);
     if (
         ri->max_nelems != 1
         ||
@@ -3609,10 +3638,48 @@ int cda_process_ref(cda_dataref_t ref, int options,
     {
         if      (ri->in_use == REF_TYPE_CHN)
         {
+#if 1
             /* Send */
             if ((options & CDA_OPT_READONLY) == 0)
                 ret = SendOrStore(ri, CXDTYPE_DOUBLE, 1, &userval,
                                   DO_RD_CONV | NTVZ_DTYPE);
+#else
+            v   = userval;
+
+            /* {r,d} conversion */
+            if ((ri->options & CDA_DATAREF_OPT_NO_RD_CONV) == 0)
+            {
+                n   = ri->phys_count;
+                rdp = ri->alc_phys_rds;
+                if (rdp == NULL) rdp = ri->imm_phys_rds;
+                rdp += (n-1)*2;
+                while (n > 0)
+                {
+                    v = (v + rdp[1]) * rdp[0];
+                    rdp -= 2;
+                    n--;
+                }
+            }
+
+            /* Type conversion */
+            if    (repr == CXDTYPE_REPR_INT)
+            {
+                if      (size == sizeof(int32))    {i32 = round(v); vp = &i32;}
+                else if (size == sizeof(int16))    {i16 = round(v); vp = &i16;}
+                else if (size == sizeof(int64))    {i64 = round(v); vp = &i64;}
+                else           /*sizeof(int8)*/    {i8  = round(v); vp = &i8; }
+            }
+            else /*repr == CXDTYPE_REPR_FLOAT*/
+            {
+                if      (size == sizeof(float64))            vp = &v;
+                else           /*sizeof(float32)*/ {f32 = v; vp = &f32; }
+            }
+                
+            
+            /* Send */
+            if ((options & CDA_OPT_READONLY) == 0)
+                ret = SendOrStore(ri, ri->dtype, 1, vp, SNDFL_NONE);
+#endif
         }
         else if (ri->in_use == REF_TYPE_FLA)
         {

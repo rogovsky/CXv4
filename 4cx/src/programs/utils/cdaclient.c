@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
+#include <errno.h>
 
 #include "misc_macros.h"
 #include "misclib.h"
@@ -61,6 +62,7 @@ static int            option_monitor   = 0;
 static const char    *option_outfile   = NULL;
 static int            option_relative  = 0;
 static double         option_timelim   = 0;
+static int            option_w_unbuff  = 0;
 
 static int            print_curval     = 0;
 static int            print_cur_as_new = 0;
@@ -78,6 +80,7 @@ static int            print_fresh_ages = 0;
 static int            print_rds        = 0;
 static int            print_strings    = 0;
 static int            print_srvlist    = 0;
+static int            print_writes     = 0;
 static int            print_unserved   = 0;
 
 static cda_context_t  the_cid;
@@ -96,6 +99,30 @@ static void ProcessContextEvent(int            uniq,
 ////fprintf(stderr, "%s  %s(cid=%d, reason=%d, info_int=%d)\n", strcurtime(), __FUNCTION__, cid, reason, info_int);
     switch (reason)
     {
+    }
+}
+
+static void PerformWrite(refrec_t *rp)
+{
+  void          *buf;
+  int            r;
+
+    buf = rp->ur.databuf;
+    if (buf == NULL) buf = &(rp->ur.val2wr);
+    if ((r = cda_snd_ref_data(rp->ur.ref, rp->ur.dtype, rp->ur.num2wr, buf)) >= 0)
+    {
+        rp->ur.wr_req = 0;
+        rp->ur.wr_snt = 1;
+    }
+    if (print_writes)
+    {
+        fprintf(outfile, "# WRITE:");
+        if (r >= 0) fprintf(outfile, "OK");
+        else        fprintf(outfile, "ERR:%d", errno);
+        fprintf(outfile, " ");
+        if (print_time) fprintf(outfile, "@%s  ", strcurtime());
+        if (print_name) fprintf(outfile, "%s",    rp->ur.spec);
+        fprintf(outfile, "\n");
     }
 }
 
@@ -186,6 +213,9 @@ static void ProcessDatarefEvent(int            uniq,
             }
         }
         else if (rp->ur.wr_req)
+#if 1
+            PerformWrite(rp);
+#else
         {
             buf = rp->ur.databuf;
             if (buf == NULL) buf = &(rp->ur.val2wr);
@@ -195,6 +225,7 @@ static void ProcessDatarefEvent(int            uniq,
                 rp->ur.wr_snt = 1;
             }
         }
+#endif
         else if (rp->ur.wr_snt)
         {
             rp->ur.wr_snt = 0;
@@ -421,6 +452,7 @@ static int  ActivateChannel(refrec_t *rp, void *privptr)
 
         RlsRefRecSlot(rn);
         nrefs--;
+        return 0;  // Despite an error, we MUST return 0, because it is an iterator (with non-0 further channels would be skipped)
     }
     cda_add_dataref_evproc(rp->ur.ref,
                            CDA_REF_EVMASK_UPDATE | CDA_REF_EVMASK_RSLVSTAT |
@@ -430,6 +462,8 @@ static int  ActivateChannel(refrec_t *rp, void *privptr)
                            (CDA_REF_EVMASK_FRESHCHG * print_fresh_ages) |
                            (CDA_REF_EVMASK_QUANTCHG * print_quants),
                            ProcessDatarefEvent, lint2ptr(rn));
+
+    if (option_w_unbuff  &&  rp->ur.wr_req) PerformWrite(rp);
 
     return 0;
 }
@@ -513,7 +547,7 @@ int main(int argc, char *argv[])
 
     set_signal(SIGPIPE, SIG_IGN);
 
-    while ((c = getopt(argc, argv, "1b:d:D:f:hmo:rT:")) != EOF)
+    while ((c = getopt(argc, argv, "1b:d:D:f:hmo:rT:w")) != EOF)
         switch (c)
         {
             case '1':
@@ -552,6 +586,7 @@ int main(int argc, char *argv[])
                         case 's': print_srvlist    = val2set; break;
                         case 'S': print_strings    = val2set; break;
                         case 'Q': print_quants     = val2set; break;
+                        case 'w': print_writes     = val2set; break;
                         case '/': print_unserved   = val2set; break;
                         default:
                             fprintf(stderr, "%s %s: unknown print-option '%c'\n",
@@ -584,6 +619,10 @@ int main(int argc, char *argv[])
                 option_timelim  = atof(optarg);
                 break;
 
+            case 'w':
+                option_w_unbuff = 1;
+                break;
+
             case ':':
             case '?':
                 err++;
@@ -607,6 +646,7 @@ int main(int argc, char *argv[])
                "  -o OUTFILE  -- send output to OUTFILE\n"
                "  -r          -- print relative channel names\n"
                "  -T DURATION -- how many seconds to run (time limit)\n"
+               "  -w          -- send writes to cda immediately (w/o builtin buffering)\n"
                "  -h  show this help; -hh shows more details\n",
                argv[0]);
         if (option_help > 1)
@@ -628,6 +668,7 @@ int main(int argc, char *argv[])
                " F  print Fresh ages\n"
                " Q  print Quants\n"
                " S  print Strings (label, comment, units, ...)\n"
+               " w  print when performing writes (sending data)\n"
                " /  print unserved channels upon timeout (-T)\n"
                "\n"
                "CHANNEL may have optional prefixes:\n"
