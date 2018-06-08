@@ -1,3 +1,0 @@
-grouping main KnobTest "Knob Test" grid "" content:1 {
-    knob one "A Text" text
-}

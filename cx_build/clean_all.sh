@@ -4,5 +4,5 @@
 CXDIR=$HOME/cx
 
 
-make -kC $CXDIR/4cx/src clean maintainer-clean
+make -kC $CXDIR/4cx/src maintainer-clean clean
 

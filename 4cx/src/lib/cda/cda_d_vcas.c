@@ -673,7 +673,7 @@ static void ProcessInData(cda_d_vcas_privrec_t *me,
                    strlen(not_found)) == 0)
         {
 ////            fprintf(stderr, "CH(%s) NOTFOUND\n", hi->name);
-            cda_dat_p_set_notfound(hi->dataref);
+            cda_dat_p_report_rslvstat(hi->dataref, CDA_RSLVSTAT_NOTFOUND);
             return;
         }
 
