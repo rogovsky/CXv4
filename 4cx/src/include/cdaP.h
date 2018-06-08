@@ -270,7 +270,7 @@ void  cda_fla_p_update_fla_result  (cda_dataref_t  ref,
                                     cx_time_t      timestamp);
 
 void  cda_dat_p_set_hwr            (cda_dataref_t  ref, cda_hwcnref_t hwr);
-void  cda_dat_p_set_notfound       (cda_dataref_t  ref);
+void  cda_dat_p_report_rslvstat    (cda_dataref_t  ref, int rslvstat);
 void  cda_dat_p_set_ready          (cda_dataref_t  ref, int is_ready);
 void  cda_dat_p_set_phys_rds       (cda_dataref_t  ref,
                                     int            phys_count,

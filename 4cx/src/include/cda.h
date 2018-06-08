@@ -111,6 +111,13 @@ typedef enum /* Note: the statuses are ordered by decreasing of severity, so tha
     CDA_SERVERSTATUS_NORMAL       = +3,  // Is connected
 } cda_serverstatus_t;
 
+enum
+{
+    CDA_RSLVSTAT_NOTFOUND  = 0, // Is definitely not found
+    CDA_RSLVSTAT_SEARCHING = 1, // Is being searched for, but currently unavailable
+    CDA_RSLVSTAT_FOUND     = 2, // Is found
+};
+
 
 static inline int cda_ref_is_sensible(cda_dataref_t ref)
 {

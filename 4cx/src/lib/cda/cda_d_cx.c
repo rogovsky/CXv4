@@ -327,7 +327,7 @@ static int  cda_d_cx_new_chan(cda_dataref_t ref, const char *name,
             return CDA_DAT_P_ERROR;
         }
         AddHwrToSrv(me, hwr);
-        cda_dat_p_set_notfound(hi->dataref);
+        cda_dat_p_report_rslvstat(hi->dataref, CDA_RSLVSTAT_SEARCHING);
 
         hi->rslv_type  = RSLV_TYPE_GLBL;
         hi->rslv_state = RSLV_STATE_UNKNOWN;
@@ -519,7 +519,7 @@ static void FailureProc(cda_d_cx_privrec_t *me, int reason)
             AddHwrToSrv  (rs, hwr);
             hi->rslv_state = RSLV_STATE_UNKNOWN;
             cda_dat_p_set_ready(hi->dataref, 0);
-            cda_dat_p_set_notfound(hi->dataref);
+            cda_dat_p_report_rslvstat(hi->dataref, CDA_RSLVSTAT_SEARCHING);
         }
         else if (hi->rslv_type == RSLV_TYPE_NAME)
         {
@@ -615,7 +615,7 @@ static void ProcessCxlibEvent(int uniq, void *unsdptr,
                     {
                         ////fprintf(stderr, "NOTFOUND %s\n", hi->name);
                         hi->rslv_state = RSLV_STATE_ABSENT;
-                        cda_dat_p_set_notfound(hi->dataref);
+                        cda_dat_p_report_rslvstat(hi->dataref, CDA_RSLVSTAT_NOTFOUND);
                     }
                 }
                 else

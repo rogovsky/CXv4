@@ -259,12 +259,14 @@ static void RlsRefSlot(cda_dataref_t ref)
         /* Do nothing */
     }
 
-    DestroyRefCbSlotArray(ri);
+    DestroyRefCbSlotArray(ri); // This also does safe_free(cb_list)
 
     safe_free(ri->reference);
     safe_free(ri->fla_privptr);
     safe_free(ri->strings_buf);
+    safe_free(ri->alc_phys_rds);
     safe_free(ri->current_val);
+    safe_free(ri->sndbuf);
 }
 
 static int CheckRef(cda_dataref_t ref)
@@ -2708,7 +2710,7 @@ void  cda_dat_p_set_hwr            (cda_dataref_t  ref, cda_hwcnref_t hwr)
     }
 }
 
-void  cda_dat_p_set_notfound       (cda_dataref_t  ref)
+void  cda_dat_p_report_rslvstat    (cda_dataref_t  ref, int rslvstat)
 {
   refinfo_t       *ri;
   ctxinfo_t       *ci;
@@ -2728,8 +2730,11 @@ void  cda_dat_p_set_notfound       (cda_dataref_t  ref)
     }
 
     /* Mark as NOTFOUND */
-    ri->rflags    = CXCF_FLAG_NOTFOUND;
-    ri->timestamp = (cx_time_t){CX_TIME_SEC_NEVER_READ,0};
+    if (rslvstat != CDA_RSLVSTAT_FOUND)
+    {
+        ri->rflags    = CXCF_FLAG_NOTFOUND;
+        ri->timestamp = (cx_time_t){CX_TIME_SEC_NEVER_READ,0};
+    }
 
     /* Notify interested */
     ci = AccessCtxSlot(ri->cid);
@@ -2740,7 +2745,7 @@ void  cda_dat_p_set_notfound       (cda_dataref_t  ref)
     call_info.privptr1 = ci->privptr1;
     call_info.reason   = CDA_REF_R_RSLVSTAT;
     call_info.evmask   = 1 << call_info.reason;
-    call_info.info_ptr = NULL;
+    call_info.info_ptr = lint2ptr(rslvstat);
     call_info.ref      = ref;
     ForeachRefCbSlot(ref_evproc_caller, &call_info, ri);
 
