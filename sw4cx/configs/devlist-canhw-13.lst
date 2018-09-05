@@ -1,33 +1,36 @@
+# canhw:13 -- Linac+DampingRing+K500 vacuum
+
 include(`caniva.devtype')
 include(`ceac124.devtype')
 
+include(`canhw_CAN_LINES_LIST.m4')
+
 # Linac
-dev liniva0 caniva/remdrv ~ 0,10 b:cangw-linvac:8002
-dev liniva1 caniva/remdrv ~ 0,6  b:cangw-linvac:8002
-dev liniva2 caniva/remdrv ~ 0,7  b:cangw-linvac:8002
-dev liniva3 caniva/remdrv ~ 0,8  b:cangw-linvac:8002
-dev liniva4 caniva/remdrv ~ 0,9  b:cangw-linvac:8002
-dev liniva5 caniva/remdrv ~ 0,5  b:cangw-linvac:8002
+dev liniva0  caniva@sktcankoz  ~ L_VAC,10 
+dev liniva1  caniva@sktcankoz  ~ L_VAC,6  
+dev liniva2  caniva@sktcankoz  ~ L_VAC,7  
+dev liniva3  caniva@sktcankoz  ~ L_VAC,8  
+dev liniva4  caniva@sktcankoz  ~ L_VAC,9  
+dev liniva5  caniva@sktcankoz  ~ L_VAC,5  
 
 # Channel
-dev chanvc0  ceac124/remdrv ~ 0,31 b:cangw-chanvac:8002
-dev chanvc1  ceac124/remdrv ~ 0,30 b:cangw-chanvac:8002
-dev chanvc2  ceac124/remdrv ~ 0,29 b:cangw-chanvac:8002
-dev chanvc3  ceac124/remdrv ~ 0,28 b:cangw-chanvac:8002
-dev chanvc4  ceac124/remdrv ~ 0,27 b:cangw-chanvac:8002
-dev chanvc5  ceac124/remdrv ~ 0,26 b:cangw-chanvac:8002
-dev chanvc6  ceac124/remdrv ~ 0,25 b:cangw-chanvac:8002
-dev chanvc7  ceac124/remdrv ~ 0,24 b:cangw-chanvac:8002
-dev chanvc8  ceac124/remdrv ~ 0,23 b:cangw-chanvac:8002
-dev chanvc9  ceac124/remdrv ~ 0,22 b:cangw-chanvac:8002
-dev chanvc10 ceac124/remdrv ~ 0,21 b:cangw-chanvac:8002
-dev chanvc11 ceac124/remdrv ~ 0,20 b:cangw-chanvac:8002
+dev chanvc1  ceac124@sktcankoz ~ L_VAC,31 
+dev chanvc2  ceac124@sktcankoz ~ L_VAC,30 
+dev chanvc3  ceac124@sktcankoz ~ L_VAC,29 
+dev chanvc4  ceac124@sktcankoz ~ L_VAC,28 
+dev chanvc5  ceac124@sktcankoz ~ L_VAC,27 
+dev chanvc6  ceac124@sktcankoz ~ L_VAC,26 
+dev chanvc7  ceac124@sktcankoz ~ L_VAC,25 
+dev chanvc8  ceac124@sktcankoz ~ L_VAC,24 
+dev chanvc9  ceac124@sktcankoz ~ L_VAC,23 
+dev chanvc10 ceac124@sktcankoz ~ L_VAC,22 
+dev chanvc11 ceac124@sktcankoz ~ L_VAC,21 
+dev chanvc12 ceac124@sktcankoz ~ L_VAC,20 
 
 devtype chanalm w8d {
 	ilim<0-3>	0
 	ulim<0-3>	4
 }
-dev a_chanvc0  chanalm/noop ~ -
 dev a_chanvc1  chanalm/noop ~ -
 dev a_chanvc2  chanalm/noop ~ -
 dev a_chanvc3  chanalm/noop ~ -
@@ -39,6 +42,7 @@ dev a_chanvc8  chanalm/noop ~ -
 dev a_chanvc9  chanalm/noop ~ -
 dev a_chanvc10 chanalm/noop ~ -
 dev a_chanvc11 chanalm/noop ~ -
+dev a_chanvc12 chanalm/noop ~ -
 
 ######################################################################
 
@@ -113,15 +117,15 @@ LINIVA_DEV(liniva5, _5D1,    _5D2,    _5D3,    _5D4,
                     _7D1,    _7D2,    _7D3,    _7D4,
                     _8D1,    _8D2,    _8D3,    _8D4)
 
-LIN124_DEV(chanvc0,  K1,     K2,     K3,     K4)
-LIN124_DEV(chanvc1,  K5,     K6,     K7,     K8)
-LIN124_DEV(chanvc2,  K9,     K10,    K11,    K12)
-LIN124_DEV(chanvc3,  K13,    K14,    KD3,    KD4)
-LIN124_DEV(chanvc4,  E1,     E2,     E3,     E4)
-LIN124_DEV(chanvc5,  E5,     R51,    P5,     P6)
-LIN124_DEV(chanvc6,  P1,     P2,     P3,     P4)
-LIN124_DEV(chanvc7,  R70,    R71,    R72,    R73)
-LIN124_DEV(chanvc8,  R80,    R81,    R82,    R83)
-LIN124_DEV(chanvc9,  R90,    R91,    R92,    R93)
-LIN124_DEV(chanvc10, R100,   R101,   R102,   R103)
-LIN124_DEV(chanvc11, R110,   R111,   R112,   R113)
+LIN124_DEV(chanvc1,  vK1,     vK2,     vK3,     vK4)
+LIN124_DEV(chanvc2,  vK5,     vK6,     vK7,     vK8)
+LIN124_DEV(chanvc3,  vK9,     vK10,    vK11,    vK12)
+LIN124_DEV(chanvc4,  vK13,    vK14,    vR43,    vE1)
+LIN124_DEV(chanvc5,  vE2,     vE3,     vE4,     vE5)
+LIN124_DEV(chanvc6,  vR61,    vR62,    vR63,    vR64)
+LIN124_DEV(chanvc7,  vP1,     vP2,     vP3,     vP4)
+LIN124_DEV(chanvc8,  vP5,     vP6,     vP7,     vT1)
+LIN124_DEV(chanvc9,  v5T2,    v5T3,    v5T4,    v5T5)
+LIN124_DEV(chanvc10, v6T6,    v6T7,    v6T8,    v6T9)
+LIN124_DEV(chanvc11, v6T10,   v6T11,   v6T12,   v6T13)
+LIN124_DEV(chanvc12, vR120,   vR121,   vR122,   vR123)

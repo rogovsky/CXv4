@@ -101,6 +101,42 @@ static GC AllocDashGC(Widget w, int idx, int dash_length)
 
 //////////////////////////////////////////////////////////////////////
 
+static char *make_time_str(MotifKnobs_histplot_t *hp, int age, int with_msc)
+{
+  static char     buf[100];
+  int             secs;
+  struct timeval  at;
+  struct tm      *st;
+
+    if (hp->view_only  &&
+        hp->timestamps_ring_used > age)
+    {
+        at = hp->timestamps_ring[hp->timestamps_ring_used - 1 - age];
+        st = localtime(&(at.tv_sec));
+        if (with_msc)
+            sprintf(buf, "%02d:%02d:%02d.%03d",
+                    st->tm_hour, st->tm_min, st->tm_sec, (int)(at.tv_usec / 1000));
+        else
+            sprintf(buf, "%02d:%02d:%02d",
+                    st->tm_hour, st->tm_min, st->tm_sec);
+    }
+    else
+    {
+        secs = (((double)age) * hp->cyclesize_us / 1000000);
+        
+        if      (secs < 59)
+            sprintf(buf,            "%d",                               -secs);
+        else if (secs < 3600)
+            sprintf(buf,      "-%d:%02d",               secs / 60,       secs % 60);
+        else
+            sprintf(buf, "-%d:%02d:%02d", secs / 3600, (secs / 60) % 60, secs % 60);
+    }
+
+    return buf;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 enum
 {
     H_TICK_LEN      = 5,
@@ -118,8 +154,10 @@ enum
 
 static int x_scale_factors[] = {1, 10, 60};
 
-static void GetDispRange(DataKnob k, double *min_p, double *max_p)
+/* Return 1 if sensible range was found and 0 if default range is in effect */
+static int GetDispRange(DataKnob k, double *min_p, double *max_p)
 {
+  register int     ret = 1;
   register double  mindisp;
   register double  maxdisp;
 
@@ -147,12 +185,15 @@ static void GetDispRange(DataKnob k, double *min_p, double *max_p)
     {/* Nothing to do, ranges are already got */}
     else
     {
+        ret     = 0;
         mindisp = -100.0;
         maxdisp = +100.0;
     }
 
     *min_p = mindisp;
     *max_p = maxdisp;
+
+    return ret;
 }
 
 static int ShouldUseLog(DataKnob k)
@@ -230,7 +271,8 @@ static void DrawGraph(MotifKnobs_histplot_t *hp, int do_clear)
   int         v_tick_segs;
   int         i;
   int         limit;
-  int         t;
+  int         scr_age;
+  int         age;
   double      v;
   int         x;
   int         y;
@@ -266,15 +308,23 @@ static void DrawGraph(MotifKnobs_histplot_t *hp, int do_clear)
     }
     
     // Grid -- vertical lines
-    for (t = (H_TICK_STEP*2) - hp->horz_offset % (H_TICK_STEP*2);
-         t < grf_w;
-         t += H_TICK_STEP*2)
+    for (scr_age = (H_TICK_STEP*2) - hp->horz_offset % (H_TICK_STEP*2);
+         scr_age < grf_w;
+         scr_age += H_TICK_STEP*2)
     {
-        x = grf_w - 1 - t;
+        x = grf_w - 1 - scr_age;
         XDrawLine(dpy, win, hp->gridGC,
                   x, 0, x, grf_h-1);
     }
-    
+
+    // "Reper" -- only in static mode
+    if ((hp->view_only || 0)  &&  hp->x_index >= 0)
+    {
+        x = grf_w - 1 - (hp->x_index / hp->x_scale - hp->horz_offset);
+        XDrawLine(dpy, win, hp->axisGC,
+                  x, 0, x, grf_h-1);
+    }
+
     for (row = hp->rows_used - 1;  row >= 0;  row--)
     {
         if (!hp->show[row]) continue;
@@ -288,20 +338,7 @@ static void DrawGraph(MotifKnobs_histplot_t *hp, int do_clear)
         if (limit > k->u.k.histring_used)
             limit = k->u.k.histring_used;
 
-#if 1
         GetDispRange(k, &mindisp, &maxdisp);
-#else
-        if (k->u.k.num_params > DATAKNOB_PARAM_DISP_MAX  &&
-            (mindisp = k->u.k.params[DATAKNOB_PARAM_DISP_MIN].value)
-            <
-            (maxdisp = k->u.k.params[DATAKNOB_PARAM_DISP_MAX].value))
-        {}
-        else
-        {
-            mindisp = -100;
-            maxdisp = +100;
-        }
-#endif
         is_logarithmic = ShouldUseLog(k);
         if (is_logarithmic)
         {
@@ -310,15 +347,15 @@ static void DrawGraph(MotifKnobs_histplot_t *hp, int do_clear)
             maxdisp = log(maxdisp);
         }
         
-        for (t = hp->horz_offset * hp->x_scale, npoints = 0;
-             t < limit;
-             t++)
+        for (age = hp->horz_offset * hp->x_scale, npoints = 0;
+             age < limit;
+             age++)
         {
             v = k->u.k.histring[
                                 (
                                  k->u.k.histring_start
                                  +
-                                 (k->u.k.histring_used - 1 - t)
+                                 (k->u.k.histring_used - 1 - age)
                                 )
                                 %
                                 k->u.k.histring_len
@@ -341,7 +378,7 @@ static void DrawGraph(MotifKnobs_histplot_t *hp, int do_clear)
             ////if (t == 0  &&  isnan(v)) fprintf(stderr, "%s v=nan y=%d\n", k->ident, y);
             if      (y < -32767) y = -32767;
             else if (y > +32767) y = +32767;
-            x = grf_w - 1 - ((t * x_mul) / x_div) + hp->horz_offset;
+            x = grf_w - 1 - ((age * x_mul) / x_div) + hp->horz_offset;
 
             if (npoints == PTSBUFSIZE) do_flush(dpy, win, hp->chanGC[is_wide][row % XH_NUM_DISTINCT_LINE_COLORS],
                                                 points, &npoints);
@@ -383,8 +420,7 @@ static void DrawAxis (MotifKnobs_histplot_t *hp, int do_clear)
   int        y_lr  [2];
 
   int        even;
-  int        t;
-  int        secs;
+  int        age;
   int        v_tick_segs;
   int        i;
   int        x;
@@ -421,12 +457,12 @@ static void DrawAxis (MotifKnobs_histplot_t *hp, int do_clear)
                    hp->m_lft - 1, hp->m_top - 1,
                    grf_w + 1,      grf_h + 1);
 
-    for (t = hp->horz_offset + H_TICK_STEP - 1, t -= t % H_TICK_STEP;
-         t < hp->horz_offset + grf_w;
-         t += H_TICK_STEP)
+    for (age = hp->horz_offset + H_TICK_STEP - 1, age -= age % H_TICK_STEP;
+         age < hp->horz_offset + grf_w;
+         age += H_TICK_STEP)
     {
-        x = cur_w - hp->m_rgt - 1 - t + hp->horz_offset;
-        even = (t % (H_TICK_STEP*2)) == 0;
+        x = cur_w - hp->m_rgt - 1 - age + hp->horz_offset;
+        even = (age % (H_TICK_STEP*2)) == 0;
         if (even) len = V_TICK_LEN;
         else      len = V_TICK_LEN / 2 + 1;
 
@@ -439,25 +475,16 @@ static void DrawAxis (MotifKnobs_histplot_t *hp, int do_clear)
 
         if (even)
         {
-            secs = (((double)t) * hp->cyclesize_us / 1000000) * hp->x_scale;
-            
-            if      (secs < 59)
-                sprintf(buf,            "%d",                               -secs);
-            else if (secs < 3600)
-                sprintf(buf,      "-%d:%02d",               secs / 60,       secs % 60);
-            else
-                sprintf(buf, "-%d:%02d:%02d", secs / 3600, (secs / 60) % 60, secs % 60);
-
+            p = make_time_str(hp, age * hp->x_scale, 0);
             XDrawString(dpy, win, hp->axisGC,
-                        x - XTextWidth(hp->axis_finfo, buf, strlen(buf)) / 2,
+                        x - XTextWidth(hp->axis_finfo, p, strlen(p)) / 2,
                         hp->m_top - V_TICK_LEN - V_TICK_SPC - hp->axis_finfo->descent,
-                        buf, strlen(buf));
-
+                        p, strlen(p));
             XDrawString(dpy, win, hp->axisGC,
-                        x - XTextWidth(hp->axis_finfo, buf, strlen(buf)) / 2,
+                        x - XTextWidth(hp->axis_finfo, p, strlen(p)) / 2,
                         hp->m_top + grf_h +
                             V_TICK_LEN + V_TICK_SPC + hp->axis_finfo->ascent,
-                        buf, strlen(buf));
+                        p, strlen(p));
         }
     }
 
@@ -509,20 +536,7 @@ static void DrawAxis (MotifKnobs_histplot_t *hp, int do_clear)
                 if (!hp->show[row]) continue;
 
                 k = hp->target[row];
-#if 1
-        GetDispRange(k, &mindisp, &maxdisp);
-#else
-                if (k->u.k.num_params > DATAKNOB_PARAM_DISP_MAX  &&
-                    (mindisp = k->u.k.params[DATAKNOB_PARAM_DISP_MIN].value)
-                    <
-                    (maxdisp = k->u.k.params[DATAKNOB_PARAM_DISP_MAX].value))
-                {}
-                else
-                {
-                    mindisp = -100;
-                    maxdisp = +100;
-                }
-#endif
+                GetDispRange(k, &mindisp, &maxdisp);
                 is_logarithmic = ShouldUseLog(k);
                 if (is_logarithmic)
                 {
@@ -585,60 +599,6 @@ static void DrawAxis (MotifKnobs_histplot_t *hp, int do_clear)
 
 //////////////////////////////////////////////////////////////////////
 
-static void GraphExposureCB(Widget     w,
-                            XtPointer  closure,
-                            XtPointer  call_data)
-{
-  MotifKnobs_histplot_t *hp = (MotifKnobs_histplot_t *) closure;
-
-    if (hp->ignore_graph_expose) return;
-    XhRemoveExposeEvents(ABSTRZE(w));
-    DrawGraph(hp, False);
-}
-
-static void AxisExposureCB(Widget     w,
-                           XtPointer  closure,
-                           XtPointer  call_data)
-{
-  MotifKnobs_histplot_t *hp = (MotifKnobs_histplot_t *) closure;
-
-    if (hp->ignore_axis_expose) return;
-    XhRemoveExposeEvents(ABSTRZE(w));
-    DrawAxis(hp, False);
-}
-
-static void GraphResizeCB(Widget     w,
-                          XtPointer  closure,
-                          XtPointer  call_data)
-{
-  MotifKnobs_histplot_t *hp = (MotifKnobs_histplot_t *) closure;
-
-    XhAdjustPreferredSizeInForm(ABSTRZE(w));
-    if (XhCompressConfigureEvents(ABSTRZE(w)) == 0)
-    {
-        hp->ignore_graph_expose = 0;
-        DrawGraph(hp, True);
-    }
-    else
-        hp->ignore_graph_expose = 1;
-}
-
-static void AxisResizeCB(Widget     w,
-                         XtPointer  closure,
-                         XtPointer  call_data)
-{
-  MotifKnobs_histplot_t *hp = (MotifKnobs_histplot_t *) closure;
-
-    XhAdjustPreferredSizeInForm(ABSTRZE(w));
-    if (XhCompressConfigureEvents(ABSTRZE(w)) == 0)
-    {
-        hp->ignore_axis_expose = 0;
-        DrawAxis(hp, True);
-    }
-    else
-        hp->ignore_axis_expose = 1;
-}
-
 static void SetHorzOffset(MotifKnobs_histplot_t *hp, int v)
 {
     if ((v == 0) != (hp->horz_offset == 0))
@@ -692,6 +652,63 @@ static int SetHorzbarParams(MotifKnobs_histplot_t *hp)
     return ret;
 }
 
+//////////////////////////////////////////////////////////////////////
+
+static void GraphExposureCB(Widget     w,
+                            XtPointer  closure,
+                            XtPointer  call_data)
+{
+  MotifKnobs_histplot_t *hp = (MotifKnobs_histplot_t *) closure;
+
+    if (hp->ignore_graph_expose) return;
+    XhRemoveExposeEvents(ABSTRZE(w));
+    DrawGraph(hp, False);
+}
+
+static void AxisExposureCB(Widget     w,
+                           XtPointer  closure,
+                           XtPointer  call_data)
+{
+  MotifKnobs_histplot_t *hp = (MotifKnobs_histplot_t *) closure;
+
+    if (hp->ignore_axis_expose) return;
+    XhRemoveExposeEvents(ABSTRZE(w));
+    DrawAxis(hp, False);
+}
+
+static void GraphResizeCB(Widget     w,
+                          XtPointer  closure,
+                          XtPointer  call_data)
+{
+  MotifKnobs_histplot_t *hp = (MotifKnobs_histplot_t *) closure;
+
+    XhAdjustPreferredSizeInForm(ABSTRZE(w));
+    if (XhCompressConfigureEvents(ABSTRZE(w)) == 0)
+    {
+        hp->ignore_graph_expose = 0;
+        SetHorzbarParams(hp);
+        DrawGraph(hp, True);
+    }
+    else
+        hp->ignore_graph_expose = 1;
+}
+
+static void AxisResizeCB(Widget     w,
+                         XtPointer  closure,
+                         XtPointer  call_data)
+{
+  MotifKnobs_histplot_t *hp = (MotifKnobs_histplot_t *) closure;
+
+    XhAdjustPreferredSizeInForm(ABSTRZE(w));
+    if (XhCompressConfigureEvents(ABSTRZE(w)) == 0)
+    {
+        hp->ignore_axis_expose = 0;
+        DrawAxis(hp, True);
+    }
+    else
+        hp->ignore_axis_expose = 1;
+}
+
 static void HorzScrollCB(Widget     w,
                          XtPointer  closure,
                          XtPointer  call_data)
@@ -703,6 +720,50 @@ static void HorzScrollCB(Widget     w,
    SetHorzOffset(hp, info->value);
    DrawGraph(hp, True);
    DrawAxis (hp, True);
+}
+
+static void set_x_index(MotifKnobs_histplot_t *hp, int idx);
+static void PointerHandler(Widget     w,
+                           XtPointer  closure,
+                           XEvent    *event,
+                           Boolean   *continue_to_dispatch)
+{
+  MotifKnobs_histplot_t *hp = closure;
+
+  XMotionEvent      *mev = (XMotionEvent      *) event;
+  XButtonEvent      *bev = (XButtonEvent      *) event;
+  XCrossingEvent    *cev = (XEnterWindowEvent *) event;
+
+  int                    x;
+  int                    is_in;
+  Dimension              grf_w;
+
+    if      (event->type == MotionNotify)
+    {
+        x = mev->x;
+        if ((mev->state & Button1Mask) == 0  &&  hp->view_only == 0) return;
+        is_in = 1;
+    }
+    else if (event->type == ButtonPress  ||  event->type == ButtonRelease)
+    {
+        x = bev->x;
+        is_in = (event->type == ButtonPress) || hp->view_only;
+    }
+    else if (event->type == LeaveNotify)
+    {
+        x = cev->x;
+        is_in = 0;
+    }
+    else return;
+
+    if (is_in)
+    {
+        XtVaGetValues(hp->graph, XmNwidth, &grf_w, NULL);
+        x = ((grf_w - 1 - x) + hp->horz_offset) * hp->x_scale;
+        set_x_index(hp, x >= 0? x : -1);
+    }
+    else
+        set_x_index(hp, -1);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -754,6 +815,12 @@ static void SetAttachments(MotifKnobs_histplot_t *hp)
                   XmNrightAttachment,   XmATTACH_WIDGET,
                   XmNrightWidget,       hp->w_r,
                   XmNbottomAttachment,  XmATTACH_FORM,
+                  NULL);
+
+    XtVaSetValues(hp->time_dpy,
+                  XmNrightAttachment,   XmATTACH_FORM,
+                  XmNtopAttachment,     XmATTACH_WIDGET,
+                  XmNtopWidget,         hp->grid,
                   NULL);
 
 #else
@@ -889,23 +956,72 @@ static void RenewPlotRow(MotifKnobs_histplot_t *hp, int  row,
 
 static void UpdatePlotRow(MotifKnobs_histplot_t *hp, int  row)
 {
-  DataKnob  k = hp->target[row];
-  Pixel     fg;
-  Pixel     bg;
-    
-    MotifKnobs_SetTextString(k, hp->val_dpy[row], k->u.k.curv);
+  DataKnob     k = hp->target[row];
+  knobstate_t  new_state;
+  Pixel        fg;
+  Pixel        bg;
 
-    if (k->curstate != hp->curstate[row])
+    if      (hp->x_index < 0  &&  !hp->view_only)
+        MotifKnobs_SetTextString(k, hp->val_dpy[row], k->u.k.curv);
+    else if (hp->x_index < k->u.k.histring_used  &&
+             hp->x_index >= 0)
+        MotifKnobs_SetTextString(k, hp->val_dpy[row],
+                                 k->u.k.histring[
+                                                 (k->u.k.histring_start + (k->u.k.histring_used - 1 - hp->x_index))
+                                                 %
+                                                 k->u.k.histring_len
+                                                ]);
+    else
+        XmTextSetString         (   hp->val_dpy[row], "");
+
+    new_state = (hp->x_index < 0)? k->curstate : KNOBSTATE_NONE;
+    if (new_state != hp->curstate[row])
     {
-        MotifKnobs_ChooseColors(k->colz_style, k->curstate,
+        MotifKnobs_ChooseColors(k->colz_style, new_state,
                                 hp->deffg, hp->defbg,
                                 &fg, &bg);
         XtVaSetValues(hp->val_dpy[row],
                       XmNforeground, fg,
                       XmNbackground, bg,
                       NULL);
-        hp->curstate[row] = k->curstate;
+        hp->curstate[row] = new_state;
     }
+}
+
+static void UpdateAllPlotRows(MotifKnobs_histplot_t *hp)
+{
+  int   row;
+  
+    for (row = 0;  row < hp->rows_used;  row++)
+        UpdatePlotRow(hp, row);
+}
+
+static void set_x_index(MotifKnobs_histplot_t *hp, int idx)
+{
+    /* Update value of time_dpy */
+    /* 1. Blank if state changes from "on" to "off" */
+    if (idx < 0  &&  hp->x_index >= 0)
+    {
+        XmTextSetString(hp->time_dpy, "");
+    }
+    /* 2. Display time if required */
+    if (idx >= 0)
+    {
+        XmTextSetString(hp->time_dpy, make_time_str(hp, idx, 1));
+    }
+
+#if 0
+    /* Change visibility of time_dpy if negativeness of x_index changes */
+    if      (idx >= 0  &&  hp->x_index <  0)
+        XtManageChild  (hp->time_dpy);
+    else if (idx <  0  &&  hp->x_index >= 0)
+        XtUnmanageChild(hp->time_dpy);
+#endif
+
+    hp->x_index = idx;
+
+    UpdateAllPlotRows(hp);
+    if (hp->view_only) DrawGraph(hp, True);
 }
 
 static void SetPlotCount(MotifKnobs_histplot_t *hp, int count)
@@ -973,10 +1089,7 @@ static int CalcPlotParams(MotifKnobs_histplot_t *hp)
 
 static void DisplayPlot(MotifKnobs_histplot_t *hp)
 {
-  int   row;
-  
-    for (row = 0;  row < hp->rows_used;  row++)
-        UpdatePlotRow(hp, row);
+    if (hp->x_index < 0) UpdateAllPlotRows(hp);
 
     CalcPlotParams(hp);
     
@@ -1202,6 +1315,9 @@ int  MotifKnobs_CreateHistplot(MotifKnobs_histplot_t *hp,
 
     hp->fixed = ((flags & MOTIFKNOBS_HISTPLOT_FLAG_FIXED) != 0);
 
+    hp->view_only = ((flags & MOTIFKNOBS_HISTPLOT_FLAG_VIEW_ONLY) != 0);
+    hp->x_index   = -1;
+
     hp->form = XtVaCreateManagedWidget("form", xmFormWidgetClass,
                                        parent,
                                        XmNbackground,      bg,
@@ -1298,6 +1414,7 @@ int  MotifKnobs_CreateHistplot(MotifKnobs_histplot_t *hp,
     hp->bkgdGC    = AllocXhGC  (hp->form, XH_COLOR_GRAPH_BG,     NULL);
     hp->axisGC    = AllocXhGC  (hp->form, XH_COLOR_GRAPH_AXIS,   XH_TINY_FIXED_FONT); hp->axis_finfo = last_finfo;
     hp->gridGC    = AllocDashGC(hp->form, XH_COLOR_GRAPH_GRID,   GRID_DASHLENGTH);
+    hp->reprGC    = AllocXhGC  (hp->form, XH_COLOR_GRAPH_REPERS, NULL);
     for (row = 0;
          row < MOTIFKNOBS_HISTPLOT_MAX_LINES_PER_BOX  &&
          row < XH_NUM_DISTINCT_LINE_COLORS;
@@ -1322,6 +1439,11 @@ int  MotifKnobs_CreateHistplot(MotifKnobs_histplot_t *hp,
                                         NULL);
     XtAddCallback(hp->graph, XmNexposeCallback, GraphExposureCB, (XtPointer)hp);
     XtAddCallback(hp->graph, XmNresizeCallback, GraphResizeCB,   (XtPointer)hp);
+    XtAddEventHandler(hp->graph,
+                      EnterWindowMask | LeaveWindowMask | PointerMotionMask |
+                      ButtonPressMask | ButtonReleaseMask |
+                      Button1MotionMask,
+                      False, PointerHandler, hp);
 
     hp->horzbar = XtVaCreateManagedWidget("horzbar", xmScrollBarWidgetClass,
                                           hp->form,
@@ -1405,6 +1527,18 @@ int  MotifKnobs_CreateHistplot(MotifKnobs_histplot_t *hp,
                   XmNbackground, &(hp->defbg),
                   NULL);
     
+    hp->time_dpy  =
+        XtVaCreateManagedWidget("text_o", xmTextWidgetClass, hp->form,
+                                XmNbackground,            bg,
+                                XmNscrollHorizontal,      False,
+                                XmNcursorPositionVisible, False,
+                                XmNcolumns,               12, // "HH:MM:SS.nnn"
+                                XmNeditMode,              XmSINGLE_LINE_EDIT,
+                                XmNeditable,              False,
+                                XmNtraversalOn,           False,
+                                XmNvalue,                 "",
+                                NULL);
+
     SetAttachments(hp);
     CalcSetMargins(hp);
 
@@ -1468,9 +1602,14 @@ int  MotifKnobs_SaveHistplotData   (MotifKnobs_histplot_t *hp,
   struct timeval  tv_x, tv_y, tv_r;
 
   int             row;
-  int             t;
+  int             age;
   DataKnob        k;
   double          v;
+  double          mindisp;
+  double          maxdisp;
+  char            minbuf[400]; // So that 1e308 fits
+  char            maxbuf[400]; // So that 1e308 fits
+  const char     *cp;
 
   int             max_used;
 
@@ -1488,24 +1627,47 @@ int  MotifKnobs_SaveHistplotData   (MotifKnobs_histplot_t *hp,
     for (row = 0;  row < hp->rows_used;  row++)
     {
         k = hp->target[row];
-        fprintf(fp, " %s",
-                k->ident != NULL  &&  k->ident[0] != '\0'? k->ident : "UNNAMED");
+        /* %DPYFMT: */
+        fprintf(fp, " %s:", k->u.k.dpyfmt);
+        /* Disprange (optional, if specified anyhow) */
+        if (GetDispRange(k, &mindisp, &maxdisp))
+        {
+            fprintf(fp, "disprange=%s-%s:",
+                    snprintf_dbl_trim(minbuf, sizeof(minbuf), k->u.k.dpyfmt, mindisp, 1),
+                    snprintf_dbl_trim(maxbuf, sizeof(maxbuf), k->u.k.dpyfmt, maxdisp, 1));
+        }
+        /* Units */
         if (k->u.k.units != NULL  &&  k->u.k.units[0] != '\0')
-            fprintf(fp, "(%s)", k->u.k.units);
+        {
+            fprintf(fp, "units=");
+            for (cp = k->u.k.units;  *cp != '\0';  cp++)
+                fprintf(fp, "%c", 1? *cp : '_');
+            fprintf(fp, ":");
+        }
+        /* Value */
+        fprintf(fp, "%s",
+                k->ident != NULL  &&  k->ident[0] != '\0'? k->ident : "UNNAMED");
     }
     fprintf(fp, "\n");
 
     /* Data */
-    for (t = max_used - 1;  t >= 0;  t--)
+    for (age = max_used - 1;  age >= 0;  age--)
     {
         /* Calculate timeval of t */
-        tv_x = timenow;
-        tv_y.tv_sec  =      ((double)t) * hp->cyclesize_us / 1000000;
-        tv_y.tv_usec = fmod(((double)t) * hp->cyclesize_us , 1000000);
-        timeval_subtract(&timeoft, &tv_x, &tv_y);
+        if (hp->timestamps_ring_used > age)
+        {
+            timeoft = hp->timestamps_ring[hp->timestamps_ring_used - 1 - age];
+        }
+        else
+        {
+            tv_x = timenow;
+            tv_y.tv_sec  =      ((double)age) * hp->cyclesize_us / 1000000;
+            tv_y.tv_usec = fmod(((double)age) * hp->cyclesize_us , 1000000);
+            timeval_subtract(&timeoft, &tv_x, &tv_y);
+        }
 
         /* Store it as start, if needed */
-        if (t == max_used - 1) timestart = timeoft;
+        if (age == max_used - 1) timestart = timeoft;
 
         /* Calculate time since start */
         tv_x = timeoft;
@@ -1520,9 +1682,13 @@ int  MotifKnobs_SaveHistplotData   (MotifKnobs_histplot_t *hp,
         for (row = 0;  row < hp->rows_used;  row++)
         {
             k = hp->target[row];
-            if (k->u.k.histring_used > t)
+            if (k->u.k.histring_used > age)
                 v = k->u.k.histring[
-                                    (k->u.k.histring_start + (k->u.k.histring_used - 1 - t))
+                                    (
+                                     k->u.k.histring_start
+                                     + 
+                                     (k->u.k.histring_used - 1 - age)
+                                    )
                                     %
                                     k->u.k.histring_len
                                    ];

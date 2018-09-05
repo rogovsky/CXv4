@@ -18,6 +18,10 @@ libcxsd_plugins.a_COMPONENTS=	cxsd_db_via_ppf4td.o \
 #cxsd_fe_cx.so_COMPONENTS=	cxsd_fe_cx.o
 #cxsd_db_file_ldr.so_COMPONENTS=	cxsd_db_file_ldr.o cxsd_db_via_ppf4td.o
 
+SOLIBS=			cxsd_fe_starogate.so
+cxsd_fe_starogate.so_COMPONENTS=cxsd_fe_starogate.o
+$(cxsd_fe_starogate.so_COMPONENTS):	SPECIFIC_CFLAGS=-fPIC
+
 EXPORTSFILES=	$(ARLIBS)
 EXPORTSDIR=	lib
 

@@ -37,6 +37,7 @@ typedef struct
     int  newline;
     int  hfill;
     int  vfill;
+    int  offset;
 } placeopts_t;
 
 static psp_paramdescr_t text2placeopts[] =
@@ -44,6 +45,7 @@ static psp_paramdescr_t text2placeopts[] =
     PSP_P_FLAG("newline", placeopts_t, newline, 1, 0),
     PSP_P_FLAG("hfill",   placeopts_t, hfill,   1, 0),
     PSP_P_FLAG("vfill",   placeopts_t, vfill,   1, 0),
+    PSP_P_INT ("offset",  placeopts_t, offset, -1, 0, 0),
     PSP_P_END()
 };
 
@@ -85,7 +87,10 @@ static int CreateLRTB(DataKnob k, CxWidget parent, int may_use_layinfo)
         {
             fprintf(stderr, "Knob %s/\"%s\".layinfo: %s\n",
                     ck->ident, ck->label, psp_error());
-            bzero(&placeopts, sizeof(placeopts));
+            psp_parse(NULL, NULL,
+                      &placeopts,
+                      Knobs_wdi_equals_c, Knobs_wdi_separators, Knobs_wdi_terminators,
+                      text2placeopts);
         }
         
         /* New-line? */
@@ -135,8 +140,8 @@ static int CreateLRTB(DataKnob k, CxWidget parent, int may_use_layinfo)
             me->is_vertical? attachtop (ew, NULL, 0)
                            : attachleft(ew, NULL, 0);
         else
-            me->is_vertical? attachtop (ew, prev, me->vspc)
-                           : attachleft(ew, prev, me->hspc);
+            me->is_vertical? attachtop (ew, prev, placeopts.offset < 0? me->vspc : placeopts.offset)
+                           : attachleft(ew, prev, placeopts.offset < 0? me->hspc : placeopts.offset);
 
         me->is_vertical? attachleft(ew, NULL, 0)
                        : attachtop (ew, NULL, 0);
@@ -195,7 +200,7 @@ dataknob_cont_vmt_t motifknobs_lrtb_vmt =
         sizeof(lrtb_privrec_t), text2lrtbopts,
         0,
         CreateNormalLRTB, MotifKnobs_CommonDestroy_m, NULL, NULL},
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };
 
 dataknob_grpg_vmt_t motifknobs_def_grpg_vmt =
@@ -205,6 +210,6 @@ dataknob_grpg_vmt_t motifknobs_def_grpg_vmt =
             sizeof(lrtb_privrec_t), NULL,
             0,
             CreateDefGrpg, MotifKnobs_CommonDestroy_m, NULL, NULL},
-        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
     }
 };

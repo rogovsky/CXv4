@@ -708,7 +708,9 @@ static int  cda_d_local_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 CDA_DEFINE_DAT_PLUGIN(local, "Local data-access plugin",
                       NULL, NULL,
                       sizeof(cda_d_local_privrec_t),
+                      CDA_DAT_P_FLAG_CHAN_TYPE_CHANGE_SUPPORTED,
                       '.', ':', '\0',
                       cda_d_local_new_chan, cda_d_local_del_chan,
+                      NULL,
                       cda_d_local_snd_data, NULL,
                       cda_d_local_new_srv,  cda_d_local_del_srv);

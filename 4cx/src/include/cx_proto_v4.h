@@ -127,6 +127,7 @@ enum
     CXC_RDS     = CXC_REQ_CMD('P', 'r', 'd'),
     CXC_FRH_AGE = CXC_REQ_CMD('P', 'f', 'a'),
     CXC_QUANT   = CXC_REQ_CMD('P', 'q', 'a'),
+    CXC_RANGE   = CXC_REQ_CMD('P', 'r', 'n'),
 };
 
 enum
@@ -239,8 +240,17 @@ typedef struct
     CxV4Chunk  ck;
     int32      hwid;
     int32      q_dtype;
-    uint8      q_data[8]; // !!! sizeof(XaAnyVal_t)
+    uint8      q_data[8]; // !!! sizeof(CxAnyVal_t)
 } CxV4QuantChunk;
+
+typedef struct
+{
+    CxV4Chunk  ck;
+    int32      hwid;
+    int32      range_dtype;
+    uint8      range_min[8]; // !!! sizeof(CxAnyVal_t)
+    uint8      range_max[8]; // !!! sizeof(CxAnyVal_t)
+} CxV4RangeChunk;
 
 typedef struct
 {

@@ -17,4 +17,7 @@ devtype weld02 w8i,r10i {
 	mes_u_high	14
 	mes_u_powr	15
 	mes_u_heat	16
+	mes_i_indr	17
+
+	mes_u_indr	mes_u_high # For Chemy only
 }

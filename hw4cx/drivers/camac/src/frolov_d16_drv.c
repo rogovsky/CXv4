@@ -1,5 +1,7 @@
 #include "cxsd_driver.h"
 
+#include <math.h>
+
 #include "drv_i/frolov_d16_drv_i.h"
 
 
@@ -15,12 +17,34 @@ enum
 };
 
 
+enum
+{
+    MODE_EASY = 0,  // Standard D16, don't use LAMs
+    MODE_MSKS = 1,  // Standard D16, use LAMs with masking START afterwards and unmasking upon DO_SHOT
+    MODE_D16P = 2,  // D16P: use LAMs and D16P-specific commands; don't mask START
+};
+
+#define MIN_F_IN_NS 0
+#define MAX_F_IN_NS 2e9 // 2e9ns==2s
+
 typedef struct
 {
-    int  devid;
-    int  N;
-    int  F_IN_NS;
+    int      devid;
+    int      N;
+    int      mode;
+    float64  F_IN_NS;
 } frolov_d16_privrec_t;
+
+static psp_paramdescr_t frolov_d16_params[] =
+{
+    PSP_P_FLAG("easy", frolov_d16_privrec_t, mode, MODE_EASY, 1),
+    PSP_P_FLAG("msks", frolov_d16_privrec_t, mode, MODE_MSKS, 0),
+    PSP_P_FLAG("d16p", frolov_d16_privrec_t, mode, MODE_D16P, 0),
+
+    PSP_P_REAL("f_in", frolov_d16_privrec_t, F_IN_NS, 0.0, 0.0, 0.0),
+
+    PSP_P_END()
+};
 
 
 static void frolov_d16_rw_p(int devid, void *devptr,
@@ -39,10 +63,10 @@ static void ReturnOne(frolov_d16_privrec_t *me, int nc)
 static void ReturnVs(frolov_d16_privrec_t *me)
 {
   static int addrs[FROLOV_D16_NUMOUTPUTS] = {
-      FROLOV_D16_CHAN_V_BASE + 0,
-      FROLOV_D16_CHAN_V_BASE + 1,
-      FROLOV_D16_CHAN_V_BASE + 2,
-      FROLOV_D16_CHAN_V_BASE + 3,
+      FROLOV_D16_CHAN_V_n_base + 0,
+      FROLOV_D16_CHAN_V_n_base + 1,
+      FROLOV_D16_CHAN_V_n_base + 2,
+      FROLOV_D16_CHAN_V_n_base + 3,
   };
 
     frolov_d16_rw_p(me->devid, me,
@@ -51,16 +75,82 @@ static void ReturnVs(frolov_d16_privrec_t *me)
                     NULL, NULL, NULL);
 }
 
+static void SetALLOFF(frolov_d16_privrec_t *me, int32 value)
+{
+  int        chn      = FROLOV_D16_CHAN_ALLOFF;
+  cxdtype_t  dt_int32 = CXDTYPE_INT32;
+  int        nels_1   = 1;
+  void      *vp       = &value;
+
+    frolov_d16_rw_p(me->devid, me,
+                    DRVA_WRITE,
+                    1, &chn,
+                    &dt_int32, &nels_1, &vp);
+}
+
+
+static void LAM_CB(int devid, void *devptr)
+{
+  frolov_d16_privrec_t *me = (frolov_d16_privrec_t*)devptr;
+  int                   c;
+
+    // Mask further "START"s
+    if      (me->mode == MODE_MSKS)
+        SetALLOFF(me, 1);
+    else if (me->mode == MODE_D16P)
+        ReturnOne(me, FROLOV_D16_CHAN_WAS_START);
+    // Drop LAM
+    DO_NAF(CAMAC_REF, me->N, 0, 10, &c);
+    // And signal LAM upwards
+    ReturnInt32Datum(devid, FROLOV_D16_CHAN_LAM_SIG, 0, 0);
+}
 
 static int frolov_d16_init_d(int devid, void *devptr,
                              int businfocount, int *businfo,
                              const char *auxinfo)
 {
   frolov_d16_privrec_t *me = (frolov_d16_privrec_t*)devptr;
+  const char           *errstr;
+  int                   c;
   
     me->devid   = devid;
     me->N       = businfo[0];
-    me->F_IN_NS = 0;
+
+    /* Handle f_in specification, if set */
+    // a. Negative -- nanoseconds specified, just change sign
+    if      (me->F_IN_NS < 0.0) me->F_IN_NS = -me->F_IN_NS;
+    // b. Positive -- in Hz, convert to nanoseconds
+    else if (me->F_IN_NS > 0.0) me->F_IN_NS = 1e9 / me->F_IN_NS;
+    // Now, impose limits
+    if (me->F_IN_NS < MIN_F_IN_NS) me->F_IN_NS = MIN_F_IN_NS;
+    if (me->F_IN_NS > MAX_F_IN_NS) me->F_IN_NS = MAX_F_IN_NS;
+
+    SetChanReturnType(devid, FROLOV_D16_CHAN_WAS_START, 1, IS_AUTOUPDATED_YES);
+    if (me->mode != MODE_D16P)
+        ReturnInt32Datum(devid, FROLOV_D16_CHAN_WAS_START, 0, CXRF_UNSUPPORTED);
+
+    SetChanReturnType(devid, FROLOV_D16_CHAN_LAM_SIG,   1, IS_AUTOUPDATED_YES);
+    if (me->mode != MODE_EASY)
+    {
+        if ((errstr = WATCH_FOR_LAM(devid, devptr, me->N, LAM_CB)) != NULL)
+        {
+            DoDriverLog(devid, DRIVERLOG_ERRNO, "WATCH_FOR_LAM(): %s", errstr);
+            return -CXRF_DRV_PROBL;
+        }
+        // Drop LAM
+        DO_NAF(CAMAC_REF, me->N, 0, 10, &c);
+        // Unmask LAM
+        DO_NAF(CAMAC_REF, me->N, A_RS, 1,  &c);
+        c = (c &~ (1 << 5));
+        DO_NAF(CAMAC_REF, me->N, A_RS, 17, &c);
+
+        // Here we use the fact that status reg was just read
+        if (me->mode == MODE_D16P  &&  (c & 1 << 7) == 0)
+            DoDriverLog(devid, DRIVERLOG_EMERG,
+                        "D16P mode is requested, but statusReg=%d (msb=0)", c);
+    }
+    else
+        ReturnInt32Datum(devid, FROLOV_D16_CHAN_LAM_SIG, 0, CXRF_UNSUPPORTED);
 
     return DEVSTATE_OPERATING;
 }
@@ -83,16 +173,30 @@ static void frolov_d16_rw_p(int devid, void *devptr,
   int                   c_rf;
   int                   c_rs;
   int                   v_kclk;
-  int                   v_fclk;
-  int                   quant;
   int                   c_Ai;
   int                   c_Bi;
-  int                   v_R;
-  
+  double                v_fclk;
+  double                quant;
+  double                v_R;
+
+  double                dval;
+  void                 *vp;
+  static cxdtype_t      dtype_f64 = CXDTYPE_DOUBLE;
+  static int            n_1       = 1;
+
     for (n = 0;  n < count;  n++)
     {
         chn = addrs[n];
-        if (action == DRVA_WRITE)
+        if (action == DRVA_WRITE  &&
+            (chn >= FROLOV_D16_DOUBLE_CHAN_base  &&
+             chn <= FROLOV_D16_DOUBLE_CHAN_base + FROLOV_D16_DOUBLE_CHAN_count - 1))
+        {
+            if (nelems[n] != 1  ||  dtypes[n] != CXDTYPE_DOUBLE)
+                goto NEXT_CHANNEL;
+            dval = *((float64*)(values[n]));
+            value = 0xFFFFFFFF; // That's just to make GCC happy
+        }
+        else if (action == DRVA_WRITE) /* Classic driver's dtype-check */
         {
             if (nelems[n] != 1  ||
                 (dtypes[n] != CXDTYPE_INT32  &&  dtypes[n] != CXDTYPE_UINT32))
@@ -105,15 +209,16 @@ static void frolov_d16_rw_p(int devid, void *devptr,
 
         switch (chn)
         {
-            case FROLOV_D16_CHAN_A_BASE ... FROLOV_D16_CHAN_A_BASE   + FROLOV_D16_NUMOUTPUTS - 1:
-                l = chn - FROLOV_D16_CHAN_A_BASE;
+            case FROLOV_D16_CHAN_A_n_base ...
+                 FROLOV_D16_CHAN_A_n_base   + FROLOV_D16_NUMOUTPUTS - 1:
+                l = chn - FROLOV_D16_CHAN_A_n_base;
                 if (action == DRVA_WRITE)
                 {
                     if (value < 0)      value = 0;
                     if (value > 0xFFFF) value = 0xFFFF;
                     c = value;
                     rflags = x2rflags(DO_NAF(CAMAC_REF, me->N, A_A+l, 16, &c));
-                    ReturnOne(me, FROLOV_D16_CHAN_V_BASE + l);
+                    ReturnOne(me, FROLOV_D16_CHAN_V_n_base + l);
                 }
                 else
                 {
@@ -122,15 +227,16 @@ static void frolov_d16_rw_p(int devid, void *devptr,
                 }
                 break;
 
-            case FROLOV_D16_CHAN_B_BASE ... FROLOV_D16_CHAN_B_BASE   + FROLOV_D16_NUMOUTPUTS - 1:
-                l = chn - FROLOV_D16_CHAN_B_BASE;
+            case FROLOV_D16_CHAN_B_n_base ...
+                 FROLOV_D16_CHAN_B_n_base   + FROLOV_D16_NUMOUTPUTS - 1:
+                l = chn - FROLOV_D16_CHAN_B_n_base;
                 if (action == DRVA_WRITE)
                 {
                     if (value < 0)    value = 0;
                     if (value > 0xFF) value = 0xFF;
                     c = value;
                     rflags = x2rflags(DO_NAF(CAMAC_REF, me->N, A_B+l, 16, &c));
-                    ReturnOne(me, FROLOV_D16_CHAN_V_BASE + l);
+                    ReturnOne(me, FROLOV_D16_CHAN_V_n_base + l);
                 }
                 else
                 {
@@ -139,8 +245,9 @@ static void frolov_d16_rw_p(int devid, void *devptr,
                 }
                 break;
 
-            case FROLOV_D16_CHAN_V_BASE ... FROLOV_D16_CHAN_V_BASE   + FROLOV_D16_NUMOUTPUTS - 1:
-                l = chn - FROLOV_D16_CHAN_V_BASE;
+            case FROLOV_D16_CHAN_V_n_base ...
+                 FROLOV_D16_CHAN_V_n_base   + FROLOV_D16_NUMOUTPUTS - 1:
+                l = chn - FROLOV_D16_CHAN_V_n_base;
 
                 DO_NAF(CAMAC_REF, me->N, A_RF, 1, &c_rf);
                 DO_NAF(CAMAC_REF, me->N, A_RS, 1, &c_rs);
@@ -149,37 +256,44 @@ static void frolov_d16_rw_p(int devid, void *devptr,
                 quant = v_fclk * v_kclk;
 
                 rflags = 0;
-                if (action == DRVA_WRITE  &&  quant != 0)
+                if (action == DRVA_WRITE  &&  quant != 0.0)
                 {
-                    if (value < 0) value = 0;
-                    
-                    c_Ai = value / quant;        if (c_Ai > 65535) c_Ai = 65535;
-                    v_R  = value % quant;
-                    c_Bi = v_R * 4; /* =*0.25 */ if (c_Bi > 255)   c_Bi = 255;
+                    if (dval < 0) dval = 0;
+
+                    // ? c_Ai = remquo(dval, quant, &v_R) ?  No, too underspecified to rely upon.
+                    c_Ai = dval / quant;         if (c_Ai > 65535) c_Ai = 65535;
+                    v_R  = fmod(dval, quant) /*+ 0.125*/;
+////fprintf(stderr, "dval=%8.3f c_Ai=%d v_R=%8.3f\n", dval, c_Ai, v_R);
+                    c_Bi = v_R * 4; /* =/0.25 */ if (c_Bi > 255)   c_Bi = 255;
 
                     rflags |= x2rflags(DO_NAF(CAMAC_REF, me->N, A_A+l, 16, &c_Ai));
                     rflags |= x2rflags(DO_NAF(CAMAC_REF, me->N, A_B+l, 16, &c_Bi));
                     
-                    ReturnOne(me, FROLOV_D16_CHAN_A_BASE + l);
-                    ReturnOne(me, FROLOV_D16_CHAN_B_BASE + l);
+                    ReturnOne(me, FROLOV_D16_CHAN_A_n_base + l);
+                    ReturnOne(me, FROLOV_D16_CHAN_B_n_base + l);
                 }
                 // Perform "read" anyway
                 rflags |= x2rflags(DO_NAF(CAMAC_REF, me->N, A_A+l, 0, &c_Ai));
                 rflags |= x2rflags(DO_NAF(CAMAC_REF, me->N, A_B+l, 0, &c_Bi));
-                if (quant != 0)
+                if (quant != 0.0)
                 {
-                    value = c_Ai * quant + c_Bi / 4;
+                    dval = c_Ai * quant + c_Bi / 4.;
                 }
                 else
                 {
                     rflags |= CXRF_OVERLOAD;
-                    value   = -999999;
+                    dval    = -999999;
                 }
-                break;
+                vp     = &dval;
+                rflags = 0;
+                ReturnDataSet(devid, 1,
+                              &chn, &dtype_f64, &n_1, &vp, &rflags, NULL);
+                goto NEXT_CHANNEL;
 
-            case FROLOV_D16_CHAN_OFF_BASE ... FROLOV_D16_CHAN_OFF_BASE + FROLOV_D16_NUMOUTPUTS - 1:
+            case FROLOV_D16_CHAN_OFF_n_base ...
+                 FROLOV_D16_CHAN_OFF_n_base + FROLOV_D16_NUMOUTPUTS - 1:
             case FROLOV_D16_CHAN_ALLOFF: // "ALL" immediately follows individual ones in both channels and bits
-                l = chn - FROLOV_D16_CHAN_OFF_BASE;
+                l = chn - FROLOV_D16_CHAN_OFF_n_base;
                 if (action == DRVA_WRITE)
                 {
                     value = (value != 0);
@@ -195,8 +309,29 @@ static void frolov_d16_rw_p(int devid, void *devptr,
                 break;
 
             case FROLOV_D16_CHAN_DO_SHOT:
-                if (action == DRVA_WRITE  &&  value != 0)
-                    rflags = x2rflags(DO_NAF(CAMAC_REF, me->N, 0, 10, &c));
+                rflags = 0;
+                if (action == DRVA_WRITE  &&  value == CX_VALUE_COMMAND)
+                {
+                    if      (me->mode == MODE_EASY)
+                        rflags = x2rflags(DO_NAF(CAMAC_REF, me->N, 0, 10, &c));
+                    else if (me->mode == MODE_MSKS)
+                        SetALLOFF(me, 0);
+                    else if (me->mode == MODE_D16P)
+                    {
+                        rflags = x2rflags(DO_NAF(CAMAC_REF, me->N, 1, 25, &c));
+                        ReturnOne(me, FROLOV_D16_CHAN_WAS_START);
+                    }
+                }
+                value = 0;
+                break;
+
+            case FROLOV_D16_CHAN_ONES_STOP:
+                if      (me->mode != MODE_D16P)
+                    rflags = CXRF_UNSUPPORTED;
+                else if (action == DRVA_WRITE  &&  value == CX_VALUE_COMMAND)
+                {
+                    rflags = x2rflags(DO_NAF(CAMAC_REF, me->N, 2, 25, &c));
+                }
                 else
                     rflags = 0;
                 value = 0;
@@ -285,22 +420,56 @@ static void frolov_d16_rw_p(int devid, void *devptr,
                 }
                 break;
 
+            case FROLOV_D16_CHAN_F_IN_HZ:
+                if (action == DRVA_WRITE)
+                {
+                    // Convert HZ to ns
+                    if (dval <= 0.0) dval = 0.0; else dval = 1e9 / dval;
+                    // Impose regular limits on F_IN_NS
+                    if (dval < MIN_F_IN_NS) dval = MIN_F_IN_NS;
+                    if (dval > MAX_F_IN_NS) dval = MAX_F_IN_NS;
+                    me->F_IN_NS = dval;
+                    ReturnOne(me, FROLOV_D16_CHAN_F_IN_NS);
+                    ReturnVs (me);
+                }
+                if (me->F_IN_NS == 0.0) dval = 3.0; else dval = 1e9 / me->F_IN_NS;
+                vp     = &dval;
+                rflags = 0;
+                ReturnDataSet(devid, 1,
+                              &chn, &dtype_f64, &n_1, &vp, &rflags, NULL);
+                goto NEXT_CHANNEL;
+
             case FROLOV_D16_CHAN_F_IN_NS:
                 if (action == DRVA_WRITE)
                 {
-                    if (value < 0)          value = 0;
-                    if (value > 2000000000) value = 2000000000; // 2e9ns=2s
-                    me->F_IN_NS = value;
-                    ReturnVs(me);
+                    if (dval < MIN_F_IN_NS) dval = MIN_F_IN_NS;
+                    if (dval > MAX_F_IN_NS) dval = MAX_F_IN_NS;
+                    me->F_IN_NS = dval;
+                    ReturnOne(me, FROLOV_D16_CHAN_F_IN_HZ);
+                    ReturnVs (me);
                 }
-                value  = me->F_IN_NS;
+                vp     = &(me->F_IN_NS);
                 rflags = 0;
+                ReturnDataSet(devid, 1,
+                              &chn, &dtype_f64, &n_1, &vp, &rflags, NULL);
+                goto NEXT_CHANNEL;
+
+            case FROLOV_D16_CHAN_WAS_START:
+                if (me->mode == MODE_D16P)
+                {
+                    rflags = x2rflags(DO_NAF(CAMAC_REF, me->N, A_RS, 1, &c));
+                    value  = ((c & (1 << 6)) != 0);
+                }
+                else
+                {
+                    value  = 0;
+                    rflags = CXRF_UNSUPPORTED;
+                }
                 break;
-                
-            case FROLOV_D16_CHAN_WAITING:
-                value  = 0;
-                rflags = CXRF_UNSUPPORTED;
-                break;
+
+            case FROLOV_D16_CHAN_LAM_SIG:
+                /* Just ignore this request: it is returned from LAM_CB() */
+                goto NEXT_CHANNEL;
                 
             default:
                 value  = 0;
@@ -316,7 +485,7 @@ static void frolov_d16_rw_p(int devid, void *devptr,
 
 DEFINE_CXSD_DRIVER(frolov_d16, "Frolov D16",
                    NULL, NULL,
-                   sizeof(frolov_d16_privrec_t), NULL,
+                   sizeof(frolov_d16_privrec_t), frolov_d16_params,
                    1, 1,
                    NULL, 0,
                    NULL,

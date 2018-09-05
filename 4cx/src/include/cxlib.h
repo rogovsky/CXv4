@@ -52,17 +52,18 @@ enum {
          CAR_ERRCLOSE,        /* Connection was closed on error */
          CAR_CYCLE,           /* Server cycle notification had arrived */
          
-         CAR_NEWDATA,         /* Data chunk had arrived */
+         CAR_NEWDATA = 100,   /* Data chunk had arrived */
          CAR_RSLV_RESULT,
          CAR_FRESH_AGE,
          CAR_STRS,
          CAR_RDS,
          CAR_QUANT,
+         CAR_RANGE,
 
-         CAR_ECHO,            /* Echo packet */
+         CAR_ECHO = 200,      /* Echo packet */
          CAR_KILLED,          /* Connection was killed by server */
 
-         CAR_SRCH_RESULT      /* Result of broadcast search for channel by name */
+         CAR_SRCH_RESULT = 500 /* Result of broadcast search for channel by name */
      };
 
 
@@ -100,6 +101,10 @@ typedef struct
     int        hwid;
     int        param1;
     int        param2;
+    // Info props
+    int        rw;     // 0 -- readonly, 1 -- read/write
+    cxdtype_t  dtype;  // cxdtype_t, with 3 high bytes of 0s
+    int        nelems; // Max # of units; ==1 for scalar channels
 } cx_rslv_info_t;
 
 typedef struct
@@ -134,6 +139,15 @@ typedef struct
     cxdtype_t  q_dtype;
     CxAnyVal_t q;
 } cx_quant_info_t;
+
+typedef struct
+{
+    int        hwid;
+    int        param1;
+    int        param2;
+    cxdtype_t  range_dtype;
+    CxAnyVal_t range[2];
+} cx_range_info_t;
 
 typedef struct
 {

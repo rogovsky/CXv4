@@ -1,0 +1,50 @@
+# Note: vnn_ceac51 is the same as v1k_cdac20 and is served by latter's driver
+#       Only several channel names differ (Veremeenko's interlocks and
+#       measurements are mapped to different inputs)
+devtype vnn_ceac51 w50i,r50i {
+	iset		0
+	iset_rate	1
+	switch_on	2
+	switch_off	3
+	rst_ilks	4
+	reset_state	5
+	do_calb_dac	6
+	autocalb_onoff	7
+	autocalb_secs	8
+	digcorr_mode	9
+	reset_c_ilks	10
+
+	dcct1		50
+	dcct2		51
+	dac_mes		52
+	uout_minus	53
+	uout_plus	54
+	adc_dac		55
+	adc_0v		56
+	adc_p10v	57
+
+	iset_cur	58
+	digcorr_factor	59
+	opr		60
+
+	ilk_out_prot1	61
+	ilk_out_prot2	62
+	ilk_temp	63
+	ilk_inverter	64
+	ilk_phase	65
+	ilk_out_prot3	66
+	ilk_imax	67
+
+	is_on		68
+
+	c_ilk_out_prot1	69
+	c_ilk_out_prot2	70
+	c_ilk_temp	71
+	c_ilk_inverter	72
+	c_ilk_phase	73
+	c_ilk_out_prot3	74
+	c_ilk_imax	75
+
+	cur_polarity	98
+	ist_state	99
+}

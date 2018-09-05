@@ -324,6 +324,9 @@ void SetChanFreshAge  (int devid,
 void SetChanQuant     (int devid,
                        int first, int count,
                        CxAnyVal_t q, cxdtype_t q_dtype);
+void SetChanRange     (int devid,
+                       int first, int count,
+                       CxAnyVal_t minv, CxAnyVal_t maxv, cxdtype_t range_dtype);
 void SetChanReturnType(int devid,
                        int first, int count,
                        int is_autoupdated);

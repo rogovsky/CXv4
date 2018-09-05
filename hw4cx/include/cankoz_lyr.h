@@ -14,10 +14,19 @@
 #define CANKOZ_LYR_NAME "cankoz"
 enum
 {
-    CANKOZ_LYR_VERSION_MAJOR = 2,
+    CANKOZ_LYR_VERSION_MAJOR = 3,
     CANKOZ_LYR_VERSION_MINOR = 0,
     CANKOZ_LYR_VERSION = CX_ENCODE_VERSION(CANKOZ_LYR_VERSION_MAJOR,
                                            CANKOZ_LYR_VERSION_MINOR)
+};
+
+
+enum
+{
+    CANKOZ_LYR_OPTION_NONE                = 0,
+
+    CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET = 1 << 31,
+    CANKOZ_LYR_OPTION_FFPROC_AFTER_RESET  = 1 << 30,
 };
 
 
@@ -38,7 +47,8 @@ typedef int  (*CanKozAddDevice) (int devid, void *devptr,
                                  int devcode,
                                  CanKozOnIdProc  ffproc,
                                  CanKozPktinProc inproc,
-                                 int queue_size);
+                                 int queue_size,
+                                 int options);
 typedef int  (*CanKozAddDevcode)(int handle, int devcode);
 typedef int  (*CanKozGetDevVer) (int handle, 
                                  int *hw_ver_p, int *sw_ver_p,

@@ -1251,7 +1251,9 @@ static int  cda_d_v2cx_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 CDA_DEFINE_DAT_PLUGIN(v2cx, "CXv2 data-access plugin",
                       NULL, NULL,
                       sizeof(cda_d_v2cx_privrec_t),
+                      CDA_DAT_P_FLAG_NONE,
                       '.', ':', '@',
                       cda_d_v2cx_new_chan, NULL,
+                      NULL,
                       cda_d_v2cx_snd_data, NULL,
                       cda_d_v2cx_new_srv,  cda_d_v2cx_del_srv);

@@ -57,7 +57,7 @@ dataknob_cont_vmt_t motifknobs_split_vmt =
         sizeof(split_privrec_t), text2splitopts,
         0,
         CreateSplitCont, MotifKnobs_CommonDestroy_m, NULL, NULL},
-    NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL,
     MotifKnobs_CommonShowAlarm_m, MotifKnobs_CommonAckAlarm_m,
-    MotifKnobs_CommonAlarmNewData_m, NULL, NULL, NULL
+    MotifKnobs_CommonAlarmNewData_m, NULL, NULL, NULL, NULL
 };

@@ -70,7 +70,8 @@ static int senkov_vip_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE,
                                NULL, senkov_vip_in,
-                               SENKOV_VIP_NUMCHANS * 2);
+                               SENKOV_VIP_NUMCHANS * 2,
+                               CANKOZ_LYR_OPTION_NONE);
     if (me->handle < 0) return me->handle;
 
     sl_enq_tout_after(devid, devptr, HEARTBEAT_USECS, senkov_vip_hbt, NULL);

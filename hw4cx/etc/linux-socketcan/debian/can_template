@@ -1,0 +1,5 @@
+iface canbus inet manual
+        pre-up /sbin/ip link set $IFACE type can bitrate 125000
+        pre-up /sbin/ip link set $IFACE type can restart-ms 200
+        up     /sbin/ip link set $IFACE up
+        down   /sbin/ip link set $IFACE down

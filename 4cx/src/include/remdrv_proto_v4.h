@@ -41,7 +41,8 @@ enum
     REMDRV_C_DATA   = 0x44617461,  /* "Data" -- ReturnDataSet() */
     REMDRV_C_RDS    = 0x43524473,  /* "CRDs" -- SetChanRDs() */
     REMDRV_C_FRHAGE = 0x46416765,  /* "FAge" -- SetChanFreshAge() */
-    REMDRV_C_QUANT  = 0x51976e74,  /* "Qant" -- SetChanQuant() */
+    REMDRV_C_QUANT  = 0x51976e74,  /* "Qant" -- SetChanQuant() (should have been 67, not 97...) */
+    REMDRV_C_RANGE  = 0x526e6765,  /* "Rnge" -- SetChanRange() */
     REMDRV_C_RTTYPE = 0x52657454,  /* "RetT" -- SetChanReturnType() */
 };
 
@@ -101,8 +102,16 @@ typedef struct
 {
     int32  q_dtype;
     int32  padding;
-    uint8  q_data[8]; // !!! sizeof(XaAnyVal_t)
+    uint8  q_data[8]; // !!! sizeof(CxAnyVal_t)
 } remdrv_data_set_quant_t;
+
+typedef struct
+{
+    int32  range_dtype;
+    int32  padding;
+    uint8  range_min[8]; // !!! sizeof(CxAnyVal_t)
+    uint8  range_max[8]; // !!! sizeof(CxAnyVal_t)
+} remdrv_data_set_range_t;
 
 typedef struct
 {

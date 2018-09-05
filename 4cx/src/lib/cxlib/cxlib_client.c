@@ -1535,6 +1535,9 @@ static void async_CXT4_DATA_IO    (v4conn_t *cp, CxV4Header *rcvd, size_t rcvdsi
   CxV4QuantChunk       *qunt;
   cx_quant_info_t       qui;
 
+  CxV4RangeChunk       *rnge;
+  cx_range_info_t       rni;
+
     if (rcvd->Type == CXT4_DATA_IO) _cxlib_break_wait();
 
     numcns = rcvd->NumChunks;
@@ -1576,11 +1579,19 @@ static void async_CXT4_DATA_IO    (v4conn_t *cp, CxV4Header *rcvd, size_t rcvdsi
                 {
                     prps = (void*)rpy;
                     rsi.hwid   = prps->hwid*0 + prps->cpid*1;
+                    //
+                    rsi.rw     = prps->rw;
+                    rsi.dtype  = prps->dtype;
+                    rsi.nelems = prps->nelems;
                 }
                 else if (rpy->ByteSize == sizeof(CxV4Chunk))
                 {
                     /* "NOTFOUND" */
-                    rsi.hwid = -1;
+                    rsi.hwid   = -1;
+                    //
+                    rsi.rw     = -1;
+                    rsi.dtype  = CXDTYPE_UNKNOWN;
+                    rsi.nelems = -1;
                 }
                 else continue;
                 rsi.param1 = rpy->param1;
@@ -1644,6 +1655,19 @@ static void async_CXT4_DATA_IO    (v4conn_t *cp, CxV4Header *rcvd, size_t rcvdsi
                 /*!!! Note: MUST check that sizeof_cxdtype(q_dtype) is sane (<=sizeof(qunt->q_data)) */
                 memcpy(&(qui.q), qunt->q_data, sizeof(qui.q));
                 CallNotifier(cp, CAR_QUANT, &qui);
+                break;
+
+            case CXC_CVT_TO_RPY(CXC_RANGE):
+                if (rpy->ByteSize != sizeof(*rnge)) continue;
+                rnge = (void*)rpy;
+                rni.hwid        = rnge->hwid;
+                rni.param1      = rpy->param1;
+                rni.param2      = rpy->param2;
+                rni.range_dtype = rnge->range_dtype;
+                /*!!! Note: MUST check that sizeof_cxdtype(range_dtype) is sane (<=sizeof(rnge->range[0])) */
+                memcpy(rni.range+0, rnge->range_min, sizeof(rni.range[0]));
+                memcpy(rni.range+1, rnge->range_max, sizeof(rni.range[1]));
+                CallNotifier(cp, CAR_RANGE, &rni);
                 break;
         }
     }

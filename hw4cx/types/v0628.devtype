@@ -2,6 +2,6 @@ devtype v0628 w25i,r33i {
 	bit<0-23>	0
 	outrb<0-23>	0
 	fake_wr1	24
-	inrb<0-31>	25
-	rd32b		57
+	inprb<0-31>	25
+	inpr32b		57
 }

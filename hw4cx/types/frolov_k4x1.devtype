@@ -1,0 +1,4 @@
+devtype frolov_k4x1 w10i {
+	in_sel	0
+	out_sel	1
+}

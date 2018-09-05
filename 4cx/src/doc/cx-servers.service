@@ -1,0 +1,12 @@
+[Unit]
+Description=CXv4 servers automatic start/stop service
+After=multi-user.target
+
+[Service]
+User=oper
+ExecStart=/export/ctlhomes/oper/4pult/bin/start-all-servers
+ExecStop=kill $(cat /var/tmp/cxsd-*.pid)
+Type=forking
+
+[Install]
+WantedBy=multi-user.target

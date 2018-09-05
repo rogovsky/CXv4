@@ -1,17 +1,89 @@
 
 #include "cxsd_driver.h"
+#include "advdac.h"
 
 #include "drv_i/g0603_drv_i.h"
 
 
+/*=== PKS8 specifics ===============================================*/
+
+enum
+{
+    MAX_ALWD_VAL = 65535,
+    MIN_ALWD_VAL = 0,
+    THE_QUANT    = 0, // The "quant" itself is 1, but THE_QUANT is used in slowmo with +1 (because of kozak-encoding-specific 305...306 uncertainty)
+};
+
+enum
+{
+    HEARTBEAT_FREQ  = 10,
+    HEARTBEAT_USECS = 1000000 / HEARTBEAT_FREQ,
+};
+
+enum
+{
+    DEVSPEC_CHAN_OUT_n_base      = G0603_CHAN_CODE_n_base,
+    DEVSPEC_CHAN_OUT_RATE_n_base = G0603_CHAN_CODE_RATE_n_base,
+    DEVSPEC_CHAN_OUT_CUR_n_base  = G0603_CHAN_CODE_CUR_n_base,
+    DEVSPEC_CHAN_OUT_IMM_n_base  = G0603_CHAN_CODE_IMM_n_base,
+    DEVSPEC_CHAN_OUT_TAC_n_base  = -1,
+};
+
+static inline int32 val_to_daccode_to_val(int32 val)
+{
+    return val;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 typedef struct
 {
-    int       N;
+    int              N;
+    int              devid;
 
-    int       val_cache[G0603_CHAN_CODE_n_count];
-    rflags_t  rfl_cache[G0603_CHAN_CODE_n_count];
+    int              num_isc;
+
+    int              val_cache[G0603_CHAN_CODE_n_count];
+    rflags_t         rfl_cache[G0603_CHAN_CODE_n_count];
+    advdac_out_ch_t  out      [G0603_CHAN_CODE_n_count];
 } g0603_privrec_t;
+typedef g0603_privrec_t privrec_t;
 
+//////////////////////////////////////////////////////////////////////
+
+static void SendWrRq(privrec_t *me, int l, int32 val)
+{
+  rflags_t         rflags;
+
+  int              v;
+  int              status;
+  int              tries;
+
+    v = (val + 0x8000) & 0xFFFF;
+    for (status = 0, tries = 0;
+         (status & CAMAC_Q) == 0  &&  tries < 7000/*~=6.7ms(PKS8_cycle)/1us(CAMAC_cycle)*/;
+         tries++)
+        status = DO_NAF(CAMAC_REF, me->N, l, 16, &v);
+
+    rflags = status2rflags(status);
+    /* Failure? */
+    if (rflags & CXRF_CAMAC_NO_Q) rflags |= CXRF_IO_TIMEOUT;
+
+    me->val_cache[l] = val;
+    me->rfl_cache[l] = rflags;
+}
+
+/*!!!*/
+static void HandleSlowmoREADDAC_in(privrec_t *me, int l, int32 val);
+
+static void SendRdRq(privrec_t *me, int l)
+{
+    HandleSlowmoREADDAC_in(me, l, me->val_cache[l]);
+}
+
+//////////////////////////////////////////////////////////////////////
+#include "advdac_slowmo_kinetic_meat.h"
+//////////////////////////////////////////////////////////////////////
 
 static int g0603_init_d(int devid, void *devptr,
                         int businfocount, int *businfo,
@@ -21,7 +93,8 @@ static int g0603_init_d(int devid, void *devptr,
 
   int              i;
   
-    me->N = businfo[0];
+    me->N     = businfo[0];
+    me->devid = devid;
   
     for (i = 0;  i < G0603_CHAN_CODE_n_count;  i++)
     {

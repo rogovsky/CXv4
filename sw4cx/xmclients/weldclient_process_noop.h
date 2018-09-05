@@ -1,0 +1,1 @@
+extern dataknob_noop_vmt_t weldclient_process_noop_vmt;

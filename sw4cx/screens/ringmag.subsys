@@ -20,11 +20,11 @@ grouping main RINGMAG_grouping "Магнитная система" grid "noshadow,notitle" \
         str1:"Задано, A\tИзм., A\td/dT\t \t \t " \
         param1:6 content:eval(6*34) {
     RINGMAG_SECTION("Впуск-П")
-    MAGX_V1K_CDAC20_LINE(q1l0,   `"1L0"',    "ИП2: В-1000-9",     1000, 1, vcd_1l0)
-    MAGX_V1K_CDAC20_LINE(q1l1,   `"1L1"',    "ИП2: В-1000-8",     1000, 1, vcd_1l1)
-    MAGX_V1K_CDAC20_LINE(q1l2n6, `"1L2,6"',  "ИП2: В-1000-7",     1000, 1, vcd_1l2)
-    MAGX_V1K_CDAC20_LINE(q1l3n5, `"1L3,5"',  "ИП2: В-1000-6",     1000, 1, vcd_1l3)
-    MAGX_V1K_CDAC20_LINE(q1l4n8, `"1L4,8"',  "ИП2: В-1000-5",     1000, 1, vcd_1l4)
+    MAGX_IST_CDAC20_LINE(q1l0,   `"1L0"',    "ИП2: В-1000-9",     1000, 1, vcd_1l0, 0, 0, 1)
+    MAGX_IST_CDAC20_LINE(q1l1,   `"1L1"',    "ИП2: В-1000-8",     1000, 1, vcd_1l1, 0, 0, 1)
+    MAGX_IST_CDAC20_LINE(q1l2n6, `"1L2,6"',  "ИП2: В-1000-7",     1000, 1, vcd_1l2, 0, 0, 1)
+    MAGX_IST_CDAC20_LINE(q1l3n5, `"1L3,5"',  "ИП2: В-1000-6",     1000, 1, vcd_1l3, 0, 0, 1)
+    MAGX_IST_CDAC20_LINE(q1l4n8, `"1L4,8"',  "ИП2: В-1000-5",     1000, 1, vcd_1l4, 0, 0, 1)
     MAGX_IST_CDAC20_LINE(q1l7n9, `"1l7,9"',  "ИП1: И-В-1000-17",  1000, 1, icd_1l7, 0, 0)
     MAGX_VCH300_LINE(    q1l10,   "1L10",   `"ИП1: ВЧ-400, 1эт"', 1000, 1, v4h, 0)
     MAGX_VCH300_LINE(    q1l11,   "1L11",   `"ИП1: ВЧ-400, 2эт"', 1000, 1, v4h, 1)

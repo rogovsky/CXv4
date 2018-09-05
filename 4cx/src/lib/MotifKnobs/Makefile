@@ -15,6 +15,8 @@ libMotifKnobs.a_COMPONENTS=	MotifKnobs_internals.o \
 				MotifKnobs_alarmonoffled_knob.o \
 				MotifKnobs_button_knob.o \
 				MotifKnobs_text_text.o \
+				MotifKnobs_text_vect.o \
+				MotifKnobs_matrix_vect.o \
 				MotifKnobs_label_noop.o \
 				MotifKnobs_separator_noop.o \
 				MotifKnobs_histplot_noop.o \
@@ -22,6 +24,7 @@ libMotifKnobs.a_COMPONENTS=	MotifKnobs_internals.o \
 				MotifKnobs_subwin_cont.o \
 				MotifKnobs_split_cont.o \
 				MotifKnobs_scroll_cont.o \
+				MotifKnobs_tabber_cont.o \
 				MotifKnobs_loggia_cont.o \
 				MotifKnobs_canvas_cont.o \
 				MotifKnobs_lrtb_grpg.o

@@ -424,6 +424,7 @@ static int kurrez_cac208_init_d(int devid, void *devptr,
     SetChanReturnType(devid, KURREZ_CAC208_CHAN_IEXC_MIN, 1, IS_AUTOUPDATED_TRUSTED);
     SetChanReturnType(devid, KURREZ_CAC208_CHAN_ERRDESCR, 1, IS_AUTOUPDATED_TRUSTED);
     ReturnInt32Datum (devid, KURREZ_CAC208_CHAN_USET_MIN, USET_MIN, 0);
+    SetChanReturnType(devid, KURREZ_CAC208_CHAN_PINCD1, 4, IS_AUTOUPDATED_YES);
     SetErr(me, "", 1);
 #if 0
     SetChanRDs       (devid, KURREZ_CAC208_CHAN_USET,  1, -1000000.0*(5.6/9.5),  0.0);
@@ -449,6 +450,16 @@ static void kurrez_cac208_sodc_cb(int devid, void *devptr,
 {
   privrec_t      *me = (privrec_t *)devptr;
 
+  int             nc;
+  int             chn;
+  double          v;
+  double         *vp;
+
+  static double     K_n[4]      = {4493, 4500, 4467, 4500};
+  static cxdtype_t  dtype_f64   = CXDTYPE_DOUBLE;
+  static int        n_1         = 1;
+  static rflags_t   zero_rflags = 0;
+
     /* If not all info is gathered yet, then there's nothing else to do yet */
     if (me->ctx.cur_state == REZ_STATE_UNKNOWN) return;
 
@@ -469,6 +480,17 @@ static void kurrez_cac208_sodc_cb(int devid, void *devptr,
         SndCVal(me, SODC_USET,   0);
         SndCVal(me, SODC_IEXC,   0);
         vdev_set_state(&(me->ctx), REZ_STATE_INTERLOCK);
+    }
+    else if (sodc >= SODC_UINCD1  &&
+             sodc <= SODC_UREFL2)
+    {
+        nc  = sodc - SODC_UINCD1;
+        chn = KURREZ_CAC208_CHAN_PINCD1 + nc;
+        v = val / 1000000.0;
+        v = v * v / 100.0 * K_n[nc];
+        vp = &v;
+        ReturnDataSet(devid, 1,
+                      &chn, &dtype_f64, &n_1, &vp, &zero_rflags, NULL);
     }
 }
 

@@ -20,6 +20,7 @@ char *cda_last_err(void)
 void cda_clear_err(void)
 {
     cda_lasterr_str[0] = '\0';
+    errno = 0;
 }
 
 void cda_set_err  (const char *format, ...)

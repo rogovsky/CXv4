@@ -2,10 +2,12 @@ CLIENTS=	kozdev cac208 canadc40 candac16 cdac20 ceac124 \
 		cgvi8 cpks8 curvv \
 		\
 		v06xx \
+		g0401 \
 		\
 		kshd485 \
 		vsdc2 \
-		frolov_d16 \
+		frolov_d16 frolov_ie4 \
+		frolov_k4x1 \
 		s_u0632 \
 		\
 		s_adc200me s_adc812me dl200me_s dl200me_f \

@@ -4,7 +4,7 @@ SECTION=	Config.mk
 include		$(PRJDIR)/PrjRules.mk
 ######################################################################
 
-SUBDIRS=        local marathon-2.4
+SUBDIRS=        local marathon-2.4 udpcan
 
 ifeq ":$(OS):$(CPU_X86_COMPAT):" ":LINUX:YES:"
   MAY_BUILD_C4LCANGW=YES
@@ -23,11 +23,11 @@ ifeq ":$(MAY_BUILD_C4LCANGW):" ":YES:"
   SUBDIRS+=	c4l-cangw
 endif
 ifeq ":$(MAY_BUILD_SOCKETCAN):" ":YES:"
-  SUBDIRS+=	socketcan rtcan
+  SUBDIRS+=	socketcan sktcanserver rtcan
 endif
 
 ######################################################################
 include		$(TOPDIR)/TopRules.mk
 ######################################################################
 
-LOCAL_BCKPFILES=src/*~ socketcan/*~ c4l-cangw/*~
+LOCAL_BCKPFILES=src/*~ socketcan/*~ sktcanserver/*~ rtcan/*~ c4l-cangw/*~

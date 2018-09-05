@@ -121,7 +121,7 @@ static void EraseTable   (privrec_t *me, int wipe_channels, const char *message)
     }
 
     /* Request a "receipt" */
-    me->lvmt->q_enq_ons_v(me->handle, SQ_IF_NONEORFIRST, 1, DESC_GET_DAC_STAT);
+    me->lvmt->q_enq_v(me->handle, SQ_ALWAYS, 1, DESC_GET_DAC_STAT);
 
     SetTmode(me, TMODE_NONE, message);
 }
@@ -348,7 +348,7 @@ static void HandleTableHbt(privrec_t *me)
          me->t_GET_DAC_STAT_hbt_ctr >= HEARTBEAT_FREQ))
     {
         me->t_GET_DAC_STAT_hbt_ctr = 0;
-        me->lvmt->q_enq_ons_v(me->handle, SQ_IF_NONEORFIRST, 1, DESC_GET_DAC_STAT);
+        me->lvmt->q_enq_v(me->handle, SQ_IF_ABSENT, 1, DESC_GET_DAC_STAT);
     }
 }
 
@@ -380,13 +380,22 @@ static void HandleDESC_FILE_CLOSE  (privrec_t *me, int desc, size_t dlc, uint8 *
 }
 
 static void HandleDESC_GET_DAC_STAT(privrec_t *me,
-                                    int        desc __attribute__((unused)),
-                                    size_t     dlc  __attribute__((unused)),
+                                    int        desc,
+                                    size_t     dlc,
                                     uint8     *data)
 {
+    /* Note: we require only 1st data byte to be present,
+             albeit "good" packets should be 7 bytes long */
+    if (dlc < 2) return;
+#if 0
     DoDriverLog(me->devid, DRIVERLOG_NOTICE*0 | 0*DRIVERLOG_C_PKTINFO,
+                "0xFD, ID=0x%x, mode=%d stat=0x%02x %zd:0x%02x,1x%02x,2x%02x,3x%02x,4x%02x,5x%02x,6x%02x,7x%02x",
+                data[2], me->t_mode, data[1], dlc, data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
+#else
+    DoDriverLog(me->devid, DRIVERLOG_NOTICE*0 | 1*DRIVERLOG_C_PKTINFO,
                 "0xFD, ID=0x%x, mode=%d stat=0x%02x",
                 data[2], me->t_mode, data[1]);
+#endif
     if      (me->t_mode == TMODE_RUNN  &&
              ((data[1] & (DAC_STAT_EXECING|DAC_STAT_EXEC_RQ)) == 0))
     {
@@ -416,6 +425,7 @@ static void HandleDESC_GET_DAC_STAT(privrec_t *me,
     {
         SetTmode(me, TMODE_RUNN, "detected RESUME");
     }
+    me->lvmt->q_erase_and_send_next_v(me->handle, 1, desc);
 }
 
 static void OnSendTabCtlCmdCB(int         devid __attribute__((unused)),
@@ -429,7 +439,7 @@ static void OnSendTabCtlCmdCB(int         devid __attribute__((unused)),
   int         l;
 
     /*!!! Maybe ?*/
-    if (1) me->lvmt->q_enq_ons_v(me->handle, SQ_IF_NONEORFIRST, 1, DESC_GET_DAC_STAT);
+    if (1) me->lvmt->q_enq_v(me->handle, SQ_IF_ABSENT, 1, DESC_GET_DAC_STAT);
 
     if      (mode == TMODE_NONE)
     {
@@ -448,7 +458,8 @@ static void OnSendTabCtlCmdCB(int         devid __attribute__((unused)),
 }
 static void SendTabCtlCmd(privrec_t *me, int cmd, int mode)
 {
-    if (me->lvmt->q_enqueue_v(me->handle, SQ_ALWAYS,
+    if (cmd == DESC_FILE_START  || /* Note: START is ALWAYS sent synchronously */
+        me->lvmt->q_enqueue_v(me->handle, SQ_ALWAYS,
                               SQ_TRIES_DIR, 0,
                               OnSendTabCtlCmdCB, lint2ptr(mode),
                               0, 3,

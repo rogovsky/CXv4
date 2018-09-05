@@ -722,6 +722,8 @@ static psp_paramdescr_t text2canvasopts[] =
                   PSP_OFFSET_OF(canvas_privrec_t, cont)),
 
     PSP_P_FLAG  ("nodecor",     canvas_privrec_t, nodecor,     1, 0),
+
+    PSP_P_END()
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -961,5 +963,5 @@ dataknob_cont_vmt_t motifknobs_canvas_vmt =
         sizeof(canvas_privrec_t), text2canvasopts,
         0,
         CreateCanvas, MotifKnobs_CommonDestroy_m, NULL, NULL},
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
 };

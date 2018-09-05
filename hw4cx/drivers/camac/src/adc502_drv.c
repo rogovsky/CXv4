@@ -128,9 +128,53 @@ typedef struct
 
 #define PDR2ME(pdr) ((adc502_privrec_t*)pdr) //!!! Should better sufbtract offsetof(pz)
 
+static psp_lkp_t adc502_timing_lkp[] =
+{
+    {"int",   ADC502_TIMING_INT},
+    {"ext",   ADC502_TIMING_EXT},
+    {NULL, 0}
+};
+
+static psp_lkp_t adc502_tmode_lkp[] =
+{
+    {"hf",   ADC502_TMODE_HF},
+    {"lf",   ADC502_TMODE_LF},
+    {NULL, 0}
+};
+
+static psp_lkp_t adc502_range_lkp[] =
+{
+    {"8192", ADC502_RANGE_8192},
+    {"4096", ADC502_RANGE_4096},
+    {"2048", ADC502_RANGE_2048},
+    {"1024", ADC502_RANGE_1024},
+    {NULL, 0}
+};
+
+static psp_lkp_t adc502_shift_lkp[] =
+{
+    {"0", ADC502_SHIFT_NONE},
+    {"-", ADC502_SHIFT_NEG4},
+    {"+", ADC502_SHIFT_POS4},
+    {NULL, 0}
+};
+
 static psp_paramdescr_t adc502_params[] =
 {
-    PSP_P_FLAG("calcstats", adc502_privrec_t, nxt_args[ADC502_CHAN_CALC_STATS], 1, 0),
+    PSP_P_INT   ("ptsofs",   adc502_privrec_t, nxt_args[ADC502_CHAN_PTSOFS], 0,    0, ADC502_MAX_NUMPTS-1),
+    PSP_P_INT   ("numpts",   adc502_privrec_t, nxt_args[ADC502_CHAN_NUMPTS], 1024, 1, ADC502_MAX_NUMPTS),
+    PSP_P_LOOKUP("timing",   adc502_privrec_t, nxt_args[ADC502_CHAN_TIMING], ADC502_TIMING_INT, adc502_timing_lkp),
+    PSP_P_LOOKUP("tmode",    adc502_privrec_t, nxt_args[ADC502_CHAN_TMODE],  ADC502_TMODE_HF,   adc502_tmode_lkp),
+    PSP_P_LOOKUP("range1",   adc502_privrec_t, nxt_args[ADC502_CHAN_RANGE1], ADC502_RANGE_8192, adc502_range_lkp),
+    PSP_P_LOOKUP("range2",   adc502_privrec_t, nxt_args[ADC502_CHAN_RANGE2], ADC502_RANGE_8192, adc502_range_lkp),
+    PSP_P_LOOKUP("shift1",   adc502_privrec_t, nxt_args[ADC502_CHAN_SHIFT1], ADC502_SHIFT_NONE, adc502_shift_lkp),
+    PSP_P_LOOKUP("shift2",   adc502_privrec_t, nxt_args[ADC502_CHAN_SHIFT2], ADC502_SHIFT_NONE, adc502_shift_lkp),
+
+    PSP_P_FLAG("istart",     adc502_privrec_t, nxt_args[ADC502_CHAN_ISTART],     1, 0),
+    PSP_P_FLAG("noistart",   adc502_privrec_t, nxt_args[ADC502_CHAN_ISTART],     0, 0),
+    PSP_P_FLAG("calcstats",  adc502_privrec_t, nxt_args[ADC502_CHAN_CALC_STATS], 1, 0),
+    PSP_P_FLAG("nocalcstats",adc502_privrec_t, nxt_args[ADC502_CHAN_CALC_STATS], 0, 0),
+
     PSP_P_END()
 };
 
@@ -177,13 +221,13 @@ static int   InitParams(pzframe_drv_t *pdr)
 
   int               n;
 
-    me->nxt_args[ADC502_CHAN_NUMPTS] = 1024;
-    me->nxt_args[ADC502_CHAN_TIMING] = ADC502_TIMING_INT;
-    me->nxt_args[ADC502_CHAN_TMODE]  = ADC502_TMODE_HF;
-    me->nxt_args[ADC502_CHAN_RANGE1] = ADC502_RANGE_8192;
-    me->nxt_args[ADC502_CHAN_RANGE2] = ADC502_RANGE_8192;
-    me->nxt_args[ADC502_CHAN_SHIFT1] = ADC502_SHIFT_NONE;
-    me->nxt_args[ADC502_CHAN_SHIFT2] = ADC502_SHIFT_NONE;
+//    me->nxt_args[ADC502_CHAN_NUMPTS] = 1024;
+//    me->nxt_args[ADC502_CHAN_TIMING] = ADC502_TIMING_INT;
+//    me->nxt_args[ADC502_CHAN_TMODE]  = ADC502_TMODE_HF;
+//    me->nxt_args[ADC502_CHAN_RANGE1] = ADC502_RANGE_8192;
+//    me->nxt_args[ADC502_CHAN_RANGE2] = ADC502_RANGE_8192;
+//    me->nxt_args[ADC502_CHAN_SHIFT1] = ADC502_SHIFT_NONE;
+//    me->nxt_args[ADC502_CHAN_SHIFT2] = ADC502_SHIFT_NONE;
     
     Return1Param(me, ADC502_CHAN_XS_DIVISOR, 0);
     Return1Param(me, ADC502_CHAN_XS_FACTOR,  -9);

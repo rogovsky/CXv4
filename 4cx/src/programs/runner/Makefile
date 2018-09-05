@@ -5,7 +5,8 @@
 #                                                                    #
 ######################################################################
 
-UNCFILES=	cstart
+SH_UTILS=	cstart run-cx-server start-all-servers
+UNCFILES=	$(SH_UTILS)
 EXES=		cx-starter
 cx-starter_COMPONENTS=	cx-starter.o \
 			cx-starter_msg.o \
@@ -25,10 +26,10 @@ cx-starter:	$(LIBMOTIFKNOBS_CDA) \
 		$(LIBUSEFUL) $(LIBXH_CXSCHEDULER) $(LIBMISC) \
 		$(LIBDL)
 
-cstart:		cstart.sh
+$(SH_UTILS):	%: %.sh
 		cp -p $< $@  &&  chmod +x $@
 
-EXPORTSFILES=	$(EXES) cstart
+EXPORTSFILES=	$(EXES) $(SH_UTILS)
 EXPORTSDIR=	bin
 
 # #### END OF Makefile ###############################################

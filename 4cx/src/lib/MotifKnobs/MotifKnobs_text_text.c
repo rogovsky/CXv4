@@ -19,10 +19,6 @@ enum {DEFAULT_COLUMNS = 10};
 typedef struct
 {
     int     columns;
-
-    int     defcols_obtained;
-    Pixel   text_deffg;
-    Pixel   text_defbg;
 } text_text_privrec_t;
 
 static psp_paramdescr_t text2texttextopts[] =
@@ -54,7 +50,7 @@ static void TextTextChangeCB(Widget     w,
     }
 
     text = XmTextGetString(w);
-    store_knob_undo_value (k);
+    /*!!! UNDO: store_knob_undo_value (k);*/
     set_knob_textvalue(k, text, 1);
     XtFree(text);
 }
@@ -102,7 +98,7 @@ static void TextTextKbdHandler(Widget     w,
         ((ks == XK_BackSpace  ||  ks == osfXK_BackSpace)  &&  (ev->state & Mod1Mask) != 0)
        )
     {
-        perform_knob_undo(k);
+        /*!!! UNDO: perform_knob_undo(k);*/
         *continue_to_dispatch = False;
         return;
     }

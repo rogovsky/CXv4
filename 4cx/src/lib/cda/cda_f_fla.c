@@ -9,6 +9,7 @@
 
 #include "misc_macros.h"
 #include "misclib.h"
+#include "findfilein.h"
 #include "memcasecmp.h"
 #include "cxscheduler.h"
 #include "timeval_utils.h"
@@ -20,13 +21,20 @@
 #include "cda_f_fla.h"
 
 
+typedef struct
+{
+    int     numpts;
+    double  data[0];
+} lapprox_rec_t;
+
 typedef union
 {
     double         number;
-    char          *str;
+    char          *str;          /* Note: str should NOT be freed, since it is NOT malloc()'d/strdup()'s, but is placed in fla->buf (after commands) and therefore all 'str's are freed automatically */
     cda_dataref_t  chanref;
     cda_varparm_t  varparm;
     int            displacement;
+    lapprox_rec_t *lapprox_rp;
 } fla_val_t;
 
 typedef struct
@@ -109,6 +117,9 @@ enum
     //
     OP_PRINT_STR,
     OP_PRINT_DBL,
+
+    //
+    OP_LAPPROX,
 };
 
 enum
@@ -138,6 +149,7 @@ enum
     ARG_STRING,
     ARG_CHANREF,
     ARG_VARPARM,
+    ARG_LAPPROX,
 };
 
 typedef struct
@@ -187,6 +199,179 @@ typedef struct _cda_f_fla_privrec_t_struct
     int            raw_count;
     int            do_refresh;
 } cda_f_fla_privrec_t;
+
+//////////////////////////////////////////////////////////////////////
+
+static int _cda_debug_lapprox = 0;
+
+static
+int cda_do_linear_approximation(double *rv_p, double x,
+                                int npts, double *matrix)
+{
+  int     ret = 0;
+  int     lb;
+  double  x0, y0, x1, y1;
+
+    if (npts == 1)
+    {
+        *rv_p = matrix[1];
+        return 1;
+    }
+    if (npts <  1)
+    {
+        *rv_p = x;
+        return 1;
+    }
+  
+    if      (x < matrix[0])
+    {
+        ret = 1;
+        lb = 0;
+    }
+    else if (x > matrix[(npts - 1) * 2])
+    {
+        ret = 1;
+        lb = npts - 2;
+    }
+    else
+    {
+        /*!!!Should replace with binary search!*/
+        for (lb = 0;  lb < npts - 1/*!!!?*/;  lb++)
+            if (matrix[lb*2] <= x  &&  x <= matrix[(lb + 1) * 2])
+                break;
+    }
+
+    x0 = matrix[lb * 2];
+    y0 = matrix[lb * 2 + 1];
+    x1 = matrix[lb * 2 + 2];
+    y1 = matrix[lb * 2 + 3];
+    
+    *rv_p = y0 + (x - x0) * (y1 - y0) / (x1 - x0);
+
+    if (_cda_debug_lapprox)
+    {
+        fprintf(stderr, "LAPPROX: x=%f, npts=%d; lb=%d:[%f,%f] =>%f  r=%d\n",
+                                    x,       npts,  lb, x0,x1,  *rv_p, ret);
+        //    if (npts == 121) fprintf(stderr, "x=%f: lb=%d v=%f\n", x, lb, *rv_p);
+    }
+
+    return ret;
+}
+
+static int compare_doubles (const void *a, const void *b)
+{
+  const double *da = (const double *) a;
+  const double *db = (const double *) b;
+    
+    return (*da > *db) - (*da < *db);
+}
+static lapprox_rec_t *load_lapprox_table(cda_dataref_t  ref,
+                                         const char    *table_name,
+                                         int xcol, int ycol)
+{
+  FILE              *fp;
+  char               line[1000];
+
+  int                maxcol;
+  char              *p;
+  double             v;
+  double             a;
+  double             b;
+  char              *err;
+  int                col;
+  
+  int                tab_size;
+  int                tab_used;
+  lapprox_rec_t *rec;
+  lapprox_rec_t *nrp;
+
+    if (table_name == NULL) return NULL;
+
+    if (xcol < 1) xcol = 1;
+    if (ycol < 1) ycol = 2;
+
+    fp = findfilein(table_name,
+#if OPTION_HAS_PROGRAM_INVOCATION_NAME
+                    program_invocation_name,
+#else
+                    NULL,
+#endif /* OPTION_HAS_PROGRAM_INVOCATION_NAME */
+                    NULL, ".lst",
+                    "./"
+                        FINDFILEIN_SEP "../common"
+                        FINDFILEIN_SEP "!/"
+                        FINDFILEIN_SEP "!/../settings/common"
+                        FINDFILEIN_SEP "$PULT_ROOT/settings/common"
+                        FINDFILEIN_SEP "~/4pult/settings/common");
+    if (fp == NULL)
+    {
+        cda_ref_p_report(ref, "lapprox: couldn't find a table \"%s.lst\"", table_name);
+        return NULL;
+    }
+
+    tab_size = 0;
+    tab_used = 0;
+    rec      = malloc(sizeof(*rec));
+    bzero(rec, sizeof(*rec));
+
+    maxcol = xcol;
+    if (ycol > maxcol) maxcol = ycol;
+    
+    while (fgets(line, sizeof(line) - 1, fp) != NULL)
+    {
+        line[sizeof(line) - 1] = '\0';
+
+        /* Skip leading whitespace and ignore empty/comment lines */
+        p = line;
+        while(*p != '\0'  &&  isspace(*p)) p++;
+        if (*p == '\0'  ||  *p == '#')
+            goto NEXT_LINE;
+
+        /* Obtain "x" and "y" */
+        /* Note: gcc barks
+               "warning: `a' might be used uninitialized in this function"
+               "warning: `b' might be used uninitialized in this function"
+           here, but in fact either a/b are initialized, or we skip their usage.
+         */
+        for (col = 1;  col <= maxcol;  col++)
+        {
+            v = strtod(p, &err);
+            if (err == p  ||  (*err != '\0'  &&  !isspace(*err)))
+                goto NEXT_LINE;
+            p = err;
+
+            if (col == xcol) a = v;
+            if (col == ycol) b = v;
+        }
+
+        /* Grow table if required */
+        if (tab_used >= tab_size)
+        {
+            tab_size += 20;
+            nrp = safe_realloc(rec, sizeof(*rec) + sizeof(double)*2*tab_size);
+            if (nrp == NULL) goto END_OF_FILE;
+            rec = nrp;
+        }
+
+        rec->data[tab_used * 2]     = a;
+        rec->data[tab_used * 2 + 1] = b;
+        tab_used++;
+        
+ NEXT_LINE:;
+    }
+ END_OF_FILE:
+    
+    fclose(fp);
+
+    ////fprintf(stderr, "%d points read from %s\n", tab_used, fname);
+    
+    rec->numpts = tab_used;
+
+    /* Sort the table in ascending order */
+    qsort(rec->data, rec->numpts, sizeof(double)*2, compare_doubles);
+    
+    return rec;
+}
 
 //////////////////////////////////////////////////////////////////////
 
@@ -661,6 +846,23 @@ static int proc_PRINT_DBL(cda_f_fla_privrec_t *fla,
     return CMD_RC_OK;
 }
 
+static int proc_LAPPROX(cda_f_fla_privrec_t *fla,
+                        fla_val_t *stk, int *stk_idx_p)
+{
+  lapprox_rec_t *lapprp;
+  double         val;
+
+    lapprp = stk[(*stk_idx_p)++].lapprox_rp;
+    val    = stk[(*stk_idx_p)++].number;
+
+    if (cda_do_linear_approximation(&val, val, lapprp->numpts, lapprp->data) != 0)
+        fla->rflags |= CXCF_FLAG_CALCERR;
+
+    stk[--(*stk_idx_p)].number = val;
+
+    return CMD_RC_OK;
+}
+
 
 //--------------------------------------------------------------------
 
@@ -713,6 +915,7 @@ static cmd_descr_t  command_set[] =
     [OP_GETTIME]    = {"GETTIME",    proc_GETTIME,    0, 1, FLAG_NO_IM, ARG_NONE},
     [OP_PRINT_STR]  = {"PRINT_STR",  proc_PRINT_STR,  1, 0, FLAG_IMMED, ARG_STRING},
     [OP_PRINT_DBL]  = {"PRINT_DBL",  proc_PRINT_DBL,  1, 0, FLAG_IMMED, ARG_STRING},
+    [OP_LAPPROX]    = {"LAPPROX",    proc_LAPPROX,    2, 1, FLAG_IMMED, ARG_LAPPROX},
 };
 
 //////////////////////////////////////////////////////////////////////
@@ -936,6 +1139,10 @@ static int  cda_f_fla_p_create (cda_dataref_t  ref,
   fla_cmd_t           *cp;
   int                  displacement;
 
+  const char          *buf_p;
+  int                  xcol;
+  int                  ycol;
+
 #define SKIP_SPACES()                                               \
     do {                                                            \
         while (*src != '\0'  &&  *src != '\n'  &&  *src != '\r'  && \
@@ -1042,9 +1249,10 @@ static int  cda_f_fla_p_create (cda_dataref_t  ref,
                             return DO_ERR("number expected after %s", descr->name);
                         src = endp;
                     }
-                    else if (descr->argtype == ARG_STRING  ||
-                             descr->argtype == ARG_CHANREF ||
-                             descr->argtype == ARG_VARPARM)
+                    else if (descr->argtype == ARG_STRING   ||
+                             descr->argtype == ARG_CHANREF  ||
+                             descr->argtype == ARG_VARPARM  ||
+                             descr->argtype == ARG_LAPPROX)
                     {
                         /* A common part -- string parsing */
                         end_ch = '\0';
@@ -1116,6 +1324,55 @@ static int  cda_f_fla_p_create (cda_dataref_t  ref,
                                 arg.varparm =
                                     cda_add_varparm(cda_dat_p_get_cid(ref),
                                                     buf);
+                        }
+                        else if (descr->argtype == ARG_LAPPROX)
+                        {
+                            if (buf_used == 0)
+                                return DO_ERR("\'lapprox\' requires an Xcol:Ycol:FILEREF parameter");
+
+                            buf_p = buf;
+                            if (*buf_p == '='  &&  0/* In beamweld-table columns are 2:1, so no-specification (1:2) is useless */)
+                            {
+                                xcol = 1;
+                                ycol = 2;
+                                buf_p++;
+                            }
+                            else
+                            {
+                                /* xcol */
+                                xcol = strtol(buf_p, &endp, 10);
+                                if (endp == buf_p)
+                                    return DO_ERR("Xcol-number expected after \"%s\"", descr->name);
+                                buf_p = endp;
+                                /* ':' */
+                                if (*buf_p != ':')
+                                    return DO_ERR(":Ycol expected after \"%s %d\"", descr->name, xcol);
+                                buf_p++;
+                                /* ycol */
+                                ycol = strtol(buf_p, &endp, 10);
+                                if (endp == buf_p)
+                                    return DO_ERR("Ycol-number expected after \"%s %d:\"", descr->name, xcol);
+                                buf_p = endp;
+                                /* ':' */
+                                if (*buf_p != ':')
+                                    return DO_ERR(":FILEREF expected after \"%s %d:%d\"", descr->name, xcol, ycol);
+                                buf_p++;
+                            }
+
+                            if (*buf_p == '\0')
+                                return DO_ERR("FILEREF expected in %s", descr->name);
+
+                            if (stage == 1)
+                            {
+                                arg.lapprox_rp = load_lapprox_table(ref, 
+                                                                    buf_p,
+                                                                    xcol, ycol);
+                                if (arg.lapprox_rp == NULL)
+                                {
+                                    opcode     = OP_CALCERR;
+                                    arg.number = 1.0;
+                                }
+                            }
                         }
                     }
 
@@ -1195,6 +1452,20 @@ static int  cda_f_fla_p_create (cda_dataref_t  ref,
 
 static void cda_f_fla_p_destroy(void          *fla_privptr)
 {
+  cda_f_fla_privrec_t *fla = fla_privptr;
+  int                  idx;
+  fla_cmd_t           *cp;
+
+    /* Go through all buf[fla_len] to free command-specific data.
+       (Note: ARG_STRING's arg.str are placed in the same fla->buf and should NOT be free()d.) */
+    for (idx = 0, cp = fla->buf;  idx < fla->fla_len;  idx++, cp++)
+        if (cp->cmd == OP_LAPPROX)
+        {
+            safe_free(cp->arg.lapprox_rp);
+            cp->arg.lapprox_rp = NULL;
+        }
+
+    safe_free(fla->buf); fla->buf = NULL;
 }
 
 static int  cda_f_fla_p_add_evp(void          *fla_privptr,
@@ -1323,6 +1594,7 @@ static int  cda_f_fla_p_srvs_of(void          *fla_privptr,
 CDA_DEFINE_FLA_PLUGIN(fla, "CDA-CX Formulae plugin",
                       NULL, NULL,
                       sizeof(cda_f_fla_privrec_t),
+                      CDA_FLA_P_FLAG_NONE,
                       cda_f_fla_p_create,  cda_f_fla_p_destroy,
                       cda_f_fla_p_add_evp, cda_f_fla_p_del_evp,
                       cda_f_fla_p_execute, cda_f_fla_p_stop,

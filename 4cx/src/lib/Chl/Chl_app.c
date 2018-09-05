@@ -70,6 +70,11 @@ static void _ChlSndText_m(DataKnob k, const char *s)
     CdrSetKnobText (get_knob_subsys(k), k, s, 0);
 }
 
+static void _ChlSndVect_m(DataKnob k, const double *data, int nelems)
+{
+    CdrSetKnobVect (get_knob_subsys(k), k, data, nelems, 0);
+}
+
 static int  _ChlHistorize_m(DataKnob k)
 {
   DataSubsys subsys = get_knob_subsys(k);
@@ -82,6 +87,7 @@ static dataknob_cont_vmt_t ChlSysVMT =
     {.type = DATAKNOB_CONT},
     _ChlSndPhys_m,
     _ChlSndText_m,
+    _ChlSndVect_m,
     _ChlShowProps_m,
     _ChlShowBigVal_m,
     _ChlToHistPlot_m,

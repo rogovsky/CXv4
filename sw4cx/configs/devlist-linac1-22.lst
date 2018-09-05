@@ -1,3 +1,0 @@
-include(`smc8.devtype')
-
-dev kshd1 smc8/remdrv ~ 0,0 b:cangw-smc8:8002

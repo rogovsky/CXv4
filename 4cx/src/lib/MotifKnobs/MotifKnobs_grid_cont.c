@@ -519,7 +519,7 @@ dataknob_cont_vmt_t motifknobs_grid_vmt =
         sizeof(grid_privrec_t), text2gridopts,
         0,
         CreateNormalGrid, MotifKnobs_CommonDestroy_m, NULL, NULL},
-    NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL,
     MotifKnobs_CommonShowAlarm_m, MotifKnobs_CommonAckAlarm_m, 
     MotifKnobs_CommonAlarmNewData_m, NULL, NULL, NULL
 };
@@ -530,7 +530,7 @@ dataknob_cont_vmt_t motifknobs_def_cont_vmt =
         sizeof(grid_privrec_t), text2gridopts,
         0,
         CreateDefCont, MotifKnobs_CommonDestroy_m, NULL, NULL},
-    NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL,
     MotifKnobs_CommonShowAlarm_m, MotifKnobs_CommonAckAlarm_m,
     MotifKnobs_CommonAlarmNewData_m, NULL, NULL, NULL
 };

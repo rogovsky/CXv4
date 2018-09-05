@@ -57,6 +57,7 @@ typedef struct
     int             devcodes[10];
     CanKozOnIdProc  ffproc;
     CanKozPktinProc inproc;
+    int             options;
 
     /* Device properties */
     int             hw_ver;
@@ -591,7 +592,8 @@ static int  cankoz_add   (int devid, void *devptr,
                           int devcode,
                           CanKozOnIdProc  ffproc,
                           CanKozPktinProc inproc,
-                          int queue_size)
+                          int queue_size,
+                          int options)
 {
   int           line;
   int           kid;
@@ -654,6 +656,7 @@ static int  cankoz_add   (int devid, void *devptr,
     dp->devcodes[0] = devcode;
     dp->ffproc      = ffproc;
     dp->inproc      = inproc;
+    dp->options     = options;
     
     dp->hw_ver = dp->sw_ver = dp->hw_code = 0;
     dp->ioregs.base = -1;
@@ -1095,19 +1098,36 @@ static void cankoz_fd_p     (int devid, void *devptr,
             {
                 sq_clear(&(dp->q));
             }
-            
-            if (dp->ffproc != NULL  &&  id_reason != CANKOZ_IAMR_WHOAREHERE)
-                dp->ffproc(dp->devid, dp->devptr, is_a_reset);
-
             /* Should we perform re-request? */
             if (is_a_reset)
             {
+                // Notify those who requested BEFORE devstate change
+                if (dp->ffproc != NULL  &&  id_reason != CANKOZ_IAMR_WHOAREHERE  &&
+                    (dp->options & CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET) != 0)
+                    dp->ffproc(dp->devid, dp->devptr, CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET);
+
                 dp->ioregs.rcvd    = 0;
                 dp->ioregs.pend    = 0;
                 dp->ioregs.req_msk = 0;
                 SetDevState(dp->devid, DEVSTATE_NOTREADY,  0, NULL);
                 SetDevState(dp->devid, DEVSTATE_OPERATING, 0, NULL);
             }
+
+            // And an AFTER devstate change notification
+            if (dp->ffproc != NULL  &&  id_reason != CANKOZ_IAMR_WHOAREHERE)
+            {
+                // a. A regular one
+                if      (is_a_reset == 0  ||
+                         (dp->options & 
+                          (CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET | 
+                           CANKOZ_LYR_OPTION_FFPROC_AFTER_RESET)
+                         ) == 0)
+                    dp->ffproc(dp->devid, dp->devptr, is_a_reset);
+                // b. Or a special for those who requested
+                else if ((dp->options & CANKOZ_LYR_OPTION_FFPROC_AFTER_RESET) != 0)
+                    dp->ffproc(dp->devid, dp->devptr, CANKOZ_LYR_OPTION_FFPROC_AFTER_RESET);
+            }
+
         }
     }
 

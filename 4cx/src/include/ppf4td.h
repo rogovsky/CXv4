@@ -84,6 +84,8 @@ enum
     PPF4TD_FLAG_COMTERM   = 1 << 13, // COMma
     PPF4TD_FLAG_SEMTERM   = 1 << 14, // SEMicolon
     PPF4TD_FLAG_BRCTERM   = 1 << 15, // '}'-BRaCe, ']'-BRacKet, ')'-PaReN
+
+    PPF4TD_FLAG_JUST_SKIP = 1 << 31, // get_string()
 };
 
 enum {PPF4TD_UCBUF_SIZE = 100}; // This is mainly for "#line ...", so a small buf is enough
@@ -115,7 +117,7 @@ int         ppf4td_is_at_eol (ppf4td_ctx_t *ctx);
 
 int         ppf4td_skip_white(ppf4td_ctx_t *ctx);
 int         ppf4td_get_ident (ppf4td_ctx_t *ctx, int flags, char *buf, size_t bufsize);
-int         ppf4td_get_int   (ppf4td_ctx_t *ctx, int flags, int  *vp,  int   *base_p);
+int         ppf4td_get_int   (ppf4td_ctx_t *ctx, int flags, int  *vp,  int defbase, int *base_p);
 int         ppf4td_get_double(ppf4td_ctx_t *ctx, int flags, double *vp);
 int         ppf4td_get_string(ppf4td_ctx_t *ctx, int flags, char *buf, size_t bufsize);
 int         ppf4td_read_line (ppf4td_ctx_t *ctx, int flags, char *buf, size_t bufsize);

@@ -1,0 +1,40 @@
+devtype f4226 r1i1024,r9i,w20i,r20i {
+	data		0
+	marker		9	# Note: just for compatibility with others
+
+	shot		10
+	stop		11
+	istart		12
+	waittime	13
+	calc_stats	14
+
+	ptsofs		20
+	numpts		21
+	timing		22
+	range		23
+	prehist64	24
+
+	elapsed		30
+	xs_per_point	31
+	xs_divisor	32
+	xs_factor	33
+	cur_ptsofs	34
+	cur_numpts	35
+	cur_timing	36
+	cur_range	37
+	cur_prehist64	38
+
+	on		39
+	rangemin	40
+	rangemax	41
+
+	min		42
+	max		43
+	avg		44
+	int		45
+
+	totalmin	46
+	totalmax	47
+
+	num_lines	48
+}

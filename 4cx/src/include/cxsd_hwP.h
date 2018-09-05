@@ -127,6 +127,9 @@ typedef struct
     CxAnyVal_t      q;
     cxdtype_t       q_dtype;
 
+    CxAnyVal_t      range[2];
+    cxdtype_t       range_dtype;
+
     cxsd_hw_chan_cbrec_t *cb_list;
     int             cb_list_allocd;
 } cxsd_hw_chan_t;
@@ -192,6 +195,7 @@ enum
     CXSD_HW_CHAN_R_RDSCHG   = 3,  CXSD_HW_CHAN_EVMASK_RDSCHG   = 1 << CXSD_HW_CHAN_R_RDSCHG,
     CXSD_HW_CHAN_R_FRESHCHG = 4,  CXSD_HW_CHAN_EVMASK_FRESHCHG = 1 << CXSD_HW_CHAN_R_FRESHCHG,
     CXSD_HW_CHAN_R_QUANTCHG = 5,  CXSD_HW_CHAN_EVMASK_QUANTCHG = 1 << CXSD_HW_CHAN_R_QUANTCHG,
+    CXSD_HW_CHAN_R_RANGECHG = 6,  CXSD_HW_CHAN_EVMASK_RANGECHG = 1 << CXSD_HW_CHAN_R_RANGECHG,
 };
 
 enum {CXSD_HW_DRVA_IGNORE_UPD_CYCLE_FLAG = 1 << 16};
@@ -228,6 +232,7 @@ int            CxsdHwGetCpnProps(cxsd_cpntid_t  cpid,
                                  char         **units_p,
                                  char         **dpyfmt_p);
 
+/* Note: CxsdHwDoIO MAY modify contents of dtypes[], nelems[] and values[] */
 int  CxsdHwDoIO         (int  requester,
                          int  action,
                          int  count, cxsd_gchnid_t *gcids,

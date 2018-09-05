@@ -407,6 +407,25 @@ static void cda_d_vcas_del_chan(void *pdt_privptr, cda_hwcnref_t hwr)
     RlsHwrSlot(hwr, me);
 }
 
+static int  cda_d_vcas_set_type(void *pdt_privptr, cda_hwcnref_t hwr,
+                                cxdtype_t dtype, int nelems)
+{
+  cda_d_vcas_privrec_t *me = pdt_privptr;
+  hwrinfo_t            *hi = AccessHwrSlot(hwr, me);
+
+    if (hwr < 0  ||  hwr >= me->hwrs_list_allocd  ||
+        hi->in_use == 0)
+    {
+        /*!!!Bark? */
+        return -1;
+    }
+
+    hi->dtype   = dtype;
+    hi->nelems  = nelems;
+
+    return 0;
+}
+
 static int  cda_d_vcas_snd_data(void *pdt_privptr, cda_hwcnref_t hwr,
                                 cxdtype_t dtype, int nelems, void *value)
 {
@@ -1000,7 +1019,9 @@ static int  cda_d_vcas_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 CDA_DEFINE_DAT_PLUGIN(vcas, "VCAS data-access plugin",
                       NULL, NULL,
                       sizeof(cda_d_vcas_privrec_t),
+                      CDA_DAT_P_FLAG_CHAN_TYPE_CHANGE_SUPPORTED,
                       '.', ':', '@',
                       cda_d_vcas_new_chan, cda_d_vcas_del_chan,
+                      cda_d_vcas_set_type,
                       cda_d_vcas_snd_data, NULL,
                       cda_d_vcas_new_srv,  cda_d_vcas_del_srv);

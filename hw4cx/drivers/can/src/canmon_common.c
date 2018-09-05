@@ -118,6 +118,7 @@ static void CanutilSendFrame(int fd, int id,    int  dlc,   uint8 *data)
 static const char *linespec        = NULL;
 static const char *option_baudrate = NULL;
 static int         option_kozak    = 0;
+static int         option_numbers  = 0;
 static int         option_hex_data = 0;
 static int         option_hex_ids  = 0;
 static enum
@@ -264,13 +265,18 @@ static void DoRecv(const char *argv0, const char *spec)
   const char *p = spec;
   char       *errp;
 
+  int         intval;
   int         msecs;
+  int         limit;
+  int         start;
 
   struct timeval  deadline;
   struct timeval  now;          /* The time "now" for diff calculation */
   struct timeval  timeout;      /* Timeout for select() */
   fd_set          rfds;
   int             r;
+
+  static int            count = 0;
 
   static struct timeval time1st;
   static int            time1st_got = 0;
@@ -290,29 +296,43 @@ static void DoRecv(const char *argv0, const char *spec)
   int             id_reason;
     
     /* Find out duration */
+    msecs = -1;
+    limit = -1;
     p++;
-    if (*p == '\0')
-        msecs = -1;
-    else
+    if (*p != '\0')
     {
-        msecs = strtol(p, &errp, 0);
+        intval = strtol(p, &errp, 0);
         if (errp == p)
         {
-            fprintf(stderr, "%s: bad milliseconds spec in \"%s\"\n", argv0, spec);
+            fprintf(stderr, "%s: bad milliseconds/-count spec in \"%s\"\n", argv0, spec);
             exit(1);
         }
         p = errp;
-        
-        gettimeofday(&deadline, NULL);
-        timeval_add_usecs(&deadline, &deadline, msecs * 1000);
+
+        if      (intval > 0)
+        {
+            msecs = intval;
+            gettimeofday(&deadline, NULL);
+            timeval_add_usecs(&deadline, &deadline, msecs * 1000);
+        }
+        else if (intval < 0)
+        {
+            limit = -intval;
+            start = count;
+        }
     }
     
     while (1)
     {
-        if (msecs >= 0)
+        if (msecs > 0)
         {
             gettimeofday(&now, NULL);
             if (timeval_subtract(&timeout, &deadline, &now) != 0) return;
+        }
+
+        if (limit > 0)
+        {
+            if (count - start >= limit) return;
         }
 
         FD_ZERO(&rfds);
@@ -339,12 +359,20 @@ static void DoRecv(const char *argv0, const char *spec)
             if      (option_times == TIMES_REL)
             {
                 timeval_subtract(&timenow, &timenow, &time1st);
-                printf("@%ld.%06ld ", (long)timenow.tv_sec, (long)timenow.tv_usec);
+                printf("@%ld.%06ld", (long)timenow.tv_sec, (long)timenow.tv_usec);
             }
             else if (option_times == TIMES_ISO)
             {
-                printf("@%s.%06ld ", stroftime(timenow.tv_sec, "-"), (long)timenow.tv_usec);
+                printf("@%s.%06ld", stroftime(timenow.tv_sec, "-"), (long)timenow.tv_usec);
             }
+
+            if (option_numbers)
+                printf("%s#%d", option_times == TIMES_OFF? "@" : "", count);
+
+            if (option_times != TIMES_OFF  ||  option_numbers)
+                printf(" ");
+
+            count++;
 
             koz_kid  = (can_id >> 2) & 63;
             koz_prio = (can_id >> 8) & 7;
@@ -401,13 +429,14 @@ int main (int argc, char *argv[])
     /* Make stdout ALWAYS line-buffered */
     setvbuf(stdout, NULL, _IOLBF, 0);
     
-    while ((c = getopt(argc, argv, "b:hkxXtT")) > 0)
+    while ((c = getopt(argc, argv, "b:hkNxXtT")) > 0)
     {
         switch (c)
         {
             case 'b': option_baudrate = optarg;       break;
             case 'h': goto PRINT_HELP;
             case 'k': option_kozak    = 1;            break;
+            case 'N': option_numbers  = 1;            break;
             case 'x': option_hex_data = 1;            break;
             case 'X': option_hex_ids  = 1;            break;
             case 't': option_times    = TIMES_REL;    break;
@@ -465,6 +494,7 @@ int main (int argc, char *argv[])
     fprintf(stderr, "    -b BAUDS  set baudrate (125/250/500/1000)\n");
     fprintf(stderr, "    -h        display this help and exit\n");
     fprintf(stderr, "    -k        print IDs in kozak notation\n");
+    fprintf(stderr, "    -N        print packet numbers (0, 1, 2, ...)\n");
     fprintf(stderr, "    -x        print data in hex\n");
     fprintf(stderr, "    -X        print packet IDs in hex\n");
     fprintf(stderr, "    -t        print relative timestamps\n");
@@ -476,6 +506,8 @@ int main (int argc, char *argv[])
     fprintf(stderr, "    kKID/PRIO[.RESV]:byte0,byte1,...\n");
     fprintf(stderr, "  or\n");
     fprintf(stderr, "    :[milliseconds-to-wait]\n");
+    fprintf(stderr, "  or\n");
+    fprintf(stderr, "    :-[number-of-packets-to-receive]\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "  PRIO is either a digit 0-7 or 'b' (=5), 'u' (=6) or 'r' (=7)\n");
     exit(0);

@@ -225,7 +225,8 @@ static int  canadc40_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE,
                                canadc40_ff, canadc40_in,
-                               KOZDEV_NUMCHANS*2/*!!!*/);
+                               KOZDEV_NUMCHANS*2/*!!!*/,
+                               CANKOZ_LYR_OPTION_NONE);
     if (me->handle < 0) return me->handle;
     me->lvmt->has_regs(me->handle, KOZDEV_CHAN_REGS_base);
 

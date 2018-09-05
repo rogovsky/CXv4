@@ -1,0 +1,1 @@
+extern dataknob_vect_vmt_t motifknobs_matrix_vect_vmt;

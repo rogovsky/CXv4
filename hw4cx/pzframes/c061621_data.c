@@ -5,9 +5,9 @@
 
 enum { C061621_DTYPE = CXDTYPE_INT32 };
 
-static void c061621me_info2mes(fastadc_data_t      *adc,
-                               pzframe_chan_data_t *info,
-                               fastadc_mes_t       *mes_p)
+static void c061621_info2mes(fastadc_data_t      *adc,
+                             pzframe_chan_data_t *info,
+                             fastadc_mes_t       *mes_p)
 {
     mes_p->plots[0].on                 = 1;
     mes_p->plots[0].numpts             = info[C061621_CHAN_CUR_NUMPTS].valbuf.i32;
@@ -116,7 +116,7 @@ pzframe_type_dscr_t *c061621_get_type_dscr(void)
                                C061621_CHAN_XS_PER_POINT,
                                C061621_CHAN_XS_DIVISOR,
                                C061621_CHAN_XS_FACTOR,
-                               c061621me_info2mes,
+                               c061621_info2mes,
                                c061621_line_dscrs,
                                /* Data specifics */
                                "Ch",

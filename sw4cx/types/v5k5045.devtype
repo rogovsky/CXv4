@@ -1,0 +1,17 @@
+devtype v5k5045 w20i,r80i {
+	hvset		0
+	hvset_rate	1
+	pwrset		2
+	switch_on	3
+	switch_off	4
+	rst_ilks	5
+	reset_state	6
+	reset_c_ilks	7
+
+	hvset_cur	50
+
+	ilk<0-31>	30
+	c_ilk<0-31>	62
+
+	vdev_state	99
+}

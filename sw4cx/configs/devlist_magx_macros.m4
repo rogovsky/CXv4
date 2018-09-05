@@ -153,6 +153,22 @@ define(`MAGX_IST_CDAC20_DEV', `
     MAGX_WALKER_SUBDEV($1, $3)
 ')
 
+# 1:device_name 2:c51_name 3:coeff 4/opt:1=>negated_dcct2
+define(`MAGX_VNN_CEAC51_DEV', `
+    dev $1 vnn_ceac51/ist_cdac20    ~ -    $2
+    cpoint $1.Iset      $1.Iset      $3
+    cpoint $1.Iset_rate $1.Iset_rate $3
+    cpoint $1.Iset_cur  $1.Iset_cur  $3
+    cpoint $1.dcct1     $1.dcct1     $3
+    cpoint $1.dcct2     $1.dcct2     ifelse($4, 1, -$3, $3)
+    cpoint $1.dac_mes   $1.dac_mes   $3
+    cpoint $1.adc_dac   $1.adc_dac   $3
+
+    cpoint $1.Imes      $1.dcct1
+
+    MAGX_WALKER_SUBDEV($1, $3)
+')
+
 # 1:device_name 2:c124_name
 define(`MAGX_MPS20_CEAC124_DEV', `
     dev $1 mps20_ceac124 ~ -    $2

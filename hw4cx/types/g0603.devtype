@@ -1,3 +1,6 @@
-devtype g0603 w8i {
+devtype g0603 w24i,r8i {
 	code<0-7>	0
+	code_rate<0-7>	8
+	code_imm<0-7>	16
+	code_cur<0-7>	24
 }

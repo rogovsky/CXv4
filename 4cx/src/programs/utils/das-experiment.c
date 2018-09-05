@@ -276,7 +276,9 @@ static void finish_proc(int uniq, void *privptr1,
 static int header_printer(refrec_t *rp, void *privptr)
 {
     fprintf(outfile, " ");
-    fprintf(outfile, "%s:%s", rp->ur.dpyfmt, rp->ur.spec);
+    if (reprof_cxdtype(rp->ur.dtype) == CXDTYPE_REPR_FLOAT) 
+        fprintf(outfile, "%s:", rp->ur.dpyfmt);
+    fprintf    (outfile, "%s",  rp->ur.spec);
 
     return 0;
 }

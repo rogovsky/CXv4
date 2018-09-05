@@ -1,0 +1,40 @@
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+     define(`fordown',
+            `pushdef(`$1', `$2')_fordown(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_fordown',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', decr($1))_fordown(`$1', `$2', `$3', `$4')')')
+#---------------------------------------------------------------------
+
+define(`G0401_LINE', `
+    knob raw$1   ""  text  ""            "q"  %5.0f  raw$1   alwdrange:0-65535
+    knob hns$1   "=" text  "withlabel"   "us" %11.1f quant$1 alwdrange:0-214700000
+')
+
+grouping main G0401 "G0401" grid nodecor content:3 {
+    container set "Settings" grid "notitle,noshadow" \
+            2 0 0 \
+            "16-bit code\tTime" \
+            "forloop(`N', 0, 7, `N\t')" \
+            content:eval(8*2) {
+        forloop(`N', 0, 7, `G0401_LINE(N)')
+    }
+
+    noop - - hseparator layinfo:horz=fill
+
+    container ctl Control grid nodecor 3 content:3 {
+        selector period_mode "q=" selector "align=right" r:t_quant_mode \
+                items:"#T12.8us\t6.4us\t3.2us\t1.6us\t800ns\t400ns\t200ns\t100ns"
+        knob   break_on_ch7 "Break on7" onoff            r:break_on_ch7
+        button progstart ProgStart button                r:progstart
+    }
+}
+
+wintitle main "G04018"
+winname  main g0401
+winclass main G0401
+winopts  main ""

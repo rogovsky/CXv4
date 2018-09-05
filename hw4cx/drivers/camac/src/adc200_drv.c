@@ -132,9 +132,52 @@ typedef struct
 
 #define PDR2ME(pdr) ((adc200_privrec_t*)pdr) //!!! Should better sufbtract offsetof(pz)
 
+static psp_lkp_t adc200_frqdiv_lkp[] =
+{
+    {"1",  ADC200_FRQD_5NS},
+    {"5",  ADC200_FRQD_5NS},
+    {"2",  ADC200_FRQD_10NS},
+    {"10", ADC200_FRQD_10NS},
+    {"4",  ADC200_FRQD_20NS},
+    {"20", ADC200_FRQD_20NS},
+    {"8",  ADC200_FRQD_40NS},
+    {"40", ADC200_FRQD_40NS},
+    {NULL, 0}
+};
+
+static psp_lkp_t adc200_timing_lkp[] =
+{
+    {"200",   ADC200_T_200MHZ},
+    {"195",   ADC200_T_195MHZ},
+    {"timer", ADC200_T_TIMER},
+    {"ext",   ADC200_T_TIMER},
+    {NULL, 0}
+};
+
+static psp_lkp_t adc200_range_lkp[] =
+{
+    {"256",  ADC200_R_256},
+    {"512",  ADC200_R_512},
+    {"1024", ADC200_R_1024},
+    {"2048", ADC200_R_2048},
+    {NULL, 0}
+};
+
 static psp_paramdescr_t adc200_params[] =
 {
-    PSP_P_FLAG("calcstats", adc200_privrec_t, nxt_args[ADC200_CHAN_CALC_STATS], 1, 0),
+    PSP_P_INT   ("ptsofs",   adc200_privrec_t, nxt_args[ADC200_CHAN_PTSOFS], 0,    0, ADC200_MAX_NUMPTS-1),
+    PSP_P_INT   ("numpts",   adc200_privrec_t, nxt_args[ADC200_CHAN_NUMPTS], 1024, 1, ADC200_MAX_NUMPTS),
+    PSP_P_LOOKUP("frqdiv",   adc200_privrec_t, nxt_args[ADC200_CHAN_FRQDIV], ADC200_FRQD_5NS, adc200_frqdiv_lkp),
+    PSP_P_LOOKUP("timing",   adc200_privrec_t, nxt_args[ADC200_CHAN_TIMING], ADC200_T_200MHZ, adc200_timing_lkp),
+    PSP_P_LOOKUP("range1",   adc200_privrec_t, nxt_args[ADC200_CHAN_RANGE1], ADC200_R_2048,   adc200_range_lkp),
+    PSP_P_LOOKUP("range2",   adc200_privrec_t, nxt_args[ADC200_CHAN_RANGE2], ADC200_R_2048,   adc200_range_lkp),
+    PSP_P_INT   ("zero1",    adc200_privrec_t, nxt_args[ADC200_CHAN_ZERO1],  128,  0, 255),
+    PSP_P_INT   ("zero2",    adc200_privrec_t, nxt_args[ADC200_CHAN_ZERO2],  128,  0, 255),
+
+    PSP_P_FLAG("istart",     adc200_privrec_t, nxt_args[ADC200_CHAN_ISTART],     1, 0),
+    PSP_P_FLAG("noistart",   adc200_privrec_t, nxt_args[ADC200_CHAN_ISTART],     0, 0),
+    PSP_P_FLAG("calcstats",  adc200_privrec_t, nxt_args[ADC200_CHAN_CALC_STATS], 1, 0),
+    PSP_P_FLAG("nocalcstats",adc200_privrec_t, nxt_args[ADC200_CHAN_CALC_STATS], 0, 0),
     PSP_P_END()
 };
 
@@ -183,13 +226,13 @@ static int   InitParams(pzframe_drv_t *pdr)
 
   int               n;
 
-    me->nxt_args[ADC200_CHAN_NUMPTS] = 1024;
-    me->nxt_args[ADC200_CHAN_TIMING] = ADC200_T_200MHZ;
-    me->nxt_args[ADC200_CHAN_FRQDIV] = ADC200_FRQD_5NS;
-    me->nxt_args[ADC200_CHAN_RANGE1] = ADC200_R_2048;
-    me->nxt_args[ADC200_CHAN_RANGE2] = ADC200_R_2048;
-    me->nxt_args[ADC200_CHAN_ZERO1]  = 128;
-    me->nxt_args[ADC200_CHAN_ZERO2]  = 128;
+//    me->nxt_args[ADC200_CHAN_NUMPTS] = 1024;
+//    me->nxt_args[ADC200_CHAN_TIMING] = ADC200_T_200MHZ;
+//    me->nxt_args[ADC200_CHAN_FRQDIV] = ADC200_FRQD_5NS;
+//    me->nxt_args[ADC200_CHAN_RANGE1] = ADC200_R_2048;
+//    me->nxt_args[ADC200_CHAN_RANGE2] = ADC200_R_2048;
+//    me->nxt_args[ADC200_CHAN_ZERO1]  = 128;
+//    me->nxt_args[ADC200_CHAN_ZERO2]  = 128;
 
     Return1Param(me, ADC200_CHAN_XS_FACTOR,  -9);
 

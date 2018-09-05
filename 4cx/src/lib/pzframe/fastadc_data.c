@@ -24,7 +24,7 @@ static void ExtXsPerPointEvproc(int            uniq,
 {
   fastadc_data_t *adc = privptr2;
 
-    if (reason == CDA_REF_R_RSLVSTAT  &&  ptr2lint(info_ptr) == 0)
+    if (reason == CDA_REF_R_RSLVSTAT  &&  ptr2lint(info_ptr) == CDA_RSLVSTAT_NOTFOUND)
     {
         adc->ext_xs_per_point_val = 0;
         fprintf(stderr, "%s %s(): ext_xs_per_point source \"%s\": channel not found\n",

@@ -46,6 +46,17 @@ enum
     CDA_DAT_P_GET_SERVER_OPT_SRVTYPE_mask = 0x000000FF,
 };
 
+enum
+{
+    CDA_DAT_P_FLAG_NONE                       = 0,
+    CDA_DAT_P_FLAG_CHAN_TYPE_CHANGE_SUPPORTED = 1 << 0,
+};
+
+enum
+{
+    CDA_FLA_P_FLAG_NONE                       = 0,
+};
+
 //////////////////////////////////////////////////////////////////////
 
 #define CDA_DAT_P_MODREC_SUFFIX     _dat_p_rec
@@ -66,6 +77,8 @@ typedef int  (*cda_dat_p_new_chan_f)(cda_dataref_t ref, const char *name,
                                      int options, // CDA_DATAREF_OPT_ON_UPDATE only
                                      cxdtype_t dtype, int nelems);
 typedef void (*cda_dat_p_del_chan_f)(void *pdt_privptr, cda_hwcnref_t hwr);
+typedef int  (*cda_dat_p_set_type_f)(void *pdt_privptr, cda_hwcnref_t hwr,
+                                     cxdtype_t dtype, int nelems);
 typedef int  (*cda_dat_p_snd_data_f)(void *pdt_privptr, cda_hwcnref_t hwr,
                                      cxdtype_t dtype, int nelems, void *value);
 typedef int  (*cda_dat_p_lock_op_f) (void *pdt_privptr,
@@ -86,12 +99,15 @@ typedef struct cda_dat_p_rec_t_struct
 
     size_t                privrecsize;
 
+    int                   flags;
+
     char                  sep_ch;            // '.'
     char                  upp_ch;            // ':'
     char                  opt_ch;            // '@'
 
     cda_dat_p_new_chan_f  new_chan;
     cda_dat_p_del_chan_f  del_chan;
+    cda_dat_p_set_type_f  set_type;
     cda_dat_p_snd_data_f  snd_data;
     cda_dat_p_lock_op_f   do_lock;
 
@@ -111,8 +127,10 @@ typedef struct cda_dat_p_rec_t_struct
 #define CDA_DEFINE_DAT_PLUGIN(name, comment,                         \
                               init_m, term_m,                        \
                               privrecsize,                           \
+                              flags,                                 \
                               sep_ch, upp_ch, opt_ch,                \
                               new_chan, del_chan,                    \
+                              set_type,                              \
                               snd_data, do_lock,                     \
                               new_srv,  del_srv)                     \
     cda_dat_p_rec_t CDA_DAT_P_MODREC_NAME(name) =                    \
@@ -123,9 +141,11 @@ typedef struct cda_dat_p_rec_t_struct
             init_m, term_m,                                          \
         },                                                           \
         privrecsize,                                                 \
+        flags,                                                       \
         sep_ch, upp_ch, opt_ch,                                      \
                                                                      \
         new_chan, del_chan,                                          \
+        set_type,                                                    \
         snd_data, do_lock,                                           \
         new_srv,  del_srv,                                           \
                                                                      \
@@ -192,6 +212,8 @@ typedef struct cda_fla_p_rec_t_struct
 
     size_t                  privrecsize;
 
+    int                     flags;
+
     cda_fla_p_create_t      create;
     cda_fla_p_destroy_t     destroy;
     cda_fla_p_add_evp_t     add_evproc;
@@ -214,6 +236,7 @@ typedef struct cda_fla_p_rec_t_struct
 #define CDA_DEFINE_FLA_PLUGIN(name, comment,                         \
                               init_m, term_m,                        \
                               privrecsize,                           \
+                              flags,                                 \
                               cre_f, des_f,                          \
                               aep_f, dep_f,                          \
                               exe_f, stp_f,                          \
@@ -226,6 +249,7 @@ typedef struct cda_fla_p_rec_t_struct
             init_m, term_m,                                          \
         },                                                           \
         privrecsize,                                                 \
+        flags,                                                       \
                                                                      \
         cre_f, des_f,                                                \
         aep_f, dep_f,                                                \
@@ -270,6 +294,9 @@ void  cda_fla_p_update_fla_result  (cda_dataref_t  ref,
                                     cx_time_t      timestamp);
 
 void  cda_dat_p_set_hwr            (cda_dataref_t  ref, cda_hwcnref_t hwr);
+void  cda_dat_p_set_hwinfo         (cda_dataref_t  ref,
+                                    int rw, cxdtype_t dtype, int nelems,
+                                    int srv_hwid);
 void  cda_dat_p_report_rslvstat    (cda_dataref_t  ref, int rslvstat);
 void  cda_dat_p_set_ready          (cda_dataref_t  ref, int is_ready);
 void  cda_dat_p_set_phys_rds       (cda_dataref_t  ref,
@@ -278,6 +305,8 @@ void  cda_dat_p_set_phys_rds       (cda_dataref_t  ref,
 void  cda_dat_p_set_fresh_age      (cda_dataref_t  ref, cx_time_t fresh_age);
 void  cda_dat_p_set_quant          (cda_dataref_t  ref,
                                     CxAnyVal_t     q, cxdtype_t q_dtype);
+void  cda_dat_p_set_range          (cda_dataref_t  ref,
+                                    CxAnyVal_t    *range, cxdtype_t range_dtype);
 void  cda_dat_p_set_strings        (cda_dataref_t  ref,
                                     const char    *ident,
                                     const char    *label,

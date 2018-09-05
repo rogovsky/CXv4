@@ -1,0 +1,155 @@
+# From m4-1.4.1-7.src.rpm::m4-1.4.1.tar.gz#utar/m4-1.4.1/examples/foreach.m4
+# foreach(x, (item_1, item_2, ..., item_n), stmt)
+define(`foreach', `pushdef(`$1', `')_foreach(`$1', `$2', `$3')popdef(`$1')')
+define(`_arg1', `$1')
+define(`_foreach',
+        `ifelse(`$2', `()', ,
+                `define(`$1', _arg1$2)$3`'_foreach(`$1', (shift$2), `$3')')')
+                        
+# 1:id 2:label 3:"Off" 4:"On" 5:c_state 5:c_off 6:c_on
+define(`RGSWCH',
+       `knob/ign_otherop $1 $2 choicebs nolabel items:"#T$3\b\blit=red\t$4\b\blit=green" \
+               r:$5 w:"_all_code; qryval; putchan $7; \
+               push 1; qryval; sub; putchan $6; ret;"')
+
+#---------------------------------------------------------------------
+
+sysname baachi
+defserver ep1-berezin2:49
+wintitle main Baachi: beam welding control center at Chemy
+winname  main baachi
+winclass main Baachi
+winopts  main "maxitoolbar,with_save_btn,with_load_btn"
+
+grouping main BAACHI_grouping "Baachi: beam welding control center at Chemy" \
+        lrtb content:4 {
+
+    container vip "Высоковольтный источник питания" \
+            grid "nocoltitles,norowtitles" 4 base:vip content:4 {
+        container ctl "Управление" grid nohline,nofold,noshadow,nocoltitles,norowtitles content:8 {
+            container - "Settings" grid notitle,noshadow,nocoltitles content:2 {
+                knob u_high "Высокое" text - kV %4.1f set_dac_uout alwdrange:0-60
+                knob k_corr "K корр." text - -  %4.0f set_dac_corr alwdrange:0-255
+            }
+            disp pwr "3ф-сеть подана" led r:mode_power_on
+            disp act "Пускатель вкл."   led r:mode_actuator_on
+            container onoff "On/Off" grid "notitle,noshadow,nocoltitles" content:2 {
+                RGSWCH(vip, ВИП,     Выкл, Вкл, mode_vip_on,  cmd_vip_off, cmd_vip_on)
+                RGSWCH(hvl, Высокое, Выкл, Вкл, mode_operate, cmd_hvl_off, cmd_hvl_on)
+            }
+            disp manu "Ручное управл." led           r:mode_manual
+            disp lock "Блокировка"     led color=red r:mode_vip_blocked
+            noop - " "
+            container service "Служебные..." subwin \
+                    subwintitle:"Служебные каналы контроллера ВИП" content:1 {
+                container "" "" grid "noshadow,notitle,nocoltitles" content:5 {
+                    knob reserved3     "Резервный канал"                  text "" ""   %6.0f set_reserved3
+                    knob uso_coeff     "Коэфф. усиления УСО"              text "" ""   %6.0f set_uso_coeff
+                    knob vip_invrt_frq "k частоты работы инвертора ВИП"   text "" ""   %6.0f set_vip_invrt_frq
+                    knob vip_iout_prot "Защита по выходному току ВИП"     text "" "mA" %6.0f set_vip_iout_prot
+                    knob brkdn_count   "Число пробоев/1с для выкл. на 1с" text "" ""   %6.0f set_brkdn_counter
+                }
+            } layinfo:horz=center
+        }
+
+        noop - - vseparator layinfo:vert=fill
+
+        container mes "Измерения" grid nohline,nofold,noshadow,nocoltitles content:12 {
+            disp vip_uout      "Uвых ВИП"          text "" "kV"    %5.2f mes_vip_uout
+            disp vip_iout_full "Iвых ВИП (полн.)"  text "" "mA"    %6.1f mes_vip_iout_full
+            disp vip_iout_prec "Iвых ВИП (<100мА)" text "" "mA"    %6.2f mes_vip_iout_prec
+            disp transf_iin    "Iвх ВВ трансф."    text "" "A"     %3.0f mes_transf_iin
+            disp vip_3furect   "Uвыпр 3ф-сети"     text "" "V"     %3.0f mes_vip_3furect
+            disp vip_3fi       "Iпотр 3ф-сети"     text "" "A"     %3.0f mes_vip_3fi
+            disp vip_t_trrad   "T транзисторов"    text "" "\xb0C" %3.0f mes_vip_t_trrad
+            disp tank_t        "T внутри ВВ бака"  text "" "\xb0C" %3.0f mes_tank_t
+            disp reserved9     "резерв"            text "" ""      %3.0f mes_reserved9
+            disp vip_iout_auto "Iвых ВИП (авто)"   text "" "mA"    %6.1f mes_vip_iout_auto
+            disp vip_iout_avg  "Iвых ВИП (усред.)" text "" "mA"    %6.0f mes_vip_iout_avg
+            disp brkdn_count   "Число пробоев"     text "" ""      %3.0f cur_brkdn_count
+        }
+
+        container stat "?" grid nohline,nofold,noshadow,nocoltitles,norowtitles content:13 {
+            disp vip_uout_gt_70kv   "Uвых>70"   led color=red r:stat_vip_uout_gt_70kv
+            disp vip_iout_gt_1100ma "Iвых>1100" led color=red r:stat_vip_iout_gt_1100ma
+            disp feedback_break     "Обрыв ОС"  led color=red r:stat_feedback_break
+            disp transf_iin_gt_300a "Iтрнс>300" led color=red r:stat_transf_iin_gt_300a
+            disp phase_break        "Обр.фазы"  led color=red r:stat_phase_break
+            disp vip_iin_gt_250a    "Iвх>250"   led color=red r:stat_vip_iin_gt_250a
+            disp ttemp_gt_45c       "Tтранз>45" led color=red r:stat_ttemp_gt_45c
+            disp tank_t_gt_60c      "Tбака>60"  led color=red r:stat_tank_t_gt_60c
+            disp no_water           "Нет воды"  led color=red r:stat_no_water
+            disp ext_block1_ubs     "Б1 УБС"    led color=red r:stat_ext_block1_ubs
+            disp ext_block2_ubs     "Б2 УБС"    led color=red r:stat_ext_block2_ubs
+            disp constant_brkdn     "Постоянн"  led color=red r:stat_constant_brkdn
+            disp igbt_protection    "IGBT"      led color=red r:stat_igbt_protection
+        }
+    }
+
+# 1:id&r 2:label 3:units 4:set_dpyfmt 5:mes_dpyfmt 6:alwd_max 7:disp_max
+define(`WELD02_CTL', `
+    knob $1_set $2        text - $3 $4 set_$1 alwdrange:0-$6 disprange:0-$7
+    disp $1_mes $2" изм." text - "" $5 mes_$1                disprange:0-$7
+')
+
+    container gunctl "Контроллер пушки" \
+            grid "nocoltitles,norowtitles" base:gun content:eval(3) {
+
+        container ctl "Управление" grid \
+                "nohline,nofold,noshadow,nocoltitles" 2 content:8 {
+            WELD02_CTL(uh, "U упр.эл. отп.", "V", %6.0f, %6.0f, 6000, 6000)
+            WELD02_CTL(ul, "U упр.эл. зап.", "V", %6.0f, %6.0f, 6000, 6000)
+            WELD02_CTL(un, "I накала",       "A", %6.0f, %6.0f, 85,   100)
+            noop
+            disp I "I упр.эл. изм." text - mkA %3.0f \
+                    r:"_all_code; getchan mes_up; mul 1000; lapprox 2:1:weld_mes_up_mv2mka; ret;" \
+                    disprange:0-300
+#            knob - EMU text r:"_all_code; getchan localhost:5.icd.0; pop; getchan %abc; ret;" w:"_all_code; putchan %abc; ret;"
+#            knob - EMU text r:localhost:9.one.0
+#            disp I "I упр.эл. изм." text - mkA %3.0f \
+#                    r:"_all_code; getchan localhost:9.one.0; mul 1000; lapprox 2:1:weld_mes_up_mv2mka; ret;" \
+#                    disprange:0-300
+        }
+        container stab "Режим стабилизации тока, mA" \
+                grid "nohline,nofold,noshadow,nocoltitles" 2 content:8 {
+            WELD02_CTL(ih, "I катода верх.",  -, %6.1f, %6.2f, 100, 100)
+            WELD02_CTL(il, "I катода нижн.",  -, %6.1f, %6.2f, 100, 100)
+            knob gain "Усиление"     selector "nolabel" r:set_gain \
+                    items:"#TНЕТ\tx10"
+            noop
+            knob stab "Стабилизация" selector "nolabel" r:set_stab \
+                    items:"#TНЕТ\t1kHz\t300Hz\t30Hz"
+            noop
+        }
+        container mes "Измерения контроллера пушки" \
+                grid "nohline,nofold,noshadow,nocoltitles" 2 content:6 {
+            disp Uheat_mes "U накала"    text - V %8.3f mes_u_heat
+            noop
+            disp Uindr_mes "U косв.нак." text - V %8.3f mes_u_indr
+            disp Iindr_mes "I="  text withlabel A %8.3f mes_i_indr
+            disp Upowr_mes "U питания"   text - V %8.3f mes_u_powr
+            noop
+        }
+
+    }
+
+# 1:id 2:label 3:min_alwd 4:max_alwd
+define(`MAGSYS_LINE', `
+    knob $1_Iset $2 text nounits A "% 7.4f" i_`'$1`'_s \
+            alwdrange:$3-$4 step:0.01
+    disp $1_Imes "" text nounits A "% 7.4f" i_`'$1`'_m
+    disp $1_Umes "" text nounits V "% 7.4f" i_`'$1`'_v
+')
+
+    container magsys "Магнитная система" grid base:magsys \
+            coltitles:"Iуст, A\tIизм, A\tUизм, V" ncols:3 content:eval(4*3) {
+        MAGSYS_LINE(x, "X", -1.0, +1.0)
+        MAGSYS_LINE(y, "Y", -1.0, +1.0)
+        MAGSYS_LINE(f, "F",  0.0, +1.0)
+        MAGSYS_LINE(r, "+", -1.0, +1.0)
+    }
+
+    noop -plot "" histplot "width=700,height=290 \
+            foreach(`x', `(vacuum,linear,vip.mes.vip_uout,gunctl.ctl.un_mes,gunctl.stab.ih_mes,gunctl.stab.il_mes,gunctl.ctl.I,gunctl.mes.Uheat_mes)', ` add=.x')" \
+            layinfo:newline
+}

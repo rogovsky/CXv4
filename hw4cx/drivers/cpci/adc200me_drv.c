@@ -210,8 +210,11 @@ static psp_paramdescr_t adc200me_params[] =
     PSP_P_LOOKUP("timing",   adc200me_privrec_t, nxt_args[ADC200ME_CHAN_TIMING], -1, adc200me_timing_lkp),
     PSP_P_LOOKUP("rangeA",   adc200me_privrec_t, nxt_args[ADC200ME_CHAN_RANGE1], -1, adc200me_range_lkp),
     PSP_P_LOOKUP("rangeB",   adc200me_privrec_t, nxt_args[ADC200ME_CHAN_RANGE2], -1, adc200me_range_lkp),
-    PSP_P_FLAG  ("calcs",    adc200me_privrec_t, nxt_args[ADC200ME_CHAN_CALC_STATS], 1, 0),
-    PSP_P_FLAG  ("nocalcs",  adc200me_privrec_t, nxt_args[ADC200ME_CHAN_CALC_STATS], 0, 1),
+
+    PSP_P_FLAG("istart",     adc200me_privrec_t, nxt_args[ADC200ME_CHAN_ISTART],     1, 0),
+    PSP_P_FLAG("noistart",   adc200me_privrec_t, nxt_args[ADC200ME_CHAN_ISTART],     0, 0),
+    PSP_P_FLAG("calcstats",  adc200me_privrec_t, nxt_args[ADC200ME_CHAN_CALC_STATS], 1, 0),
+    PSP_P_FLAG("nocalcstats",adc200me_privrec_t, nxt_args[ADC200ME_CHAN_CALC_STATS], 0, 1),
 
     PSP_P_FLAG("fbd_timing", adc200me_privrec_t, timing_alwd, 0, 1),
     PSP_P_FLAG("alw_timing", adc200me_privrec_t, timing_alwd, 1, 0),

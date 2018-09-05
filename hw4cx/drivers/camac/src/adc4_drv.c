@@ -136,9 +136,8 @@ typedef struct
 
 static psp_paramdescr_t adc4_params[] =
 {
-    PSP_P_FLAG("calcstats", adc4_privrec_t, nxt_args[ADC4_CHAN_CALC_STATS], 1, 0),
-
-    PSP_P_INT ("numpts", adc4_privrec_t, nxt_args[ADC4_CHAN_NUMPTS], -1, 1, ADC4_MAX_NUMPTS),
+    PSP_P_INT ("ptsofs", adc4_privrec_t, nxt_args[ADC4_CHAN_PTSOFS], 0,    0, ADC4_MAX_NUMPTS-1),
+    PSP_P_INT ("numpts", adc4_privrec_t, nxt_args[ADC4_CHAN_NUMPTS], 1024, 1, ADC4_MAX_NUMPTS),
 
     PSP_P_INT ("zero0", adc4_privrec_t, nxt_args[ADC4_CHAN_ZERO0], 0, ADC4_MIN_VALUE, ADC4_MAX_VALUE),
     PSP_P_INT ("zero1", adc4_privrec_t, nxt_args[ADC4_CHAN_ZERO1], 0, ADC4_MIN_VALUE, ADC4_MAX_VALUE),
@@ -147,6 +146,12 @@ static psp_paramdescr_t adc4_params[] =
 #ifdef ADC4_EXT_PARAMS
     ADC4_EXT_PARAMS
 #endif
+
+    PSP_P_FLAG("istart",     adc4_privrec_t, nxt_args[ADC4_CHAN_ISTART],     1, 0),
+    PSP_P_FLAG("noistart",   adc4_privrec_t, nxt_args[ADC4_CHAN_ISTART],     0, 0),
+    PSP_P_FLAG("calcstats",  adc4_privrec_t, nxt_args[ADC4_CHAN_CALC_STATS], 1, 0),
+    PSP_P_FLAG("nocalcstats",adc4_privrec_t, nxt_args[ADC4_CHAN_CALC_STATS], 0, 0),
+
     PSP_P_END()
 };
 
@@ -198,7 +203,7 @@ static int   InitParams(pzframe_drv_t *pdr)
 
   int             n;
 
-    Init1Param(me, ADC4_CHAN_NUMPTS, 1024);
+//    Init1Param(me, ADC4_CHAN_NUMPTS, 1024);
 
     Return1Param(me, ADC4_CHAN_XS_DIVISOR, 0);
     Return1Param(me, ADC4_CHAN_XS_FACTOR,  -9);

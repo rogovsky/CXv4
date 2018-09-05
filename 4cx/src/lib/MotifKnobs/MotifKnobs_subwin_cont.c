@@ -212,12 +212,12 @@ dataknob_cont_vmt_t motifknobs_subwin_vmt =
         sizeof(subwin_privrec_t), text2subwinopts,
         0,
         CreateSubwinCont, DestroySubwinCont, NULL, NULL},
-    NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL,
 #if 0 /* If "1" then alarm propagates to parent (which contains [Button]),
          instead of blinking in the content */
     MotifKnobs_CommonShowAlarm_m, MotifKnobs_CommonAckAlarm_m,
 #else
     NULL, NULL,
 #endif
-    SubwinNewData, NULL, NULL, NULL
+    SubwinNewData, NULL, NULL, NULL, NULL
 };

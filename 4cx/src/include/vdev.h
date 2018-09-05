@@ -32,6 +32,7 @@ typedef struct
     CxAnyVal_t     v;           // Buffer for small-sized values; current_val=NULL
     rflags_t       flgs;
     cx_time_t      ts;
+    int            current_nelems;
     int            rcvd;  // Was the value received?
 } vdev_sodc_cur_t;
 

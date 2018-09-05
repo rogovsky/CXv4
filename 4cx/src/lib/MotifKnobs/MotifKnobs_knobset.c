@@ -7,6 +7,8 @@
 #include "MotifKnobs_alarmonoffled_knob.h"
 #include "MotifKnobs_button_knob.h"
 #include "MotifKnobs_text_text.h"
+#include "MotifKnobs_text_vect.h"
+#include "MotifKnobs_matrix_vect.h"
 #include "MotifKnobs_label_noop.h"
 #include "MotifKnobs_separator_noop.h"
 #include "MotifKnobs_histplot_noop.h"
@@ -14,6 +16,7 @@
 #include "MotifKnobs_subwin_cont.h"
 #include "MotifKnobs_split_cont.h"
 #include "MotifKnobs_scroll_cont.h"
+#include "MotifKnobs_tabber_cont.h"
 #include "MotifKnobs_canvas_cont.h"
 #include "MotifKnobs_loggia_cont.h"
 #include "MotifKnobs_lrtb_grpg.h"
@@ -39,6 +42,10 @@ static knobs_knobset_t Motif_knobset =
         (dataknob_unif_vmt_t *)&motifknobs_def_text_vmt,
         (dataknob_unif_vmt_t *)&motifknobs_text_text_vmt,
 
+        (dataknob_unif_vmt_t *)&motifknobs_text_vect_vmt,
+        (dataknob_unif_vmt_t *)&motifknobs_def_vect_vmt,
+        (dataknob_unif_vmt_t *)&motifknobs_matrix_vect_vmt,
+
         (dataknob_unif_vmt_t *)&motifknobs_def_noop_vmt,
         (dataknob_unif_vmt_t *)&motifknobs_hlabel_vmt,
         (dataknob_unif_vmt_t *)&motifknobs_vlabel_vmt,
@@ -51,6 +58,9 @@ static knobs_knobset_t Motif_knobset =
         (dataknob_unif_vmt_t *)&motifknobs_subwin_vmt,
         (dataknob_unif_vmt_t *)&motifknobs_split_vmt,
         (dataknob_unif_vmt_t *)&motifknobs_scroll_vmt,
+#if XM_TABBER_AVAILABLE
+        (dataknob_unif_vmt_t *)&motifknobs_tabber_vmt,
+#endif
         (dataknob_unif_vmt_t *)&motifknobs_loggia_vmt,
 
         (dataknob_unif_vmt_t *)&motifknobs_rectangle_vmt,

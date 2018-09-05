@@ -46,22 +46,33 @@ define(`INIT_LINE', `
     push 1;   putchan     type_p$1;
 ')
 
-grouping main SMC8 "SMC8" grid "noshadow" \
-        coltitles:"# steps\t \t...\t \t-\t+\tState\tStartFrq, /s\tFinalFrq, /s\tAccel, /s^2\tCounter\t \tOut Mode\tM-\tM+\tT-\tT+" \
-        rowtitles:"0\t1\t2\t3\t4\t5\t6\t7" \
-        base:kshd1 \
-        ncols:17 nattl:1 content:eval(1+17*6) {
-    button init "Init" button \
-            w:"_all_code;
-               INIT_LINE(0); INIT_LINE(1); INIT_LINE(2);
-               INIT_LINE(3); INIT_LINE(4); INIT_LINE(5);
-               ret;"
-    SMC8_LINE(0)
-    SMC8_LINE(1)
-    SMC8_LINE(2)
-    SMC8_LINE(3)
-    SMC8_LINE(4)
-    SMC8_LINE(5)
+# 1:N(0...2)
+define(`ONE_SMC8', `
+    container smc8_$1 "SMC8 $1" grid "noshadow" \
+            coltitles:"# steps\t \t...\t \t-\t+\tState\tStartFrq, /s\tFinalFrq, /s\tAccel, /s^2\tCounter\t \tOut Mode\tM-\tM+\tT-\tT+" \
+            rowtitles:"0\t1\t2\t3\t4\t5\t6\t7" \
+            base:kshd$1 \
+            ncols:17 nattl:1 content:eval(1+17*8) {
+        button init "Init" button \
+                w:"_all_code;
+                   INIT_LINE(0); INIT_LINE(1); INIT_LINE(2); INIT_LINE(3);
+                   INIT_LINE(4); INIT_LINE(5); INIT_LINE(6); INIT_LINE(7);
+                   ret;"
+        SMC8_LINE(0)
+        SMC8_LINE(1)
+        SMC8_LINE(2)
+        SMC8_LINE(3)
+        SMC8_LINE(4)
+        SMC8_LINE(5)
+        SMC8_LINE(6)
+        SMC8_LINE(7)
+    }
+')
+
+grouping main LinRF_SMC "SMC8" lrtb "vertical" content:3 {
+    ONE_SMC8(0)
+    ONE_SMC8(1)
+    ONE_SMC8(2)
 }
 
 wintitle main "Linac RF Stepper Motors"

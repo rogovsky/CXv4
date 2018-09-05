@@ -18,6 +18,7 @@ char *CdrLastErr(void)
 void CdrClearErr(void)
 {
     Cdr_lasterr_str[0] = '\0';
+    errno = 0;
 }
 
 void CdrSetErr  (const char *format, ...)

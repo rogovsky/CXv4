@@ -159,14 +159,19 @@ static psp_lkp_t adc333_range_lkp[] =
 
 static psp_paramdescr_t adc333_params[] =
 {
-    PSP_P_INT    ("ptsofs",    adc333_privrec_t, nxt_args[ADC333_CHAN_PTSOFS],    -1, 0, ADC333_MAX_NUMPTS-1),
-    PSP_P_INT    ("numpts",    adc333_privrec_t, nxt_args[ADC333_CHAN_NUMPTS],    -1, 1, ADC333_MAX_NUMPTS),
-    PSP_P_LOOKUP ("timing",    adc333_privrec_t, nxt_args[ADC333_CHAN_TIMING],    -1, adc333_timing_lkp),
-    PSP_P_LOOKUP ("range0",    adc333_privrec_t, nxt_args[ADC333_CHAN_RANGE0],    -1, adc333_range_lkp),
-    PSP_P_LOOKUP ("range1",    adc333_privrec_t, nxt_args[ADC333_CHAN_RANGE1],    -1, adc333_range_lkp),
-    PSP_P_LOOKUP ("range2",    adc333_privrec_t, nxt_args[ADC333_CHAN_RANGE2],    -1, adc333_range_lkp),
-    PSP_P_LOOKUP ("range3",    adc333_privrec_t, nxt_args[ADC333_CHAN_RANGE3],    -1, adc333_range_lkp),
-    PSP_P_FLAG   ("calcstats", adc333_privrec_t, nxt_args[ADC333_CHAN_CALC_STATS], 1, 0),
+    PSP_P_INT    ("ptsofs",    adc333_privrec_t, nxt_args[ADC333_CHAN_PTSOFS],    0,    0, ADC333_MAX_NUMPTS-1),
+    PSP_P_INT    ("numpts",    adc333_privrec_t, nxt_args[ADC333_CHAN_NUMPTS],    1024, 1, ADC333_MAX_NUMPTS),
+    PSP_P_LOOKUP ("timing",    adc333_privrec_t, nxt_args[ADC333_CHAN_TIMING],    ADC333_T_500NS, adc333_timing_lkp),
+    PSP_P_LOOKUP ("range0",    adc333_privrec_t, nxt_args[ADC333_CHAN_RANGE0],    ADC333_R_8192, adc333_range_lkp),
+    PSP_P_LOOKUP ("range1",    adc333_privrec_t, nxt_args[ADC333_CHAN_RANGE1],    ADC333_R_8192, adc333_range_lkp),
+    PSP_P_LOOKUP ("range2",    adc333_privrec_t, nxt_args[ADC333_CHAN_RANGE2],    ADC333_R_8192, adc333_range_lkp),
+    PSP_P_LOOKUP ("range3",    adc333_privrec_t, nxt_args[ADC333_CHAN_RANGE3],    ADC333_R_8192, adc333_range_lkp),
+
+    PSP_P_FLAG("istart",       adc333_privrec_t, nxt_args[ADC333_CHAN_ISTART],     1, 0),
+    PSP_P_FLAG("noistart",     adc333_privrec_t, nxt_args[ADC333_CHAN_ISTART],     0, 0),
+    PSP_P_FLAG("calcstats",    adc333_privrec_t, nxt_args[ADC333_CHAN_CALC_STATS], 1, 0),
+    PSP_P_FLAG("nocalcstats",  adc333_privrec_t, nxt_args[ADC333_CHAN_CALC_STATS], 0, 0),
+
     PSP_P_END()
 };
 
@@ -222,13 +227,13 @@ static int   InitParams(pzframe_drv_t *pdr)
 
   int               n;
 
-    Init1Param(me, ADC333_CHAN_PTSOFS, 0);
-    Init1Param(me, ADC333_CHAN_NUMPTS, 1024);
-    Init1Param(me, ADC333_CHAN_TIMING, ADC333_T_500NS);
-    Init1Param(me, ADC333_CHAN_RANGE0, ADC333_R_8192);
-    Init1Param(me, ADC333_CHAN_RANGE1, ADC333_R_8192);
-    Init1Param(me, ADC333_CHAN_RANGE2, ADC333_R_8192);
-    Init1Param(me, ADC333_CHAN_RANGE3, ADC333_R_8192);
+//    Init1Param(me, ADC333_CHAN_PTSOFS, 0);
+//    Init1Param(me, ADC333_CHAN_NUMPTS, 1024);
+//    Init1Param(me, ADC333_CHAN_TIMING, ADC333_T_500NS);
+//    Init1Param(me, ADC333_CHAN_RANGE0, ADC333_R_8192);
+//    Init1Param(me, ADC333_CHAN_RANGE1, ADC333_R_8192);
+//    Init1Param(me, ADC333_CHAN_RANGE2, ADC333_R_8192);
+//    Init1Param(me, ADC333_CHAN_RANGE3, ADC333_R_8192);
 
     Return1Param(me, ADC333_CHAN_XS_FACTOR,  -9);
 

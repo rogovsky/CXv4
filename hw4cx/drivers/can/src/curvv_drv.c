@@ -72,7 +72,9 @@ static int  curvv_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE,
                                curvv_ff, curvv_in,
-                               CURVV_NUMCHANS*2/*!!!*/);
+                               CURVV_NUMCHANS*2/*!!!*/,
+                               CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET |
+                               CANKOZ_LYR_OPTION_FFPROC_AFTER_RESET);
     if (me->handle < 0) return me->handle;
     me->lvmt->has_regs(me->handle, CURVV_CHAN_REGS_base);
 
@@ -88,12 +90,12 @@ static void curvv_ff (int devid, void *devptr, int is_a_reset)
   int        hw_ver;
   int        sw_ver;
 
+    if (is_a_reset == CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET)
+        bzero(&(me->ptregs), sizeof(me->ptregs));
+
     me->lvmt->get_dev_ver(me->handle, &hw_ver, &sw_ver, NULL);
     ReturnInt32Datum(me->devid, CURVV_CHAN_HW_VER, hw_ver, 0);
     ReturnInt32Datum(me->devid, CURVV_CHAN_SW_VER, sw_ver, 0);
-
-    if (is_a_reset)
-        bzero(&(me->ptregs), sizeof(me->ptregs));
 }
 
 static void curvv_in (int devid, void *devptr,

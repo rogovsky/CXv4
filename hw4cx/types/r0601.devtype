@@ -1,0 +1,3 @@
+devtype r0601 r16i {
+	inprb<0-15>	0
+}
