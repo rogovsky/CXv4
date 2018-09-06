@@ -1034,7 +1034,9 @@ static int ParseOneCpoint  (const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db,
                             char *basebuf, size_t basebufsize,
                             size_t basebufused)
 {
-  size_t            size_left = basebufsize - basebufused;
+  size_t            size_left       = basebufsize - basebufused;
+  size_t            basebufused_ini = basebufused;
+  int               xtra_cpoint_fbd = 0;
   int               r;
   int               is_eol;
   int               ch;
@@ -1061,8 +1063,15 @@ static int ParseOneCpoint  (const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db,
                        basebuf + basebufused, size_left) < 0) return -1;
 
         /* Allow optional "cpoint" at the beginning of line */
-        if (basebufused == 0  &&
-            strcasecmp(basebuf, "cpoint") == 0) continue;
+        if (strcasecmp(basebuf + basebufused, "cpoint") == 0)
+        {
+            if (xtra_cpoint_fbd)
+                return BARK("too many consecutive \"cpoint\" keywords");
+            xtra_cpoint_fbd = 1;
+            ppf4td_skip_white(ctx);
+            continue;
+        }
+        xtra_cpoint_fbd = 1;
 
         len = strlen(basebuf + basebufused);
         basebufused += len;

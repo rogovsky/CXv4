@@ -32,6 +32,7 @@ define(`THERMLINE',
                 c:"_all_code; getchan $1.Tavg; getchan $1.Tset; sub; ret"
         disp $1_alm "<->" alarm "" \
                 r:"_all_code;
+                   getchan %silent; push 0.1;  cmp_if_gt; ret 0;
                    getchan $1.Tgrn; push 20.0; cmp_if_le; ret 2;
                    getchan $1.Tgrn; getchan $1.Tavg; sub; abs;
                                     push 0.4;  cmp_if_ge; ret 1;
@@ -55,7 +56,8 @@ define(`AVGCELL',
 
 grouping main LINTHERMCAN_grouping "Термостабилизация" grid \
         str1:"Вход\tЗадано, ╟C\tВыход\tAlarm\tGoodVal" \
-        param1:5 param3:4 content:eval(4+5*19+5) {
+        at_init:"_all_code; push 0; putchan %silent;" \
+        param1:5 param3:5 content:eval(5+5*19+5) {
 
     container -plot1 "~1" subwin "resizable,compact,noclsbtn" \
         str3:"Термостабилизацийные самописцы 1" content:1 {
@@ -83,6 +85,10 @@ grouping main LINTHERMCAN_grouping "Термостабилизация" grid \
                qryval; push 1; cmp_if_lt; ret;
                OUT_TO_GOOD;
                ret;"
+
+    knob/ign_otherop -silence "" choicebs nolabel \
+            items:"(!)\bСизнализировать звуком\blit=green\tЗтк\bОфедеть и отключить сигнализацию\blit=red" \
+            r:%silent
 
     THERMLINE(group, "GROUP")
     THERMLINE(sled1, "SLED_1")

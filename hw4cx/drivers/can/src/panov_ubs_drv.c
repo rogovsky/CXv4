@@ -378,7 +378,8 @@ static int  panov_ubs_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE,
                                panov_ubs_ff, panov_ubs_in,
-                               PANOV_UBS_NUMCHANS*2/*!!!*/);
+                               PANOV_UBS_NUMCHANS*2/*!!!*/,
+                               CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET);
     if (me->handle < 0) return me->handle;
 
     for (x = 0;  x < countof(rd_info);  x++)
@@ -390,6 +391,7 @@ static int  panov_ubs_init_d(int devid, void *devptr,
 static void panov_ubs_ff (int devid, void *devptr, int is_a_reset)
 {
   privrec_t *me = devptr;
+
     if (is_a_reset)
     {
         me->hwaddr         = -1;

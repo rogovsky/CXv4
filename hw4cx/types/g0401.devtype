@@ -1,0 +1,7 @@
+devtype g0401 w40i {
+	raw<0-7>	0
+	quant<0-7>	8
+	progstart	25
+	t_quant_mode	28
+	break_on_ch7	29
+}

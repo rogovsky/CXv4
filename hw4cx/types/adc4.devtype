@@ -25,7 +25,7 @@ devtype adc4 r1i131044,r4i32761,r5i,w20i,r70i {
 	line<0-3>rangemin 54
 	line<0-3>rangemax 58
 
-	min<0-3>	70,
+	min<0-3>	70
 	max<0-3>	74
 	avg<0-3>	78
 	int<0-3>	82

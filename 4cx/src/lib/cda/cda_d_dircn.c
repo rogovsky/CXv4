@@ -600,7 +600,9 @@ static int  cda_d_dircn_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 CDA_DEFINE_DAT_PLUGIN(dircn, "Dircn data-access plugin",
                       NULL, NULL,
                       sizeof(cda_d_dircn_privrec_t),
+                      CDA_DAT_P_FLAG_CHAN_TYPE_CHANGE_SUPPORTED,
                       '.', ':', '\0',
                       cda_d_dircn_new_chan, cda_d_dircn_del_chan,
+                      NULL,
                       cda_d_dircn_snd_data, NULL,
                       cda_d_dircn_new_srv,  cda_d_dircn_del_srv);

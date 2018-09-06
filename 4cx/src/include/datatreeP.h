@@ -27,6 +27,7 @@ enum
     DATAKNOB_TEXT = 6,
     DATAKNOB_USER = 7,
     DATAKNOB_PZFR = 8,
+    DATAKNOB_VECT = 9,
 };
 
 /* Standard knobs' parameters */
@@ -226,13 +227,11 @@ typedef struct
     double       curv;
     rflags_t     rflags;
 } dataknob_user_data_rec_t;
-
 typedef struct
 {
     CxDataRef_t  br;
     rflags_t     rflags;
 } dataknob_user_bigc_rec_t;
-
 typedef struct
 {
     dataknob_user_data_rec_t *datarecs;
@@ -248,6 +247,23 @@ typedef struct
     CxDataRef_t    _devstate_ref;
 } dataknob_pzfr_data_t;
 
+typedef struct
+{
+    char          *src;
+    int            max_nelems;
+} dataknob_vect_src_t;
+typedef struct
+{
+    char                 dpyfmt[16];
+
+    dataknob_vect_src_t  src;
+
+    CxDataRef_t          ref;
+#if 0 /*!!! vect:databuf*/
+    int                  cur_nelems;
+    double              *databuf;
+#endif
+} dataknob_vect_data_t;
 
 typedef int  (*_k_create_f)    (DataKnob k, CxWidget parent);
 typedef void (*_k_destroy_f)   (DataKnob k);
@@ -256,6 +272,7 @@ typedef int  (*_k_handlecmd_f) (DataKnob k, const char *cmd, int info_int);
 
 typedef void (*_k_sndphys_f)   (DataKnob k, double v);
 typedef void (*_k_sndtext_f)   (DataKnob k, const char *s);
+typedef void (*_k_sndvect_f)   (DataKnob k, const double *data, int nelems);
 typedef void (*_k_showprops_f) (DataKnob k);
 typedef void (*_k_showbigval_f)(DataKnob k);
 typedef void (*_k_tohistplot_f)(DataKnob k);
@@ -273,6 +290,8 @@ typedef void (*_k_setvalue_f)  (DataKnob k, double v);
 typedef void (*_k_propschg_f)  (DataKnob k, DataKnob old_k);
 
 typedef void (*_k_settextv_f)  (DataKnob k, const char *s);
+
+typedef void (*_k_setvectv_f)  (DataKnob k, const double *data, int nelems);
 
 typedef struct
 {
@@ -296,6 +315,7 @@ typedef struct
 
     _k_sndphys_f         SndPhys;
     _k_sndtext_f         SndText;
+    _k_sndvect_f         SndVect;
     _k_showprops_f       ShowProps;
     _k_showbigval_f      ShowBigVal;
     _k_tohistplot_f      ToHistPlot;
@@ -348,6 +368,13 @@ typedef struct
     dataknob_unif_vmt_t  unif;
 } dataknob_pzfr_vmt_t;
 
+typedef struct
+{
+    dataknob_unif_vmt_t  unif;
+
+    _k_setvectv_f        SetVect;
+} dataknob_vect_vmt_t;
+
 typedef struct _data_knob_t_struct
 {
     int         type;       // DATAKNOB_{GRPG,ELEM,NOOP,KNOB,BIGC,USER}
@@ -378,6 +405,7 @@ typedef struct _data_knob_t_struct
         dataknob_text_data_t   t;
         dataknob_user_data_t   u;
         dataknob_pzfr_data_t   z;
+        dataknob_vect_data_t   v;
     } u;
 
     /* Vital activity */

@@ -71,7 +71,7 @@ grouping main gid25x4 "IST@CDAC20 test app" lrtb "" content:2 {
 
 
 sysname       k500gid25s
-defserver     v2k-k500-1:23
+defserver     canhw:23
 wintitle main "K500 GID25s"
 winname  main k500gid25s
 winclass main K500GID25s

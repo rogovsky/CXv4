@@ -249,6 +249,23 @@ int  CxsdHwSetDb   (CxsdDb db)
             {
                 usize = sizeof_cxdtype(grp_p->dtype);
                 csize = usize * grp_p->max_nelems;
+                /* Perform padding for alignment, if required */
+                if (csize > 0  &&
+                    /* Is it a power of 2?  I.e., does alignment have sense? */
+                    (/* NO == 1 */    usize == 2   ||  
+                     usize == 4   ||  usize == 8   ||  
+                     usize == 16  ||  usize == 32  ||  
+                     usize == 64  ||  usize == 128))
+                {
+                    // a. current_val
+                    current_val_bufsize     = (current_val_bufsize + usize-1)
+                                              & (~(usize - 1));
+                    // b. next_wr_val only if rw
+                    if (grp_p->rw)
+                        next_wr_val_bufsize = (next_wr_val_bufsize + usize-1)
+                                              & (~(usize - 1));
+                }
+////if (stage) fprintf(stderr, "\tdev#%d.g#%d: usize=%zd,csize=%zd v=%zd w=%zd\n", devid, g, usize, csize, current_val_bufsize, next_wr_val_bufsize);
 
                 /* Iterate individual channels */
                 for (x = 0,  chn_p = cxsd_hw_channels + nchans;
@@ -313,6 +330,9 @@ int  CxsdHwSetDb   (CxsdDb db)
             chn_p->timestamp.sec  = INITIAL_TIMESTAMP_SECS;
             chn_p->timestamp.nsec = 0;
             chn_p->fresh_age      = (cx_time_t){0,0}; /*Infinite*/
+            /* ...alignment */
+            current_val_bufsize     = (current_val_bufsize + chn_p->usize-1)
+                                      & (~(chn_p->usize - 1));
             if (stage)
             {
                 chn_p->current_val = cxsd_hw_current_val_buf + current_val_bufsize;
@@ -2456,6 +2476,56 @@ void SetChanQuant     (int devid,
 
     /* II. Call who requested */
     call_info.reason = CXSD_HW_CHAN_R_QUANTCHG;
+    call_info.evmask = 1 << call_info.reason;
+
+    for (x = 0;  x < count;  x++)
+    {
+        CxsdHwCallChanEvprocs(dev->first + first + x, &call_info);
+    }
+}
+
+void SetChanRange     (int devid,
+                       int first, int count,
+                       CxAnyVal_t minv, CxAnyVal_t maxv, cxdtype_t range_dtype)
+{
+  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+
+  int             x;
+  cxsd_hw_chan_t *chn_p;
+
+  CxsdHwChanEvCallInfo_t  call_info;
+
+    CHECK_SANITY_OF_DEVID();
+
+    /* Check the `first' */
+    if (first < 0  ||  first >= dev->count)
+    {
+        logline(LOGF_MODULES, LOGL_WARNING,
+                "%s(devid=%d/active=%d): first=%d, out_of[0...dev->count=%d)",
+                __FUNCTION__, devid, active_devid, first, dev->count);
+        return;
+    }
+
+    /* Now check the `count' */
+    if (count < 1  ||  count > dev->count - first)
+    {
+        logline(LOGF_MODULES, LOGL_WARNING,
+                "%s:(devid=%d/active=%d) count=%d, out_of[1..%d] (first=%d, dev->count=%d)",
+                __FUNCTION__, devid, active_devid, count, dev->count - first, first, dev->count);
+        return;
+    }
+
+    for (x = 0, chn_p = cxsd_hw_channels + dev->first + first;
+         x < count;
+         x++, chn_p++)
+    {
+        chn_p->range[0]    = minv;
+        chn_p->range[1]    = maxv;
+        chn_p->range_dtype = range_dtype;
+    }
+
+    /* II. Call who requested */
+    call_info.reason = CXSD_HW_CHAN_R_RANGECHG;
     call_info.evmask = 1 << call_info.reason;
 
     for (x = 0;  x < count;  x++)

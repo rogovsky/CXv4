@@ -40,22 +40,49 @@ static void sodc_evproc(int            devid,
   int             sodc = ptr2lint(privptr2);
   int             mode = ctx->map[sodc].mode;
 
+  cxdtype_t       dtype;
+  int             max_nelems;
+  int             cur_nelems;
+  size_t          valsize;
+  void           *dst;
+
   struct timeval    now;
   vdev_state_dsc_t *curs;
   vdev_state_dsc_t *nxts;
 
     if      (reason == CDA_REF_R_UPDATE)
     {
+        dtype      = ctx->map[sodc].dtype;
+        max_nelems = ctx->map[sodc].max_nelems;
+        if (dtype      == 0) dtype      = CXDTYPE_INT32;
+        if (max_nelems == 0) max_nelems = 1;
+        valsize = sizeof_cxdtype(dtype) * max_nelems;
+
+        if (valsize > sizeof(ctx->cur[sodc].v))
+            dst =   ctx->cur[sodc].current_val;
+        else
+            dst = &(ctx->cur[sodc].v);
+
         /* Get data */
-        cda_get_ref_data(ref, 0, sizeof(ctx->cur[sodc].v.i32), &(ctx->cur[sodc].v.i32));
+        cda_get_ref_data(ref, 0, valsize, dst);
         cda_get_ref_stat(ref, &(ctx->cur[sodc].flgs), &(ctx->cur[sodc].ts));
         ctx->cur[sodc].rcvd = 1;
+        /* ...with nelems */
+        cur_nelems = cda_current_nelems_of_ref(ref);
+        if (cur_nelems > max_nelems) cur_nelems = max_nelems;
+        ctx->cur[sodc].current_nelems = cur_nelems;
 
         /* Perform tubbing */
         if (mode & VDEV_TUBE) /*!!! Should obey dtype and nelems!!! */
+#if 1
+            ReturnDataSet(devid, 1,
+                          &(ctx->map[sodc].ourc), &dtype, &cur_nelems,
+                          &dst, &(ctx->cur[sodc].flgs), &(ctx->cur[sodc].ts));
+#else
             ReturnInt32DatumTimed(devid, ctx->map[sodc].ourc,
                                   vdev_get_int(ctx, sodc),
                                   ctx->cur[sodc].flgs, ctx->cur[sodc].ts);
+#endif
         
         /* Check if we are ready to operate */
         if (ctx->cur_state == ctx->state_unknown_val  &&
@@ -209,6 +236,14 @@ int  vdev_init(vdev_context_t *ctx,
   int         sodc;
   int         tdev;
 
+  cxdtype_t   dtype;
+  int         max_nelems;
+
+  uint8      *buf_p;
+  size_t      r_vals;  // "r" stands for "room"
+  size_t      valsize;
+  size_t      pddsize; // PaDdeD valsize
+
   const char *base_to_use;
   const char *name_to_use;
 
@@ -217,17 +252,67 @@ int  vdev_init(vdev_context_t *ctx,
     ctx->work_hbt_period = work_hbt_period;
     bzero(ctx->cur, sizeof(*(ctx->cur)) * ctx->num_sodcs);
 
+    /* 1. Allocate buffer, if required */
+    for (r_vals = 0,
+         sodc = 0;  sodc < ctx->num_sodcs;  sodc++)
+    {
+        /* Note: (***) this code should be kept in sync
+           with below */
+        dtype      = ctx->map[sodc].dtype;
+        max_nelems = ctx->map[sodc].max_nelems;
+        if (dtype      == 0) dtype      = CXDTYPE_INT32;
+        if (max_nelems == 0) max_nelems = 1;
+
+        valsize = sizeof_cxdtype(dtype) * max_nelems;
+        if (valsize > sizeof(ctx->cur[sodc].v))
+        {
+            pddsize = (valsize + 15) &~15UL;
+            r_vals += pddsize;
+        }
+        /* (***) */
+    }
+    if (r_vals != 0)
+    {
+        if ((ctx->buf = malloc(r_vals)) == NULL)
+        {
+            DoDriverLog(devid, 0 | DRIVERLOG_ERRNO,
+                        "cda_new_context(): failed to malloc(%zd) for buf",
+                        r_vals);
+            return -CXRF_DRV_PROBL;
+        }
+        bzero(ctx->buf, r_vals);
+    }
+    
+
     if ((ctx->cid = cda_new_context(devid, ctx,
                                     "insrv::", CDA_CONTEXT_OPT_NO_OTHEROP,
                                     NULL,
                                     0, NULL, 0)) <= 0)
     {
         DoDriverLog(devid, 0, "cda_new_context(): %s", cda_last_err());
+        safe_free      (ctx->buf);    ctx->buf = NULL;
         return -CXRF_DRV_PROBL;
     }
 
-    for (sodc = 0;  sodc < ctx->num_sodcs;  sodc++)
+    for (buf_p = ctx->buf,
+         sodc = 0;  sodc < ctx->num_sodcs;  sodc++)
     {
+        /* Note: (***) this code should be kept in sync
+           with below */
+        dtype      = ctx->map[sodc].dtype;
+        max_nelems = ctx->map[sodc].max_nelems;
+        if (dtype      == 0) dtype      = CXDTYPE_INT32;
+        if (max_nelems == 0) max_nelems = 1;
+
+        valsize = sizeof_cxdtype(dtype) * max_nelems;
+        if (valsize > sizeof(ctx->cur[sodc].v))
+        {
+            ctx->cur[sodc].current_val = buf_p;
+            pddsize = (valsize + 15) &~15UL;
+            buf_p += pddsize;
+        }
+        /* (***) */
+
         base_to_use = base;
         name_to_use = ctx->map[sodc].name;
         if      (name_to_use == NULL) /*!!!???*/;
@@ -240,8 +325,8 @@ int  vdev_init(vdev_context_t *ctx,
                                                name_to_use,
                                                CDA_DATAREF_OPT_NO_RD_CONV |
                                                    CDA_DATAREF_OPT_ON_UPDATE,
-                                               CXDTYPE_INT32, 1,
-                                               CDA_REF_EVMASK_UPDATE       |
+                                               dtype, max_nelems,
+                                                 CDA_REF_EVMASK_UPDATE     |
                                                    CDA_REF_EVMASK_STATCHG  |
                                                    CDA_REF_EVMASK_RSLVSTAT,
                                                sodc_evproc, lint2ptr(sodc))) < 0)
@@ -249,6 +334,7 @@ int  vdev_init(vdev_context_t *ctx,
             DoDriverLog(devid, 0, "cda_new_chan([%d]=\"%s\"): %s",
                         sodc, ctx->map[sodc].name, cda_last_err());
             cda_del_context(ctx->cid);    ctx->cid = -1;
+            safe_free      (ctx->buf);    ctx->buf = NULL;
             return -CXRF_DRV_PROBL;
         }
         ctx->cur[sodc].ts = (cx_time_t){CX_TIME_SEC_NEVER_READ,0};
@@ -267,6 +353,7 @@ int  vdev_init(vdev_context_t *ctx,
             DoDriverLog(devid, 0, "cda_new_chan(devstate[%d]=\"%s\"): %s",
                         tdev, ctx->devstate_names[tdev], cda_last_err());
             cda_del_context(ctx->cid);    ctx->cid = -1;
+            safe_free      (ctx->buf);    ctx->buf = NULL;
             return -CXRF_DRV_PROBL;
         }
         /*!!! cda_get_ref_data() for insrv:: channel to have current value?  */
@@ -283,18 +370,22 @@ int  vdev_init(vdev_context_t *ctx,
 
 int  vdev_fini(vdev_context_t *ctx)
 {
-    /*!!!*/
+    cda_del_context(ctx->cid);    ctx->cid = -1;
+    safe_free      (ctx->buf);    ctx->buf = NULL;
 
     return 0;
 }
 
 void vdev_set_state(vdev_context_t *ctx, int nxt_state)
 {
-  int                 prev_state = ctx->cur_state;
+  int                 prev_state;
   int32               val;
   struct timeval      timenow;
   vdev_sr_chan_dsc_t *sdp;
+  vdev_state_dsc_t   *curs;
+  vdev_state_dsc_t   *nxts;
 
+ NEXT_STEP:
     if (nxt_state < 0  ||  nxt_state > ctx->state_count)
     {
         return;
@@ -302,11 +393,12 @@ void vdev_set_state(vdev_context_t *ctx, int nxt_state)
 
     if (nxt_state == ctx->cur_state) return;
 
+    prev_state = ctx->cur_state;
     ctx->cur_state = nxt_state;
     val = ctx->cur_state;
     if (ctx->chan_state_n >= 0  &&  ctx->chan_state_n < ctx->our_numchans)
         ReturnInt32Datum(ctx->devid, ctx->chan_state_n, val, 0);
-    DoDriverLog(ctx->devid, DRIVERLOG_C_ENTRYPOINT, "state:=%d", val);
+    DoDriverLog(ctx->devid, DRIVERLOG_C_ENTRYPOINT*1, "state:=%d", val);
 
     bzero(&(ctx->next_state_time), sizeof(ctx->next_state_time));
     if (ctx->state_descr[nxt_state].delay_us > 0)
@@ -327,6 +419,22 @@ void vdev_set_state(vdev_context_t *ctx, int nxt_state)
                    DRVA_READ,
                    1, &(sdp->ourc),
                    NULL, NULL, NULL);
+
+    /* Switch to next state if allowed */
+    curs = ctx->state_descr + ctx->cur_state;
+//if (curs->next_state >= 0  &&  curs->delay_us <= 0) fprintf(stderr, "->%d ->%d: \n", nxt_state, curs->next_state);
+    if (ctx->cur_state == nxt_state  && // Are we still here?
+        curs->next_state >= 0        && // Is next specified?
+        curs->delay_us <= 0)            // No delay 
+    {
+        nxts = ctx->state_descr + curs->next_state;
+        if (nxts->sw_alwd == NULL  ||
+            nxts->sw_alwd(ctx->devptr, ctx->cur_state))
+        {
+            nxt_state = ctx->state_descr[nxt_state].next_state;
+            goto NEXT_STEP;
+        }
+    }
 }
 
 int  vdev_get_int(vdev_context_t *ctx, int sodc)

@@ -91,6 +91,7 @@ enum
     CDA_REF_R_RDSCHG   = 3,  CDA_REF_EVMASK_RDSCHG   = 1 << CDA_REF_R_RDSCHG,
     CDA_REF_R_FRESHCHG = 4,  CDA_REF_EVMASK_FRESHCHG = 1 << CDA_REF_R_FRESHCHG,
     CDA_REF_R_QUANTCHG = 5,  CDA_REF_EVMASK_QUANTCHG = 1 << CDA_REF_R_QUANTCHG,
+    CDA_REF_R_RANGECHG = 6,  CDA_REF_EVMASK_RANGECHG = 1 << CDA_REF_R_RANGECHG,
     CDA_REF_R_RSLVSTAT = 10, CDA_REF_EVMASK_RSLVSTAT = 1 << CDA_REF_R_RSLVSTAT,
     CDA_REF_R_CURVAL   = 11, CDA_REF_EVMASK_CURVAL   = 1 << CDA_REF_R_CURVAL,
     CDA_REF_R_LOCKSTAT = 12, CDA_REF_EVMASK_LOCKSTAT = 1 << CDA_REF_R_LOCKSTAT,
@@ -110,6 +111,13 @@ typedef enum /* Note: the statuses are ordered by decreasing of severity, so tha
     CDA_SERVERSTATUS_ALMOSTREADY  = +2,  // Connected "almost"   (unused as of 06.02.2018)
     CDA_SERVERSTATUS_NORMAL       = +3,  // Is connected
 } cda_serverstatus_t;
+
+enum
+{
+    CDA_RSLVSTAT_NOTFOUND  = 0, // Is definitely not found
+    CDA_RSLVSTAT_SEARCHING = 1, // Is being searched for, but currently unavailable
+    CDA_RSLVSTAT_FOUND     = 2, // Is found
+};
 
 
 static inline int cda_ref_is_sensible(cda_dataref_t ref)
@@ -166,6 +174,8 @@ cda_dataref_t  cda_add_chan   (cda_context_t         cid,
                                cda_dataref_evproc_t  evproc,
                                void                 *privptr2);
 int            cda_del_chan   (cda_dataref_t ref);
+int            cda_set_type   (cda_dataref_t ref,
+                               cxdtype_t dtype, int max_nelems);
 
 int            cda_add_dataref_evproc(cda_dataref_t         ref,
                                       int                   evmask,
@@ -219,20 +229,28 @@ int            cda_current_nelems_of_ref(cda_dataref_t ref);
 int            cda_fresh_age_of_ref     (cda_dataref_t ref, cx_time_t *fresh_age_p);
 int            cda_quant_of_ref         (cda_dataref_t ref,
                                          CxAnyVal_t   *q_p, cxdtype_t *q_dtype_p);
+int            cda_range_of_ref         (cda_dataref_t ref,
+                                         CxAnyVal_t    range[], cxdtype_t *range_dtype_p);
 int            cda_current_dtype_of_ref (cda_dataref_t ref);
 
 int            cda_strings_of_ref       (cda_dataref_t  ref,
-                                         char    **ident_p,
-                                         char    **label_p,
-                                         char    **tip_p,
-                                         char    **comment_p,
-                                         char    **geoinfo_p,
-                                         char    **rsrvd6_p,
-                                         char    **units_p,
-                                         char    **dpyfmt_p);
+                                         char     **ident_p,
+                                         char     **label_p,
+                                         char     **tip_p,
+                                         char     **comment_p,
+                                         char     **geoinfo_p,
+                                         char     **rsrvd6_p,
+                                         char     **units_p,
+                                         char     **dpyfmt_p);
 int            cda_phys_rds_of_ref      (cda_dataref_t  ref,
-                                         int      *phys_count_p,
-                                         double  **rds_p);
+                                         int       *phys_count_p,
+                                         double   **rds_p);
+int            cda_hwinfo_of_ref        (cda_dataref_t  ref,
+                                         int       *rw_p,
+                                         cxdtype_t *dtype_p,
+                                         int       *nelems_p,
+                                         int       *srv_hwid_p,
+                                         int       *cln_hwr_p);
 
 int                 cda_status_of_ref_sid(cda_dataref_t ref);
 

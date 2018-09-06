@@ -1,3 +1,7 @@
 include(`smc8.devtype')
 
-dev kshd1 smc8/remdrv ~ 0,0 b:cangw-smc8:8002
+include(`canhw_CAN_LINES_LIST.m4')
+
+dev kshd0 smc8@sktcankoz ~ L_SMCDIA,0 
+dev kshd1 smc8@sktcankoz ~ L_SMCDIA,1 
+dev kshd2 smc8@sktcankoz ~ L_SMCDIA,2 

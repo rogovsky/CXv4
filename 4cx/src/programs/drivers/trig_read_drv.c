@@ -36,7 +36,7 @@ static void trgr_evproc(int            devid,
     }
     else if (reason == CDA_REF_R_RSLVSTAT)
     {
-        if (ptr2lint(info_ptr) == 0)
+        if (ptr2lint(info_ptr) == CDA_RSLVSTAT_NOTFOUND)
         {
             if (cda_src_of_ref(ref, &src_p) < 0) src_p = "???";
             DoDriverLog(devid, 0, "trigger channel \"%s\" not found", src_p);
@@ -105,7 +105,7 @@ static void data_evproc(int            devid,
     }
     else if (reason == CDA_REF_R_RSLVSTAT)
     {
-        if (ptr2lint(info_ptr) == 0)
+        if (ptr2lint(info_ptr) == CDA_RSLVSTAT_NOTFOUND)
         {
             if (cda_src_of_ref(ref, &src_p) < 0) src_p = "???";
             DoDriverLog(devid, 0, "data channel \"%s\" not found", src_p);

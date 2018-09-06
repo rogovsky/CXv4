@@ -74,11 +74,13 @@ static int            print_name       = 0;
 static int            print_parens     = 1;
 static int            print_quotes     = 1;
 static int            print_quants     = 0;
+static int            print_ranges     = 0;
 static int            print_timestamp  = 0;
 static int            print_rflags     = 0;
 static int            print_fresh_ages = 0;
 static int            print_rds        = 0;
 static int            print_strings    = 0;
+static int            print_hwinfos    = 0;
 static int            print_srvlist    = 0;
 static int            print_writes     = 0;
 static int            print_unserved   = 0;
@@ -148,6 +150,16 @@ static void ProcessDatarefEvent(int            uniq,
   const char    *src_p;
   void          *buf;
 
+  int            hwinfo_rw;
+  cxdtype_t      hwinfo_dtype;
+  int            hwinfo_nelems;
+  int            hwinfo_srv_hwid;
+  int            hwinfo_cln_hwr;
+
+  const char    *rw_s;
+  const char    *dt_s;
+  char           dt_buf[100];
+
   int            phys_count;
   double        *phys_rds;
   char           rds_str[1000];
@@ -165,9 +177,14 @@ static void ProcessDatarefEvent(int            uniq,
   CxAnyVal_t     q;
   cxdtype_t      q_dtype;
 
+  CxAnyVal_t     range[2];
+  cxdtype_t      range_dtype;
+  int            range_specified;
+  int            minmax;
+
     if      (reason == CDA_REF_R_RSLVSTAT)
     {
-        if (ptr2lint(info_ptr) == 0)
+        if      (ptr2lint(info_ptr) == CDA_RSLVSTAT_NOTFOUND)
         {
             if      (option_relative)                        src_p = rp->ur.spec;
             else if (cda_src_of_ref(rp->ur.ref, &src_p) < 0) src_p = "UNKNOWN";
@@ -184,6 +201,54 @@ static void ProcessDatarefEvent(int            uniq,
                 rp->ur.wr_req = 0;
                 rp->ur.wr_snt = 0;
                 num2write--;
+            }
+        }
+        else if (ptr2lint(info_ptr) == CDA_RSLVSTAT_FOUND)
+        {
+            if (print_hwinfos > 0)
+            {
+                if      (option_relative)                        src_p = rp->ur.spec;
+                else if (cda_src_of_ref(rp->ur.ref, &src_p) < 0) src_p = "UNKNOWN";
+
+                if (cda_hwinfo_of_ref(rp->ur.ref,
+                                      &hwinfo_rw, &hwinfo_dtype, &hwinfo_nelems,
+                                      &hwinfo_srv_hwid, &hwinfo_cln_hwr) < 0)
+                {
+                    fprintf(stderr, "# %s ERROR reading hwinfo of %s\n",
+                            print_time?strcurtime():"", src_p);
+                    return;
+                }
+
+                if      (hwinfo_rw == 0) rw_s = "ro";
+                else if (hwinfo_rw == 1) rw_s = "rw";
+                else                     rw_s = "r?";
+
+                if      (hwinfo_dtype == CXDTYPE_UNKNOWN) dt_s = "x";
+                else if (hwinfo_dtype == CXDTYPE_TEXT)    dt_s = "t";
+                else if (hwinfo_dtype == CXDTYPE_UCTEXT)  dt_s = "u";
+                else if (hwinfo_dtype == CXDTYPE_SINGLE)  dt_s = "s";
+                else if (hwinfo_dtype == CXDTYPE_DOUBLE)  dt_s = "d";
+                else if (hwinfo_dtype == CXDTYPE_INT8)    dt_s = "b";
+                else if (hwinfo_dtype == CXDTYPE_INT16)   dt_s = "h";
+                else if (hwinfo_dtype == CXDTYPE_INT32)   dt_s = "i";
+                else if (hwinfo_dtype == CXDTYPE_INT64)   dt_s = "q";
+                else if (hwinfo_dtype == CXDTYPE_UINT8)   dt_s = "+b";
+                else if (hwinfo_dtype == CXDTYPE_UINT16)  dt_s = "+h";
+                else if (hwinfo_dtype == CXDTYPE_UINT32)  dt_s = "+i";
+                else if (hwinfo_dtype == CXDTYPE_UINT64)  dt_s = "+q";
+                else
+                {
+                    sprintf(dt_buf, "{%d}", hwinfo_dtype);
+                    dt_s = dt_buf;
+                }
+
+                fprintf(outfile, "# %s hwinfo(%s): %s %s%d",
+                        print_time?strcurtime():"", src_p,
+                        rw_s, dt_s, hwinfo_nelems);
+                if (print_hwinfos > 1)
+                    fprintf(outfile, " srv_hwid=%d cln_hwr=%d",
+                            hwinfo_srv_hwid, hwinfo_cln_hwr);
+                fprintf(outfile, "\n");
             }
         }
     }
@@ -257,8 +322,8 @@ static void ProcessDatarefEvent(int            uniq,
 
         if (cda_phys_rds_of_ref(rp->ur.ref, &phys_count, &phys_rds) < 0)
         {
-            fprintf(stderr, "# %s ERROR reading RDs\n",
-                    print_time?strcurtime():"");
+            fprintf(stderr, "# %s ERROR reading RDs of %s\n",
+                    print_time?strcurtime():"", src_p);
             return;
         }
         fprintf(outfile, "# %s RDs(%s)[%d]={", 
@@ -285,8 +350,8 @@ static void ProcessDatarefEvent(int            uniq,
                                strings + 4, strings + 5,
                                strings + 6, strings + 7) < 0)
         {
-            fprintf(stderr, "# %s ERROR reading strings\n",
-                    print_time?strcurtime():"");
+            fprintf(stderr, "# %s ERROR reading strings of %s\n",
+                    print_time?strcurtime():"", src_p);
             return;
         }
         fprintf(outfile, "# %s strings(%s)={",
@@ -309,8 +374,8 @@ static void ProcessDatarefEvent(int            uniq,
         fresh_age_specified = cda_fresh_age_of_ref(rp->ur.ref, &fresh_age);
         if      (fresh_age_specified < 0)
         {
-            fprintf(stderr, "# %s ERROR reading fresh age\n",
-                    print_time?strcurtime():"");
+            fprintf(stderr, "# %s ERROR reading fresh age of %s\n",
+                    print_time?strcurtime():"", src_p);
             return;
         }
         else if (fresh_age_specified)
@@ -327,8 +392,8 @@ static void ProcessDatarefEvent(int            uniq,
 
         if (cda_quant_of_ref(rp->ur.ref, &q, &q_dtype) < 0)
         {
-            fprintf(stderr, "# %s ERROR reading quant\n",
-                    print_time?strcurtime():"");
+            fprintf(stderr, "# %s ERROR reading quant of %s\n",
+                    print_time?strcurtime():"", src_p);
             return;
         }
         fprintf(outfile, "# %s quant(%s)=",
@@ -338,20 +403,65 @@ static void ProcessDatarefEvent(int            uniq,
         else if (q_dtype == CXDTYPE_TEXT)    fprintf(outfile,  "@t:???");
         else if (q_dtype == CXDTYPE_UCTEXT)  fprintf(outfile,  "@u:???");
         else if (q_dtype == CXDTYPE_SINGLE) {fprintf(outfile,  "@s:");
-                                             FprintfDbl(outfile, q.f32);}
+                                             FprintfDbl(outfile,          q.f32);}
         else if (q_dtype == CXDTYPE_DOUBLE) {fprintf(outfile,  "@d:");
-                                             FprintfDbl(outfile, q.f64);}
-        else if (q_dtype == CXDTYPE_INT8)    fprintf(outfile,  "@b:%d", q.i8);
-        else if (q_dtype == CXDTYPE_INT16)   fprintf(outfile,  "@h:%d", q.i16);
-        else if (q_dtype == CXDTYPE_INT32)   fprintf(outfile,  "@i:%d", q.i32);
+                                             FprintfDbl(outfile,          q.f64);}
+        else if (q_dtype == CXDTYPE_INT8)    fprintf(outfile,  "@b:%d",   q.i8);
+        else if (q_dtype == CXDTYPE_INT16)   fprintf(outfile,  "@h:%d",   q.i16);
+        else if (q_dtype == CXDTYPE_INT32)   fprintf(outfile,  "@i:%d",   q.i32);
         else if (q_dtype == CXDTYPE_INT64)   fprintf(outfile,  "@q:%lld", q.i64);
-        else if (q_dtype == CXDTYPE_UINT8)   fprintf(outfile, "@+b:%u", q.u8);
-        else if (q_dtype == CXDTYPE_UINT16)  fprintf(outfile, "@+h:%u", q.u16);
-        else if (q_dtype == CXDTYPE_UINT32)  fprintf(outfile, "@+i:%u", q.u32);
+        else if (q_dtype == CXDTYPE_UINT8)   fprintf(outfile, "@+b:%u",   q.u8);
+        else if (q_dtype == CXDTYPE_UINT16)  fprintf(outfile, "@+h:%u",   q.u16);
+        else if (q_dtype == CXDTYPE_UINT32)  fprintf(outfile, "@+i:%u",   q.u32);
         else if (q_dtype == CXDTYPE_UINT64)  fprintf(outfile, "@+q:%llu", q.u64);
         else                                 fprintf(outfile, "?");
 
         fprintf(outfile, "\n");
+    }
+    else if (reason == CDA_REF_R_RANGECHG)
+    {
+        if      (option_relative)                        src_p = rp->ur.spec;
+        else if (cda_src_of_ref(rp->ur.ref, &src_p) < 0) src_p = "UNKNOWN";
+
+        range_specified = cda_range_of_ref(rp->ur.ref, range, &range_dtype);
+        if      (range_specified < 0)
+        {
+            fprintf(stderr, "# %s ERROR reading range of %s\n",
+                    print_time?strcurtime():"", src_p);
+            return;
+        }
+        else if (range_specified)
+        {
+            fprintf(outfile, "# %s quant(%s)=[",
+                    print_time?strcurtime():"", src_p);
+
+            for (minmax = 0;  minmax <= 1;  minmax++)
+            {
+                if (minmax) fprintf(outfile, ",");
+
+                if      (range_dtype == CXDTYPE_UNKNOWN) fprintf(outfile,  "UNKNOWN");
+                else if (range_dtype == CXDTYPE_TEXT)    fprintf(outfile,  "@t:???");
+                else if (range_dtype == CXDTYPE_UCTEXT)  fprintf(outfile,  "@u:???");
+                else if (range_dtype == CXDTYPE_SINGLE) {fprintf(outfile,  "@s:");
+                                                         FprintfDbl(outfile,          range[minmax].f32);}
+                else if (range_dtype == CXDTYPE_DOUBLE) {fprintf(outfile,  "@d:");
+                                                         FprintfDbl(outfile,          range[minmax].f64);}
+                else if (range_dtype == CXDTYPE_INT8)    fprintf(outfile,  "@b:%d",   range[minmax].i8);
+                else if (range_dtype == CXDTYPE_INT16)   fprintf(outfile,  "@h:%d",   range[minmax].i16);
+                else if (range_dtype == CXDTYPE_INT32)   fprintf(outfile,  "@i:%d",   range[minmax].i32);
+                else if (range_dtype == CXDTYPE_INT64)   fprintf(outfile,  "@q:%lld", range[minmax].i64);
+                else if (range_dtype == CXDTYPE_UINT8)   fprintf(outfile, "@+b:%u",   range[minmax].u8);
+                else if (range_dtype == CXDTYPE_UINT16)  fprintf(outfile, "@+h:%u",   range[minmax].u16);
+                else if (range_dtype == CXDTYPE_UINT32)  fprintf(outfile, "@+i:%u",   range[minmax].u32);
+                else if (range_dtype == CXDTYPE_UINT64)  fprintf(outfile, "@+q:%llu", range[minmax].u64);
+                else                                     fprintf(outfile, "?");
+            }
+
+            fprintf(outfile, "]\n");
+        }
+        else
+            fprintf(outfile, "# %s range(%s)=UNSPECIFIED\n",
+                    print_time?strcurtime():"", src_p);
     }
 
     if (num2read == 0  &&  num2write == 0) sl_break();
@@ -443,7 +553,7 @@ static int  ActivateChannel(refrec_t *rp, void *privptr)
                               0, NULL, NULL);
     if (rp->ur.ref == CDA_DATAREF_ERROR)
     {
-        fprintf(stderr, "%s %s: cda_add_dchan(\"%s\"): %s\n",
+        fprintf(stderr, "%s %s: cda_add_chan(\"%s\"): %s\n",
                 strcurtime(), argv0, rp->ur.spec, cda_last_err());
         /* Note: we do NOT exit(EC_ERR) and allow other references to proceed */
 
@@ -460,7 +570,8 @@ static int  ActivateChannel(refrec_t *rp, void *privptr)
                            (CDA_REF_EVMASK_RDSCHG   * print_rds)        |
                            (CDA_REF_EVMASK_STRSCHG  * print_strings)    |
                            (CDA_REF_EVMASK_FRESHCHG * print_fresh_ages) |
-                           (CDA_REF_EVMASK_QUANTCHG * print_quants),
+                           (CDA_REF_EVMASK_QUANTCHG * print_quants)     |
+                           (CDA_REF_EVMASK_RANGECHG * print_ranges),
                            ProcessDatarefEvent, lint2ptr(rn));
 
     if (option_w_unbuff  &&  rp->ur.wr_req) PerformWrite(rp);
@@ -585,7 +696,9 @@ int main(int argc, char *argv[])
                         case 'F': print_fresh_ages = val2set; break;
                         case 's': print_srvlist    = val2set; break;
                         case 'S': print_strings    = val2set; break;
+                        case 'H': print_hwinfos++;            break;
                         case 'Q': print_quants     = val2set; break;
+                        case 'M': print_ranges     = val2set; break;
                         case 'w': print_writes     = val2set; break;
                         case '/': print_unserved   = val2set; break;
                         default:
@@ -667,7 +780,9 @@ int main(int argc, char *argv[])
                " s  print list of Servers\n"
                " F  print Fresh ages\n"
                " Q  print Quants\n"
+               " M  print ranges (Min/Max)\n"
                " S  print Strings (label, comment, units, ...)\n"
+               " H  print Hwinfos (-DHH - including hwid and hwr)\n"
                " w  print when performing writes (sending data)\n"
                " /  print unserved channels upon timeout (-T)\n"
                "\n"

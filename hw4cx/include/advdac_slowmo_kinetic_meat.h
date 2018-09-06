@@ -25,11 +25,16 @@ enum
     DO_CALC_R_SLOW_MOVE = 1,
 };
 enum {DO_DBG=0};
+#ifndef DO_RETURN_CUR_PARAMS
+#define DO_RETURN_CUR_PARAMS 0
+#endif /* DO_RETURN_CUR_PARAMS */
+#if DO_RETURN_CUR_PARAMS
 enum
 {
     CHAN_CURSPD = KOZDEV_CHAN_ADC_n_base + 98,
     CHAN_CURACC = KOZDEV_CHAN_ADC_n_base + 99,
 };
+#endif
 
 // b. privrec-ignorant
 static int DoCalcMovement(int32 trg, advdac_out_ch_t *ci, advdac_out_ch_t *rp)
@@ -127,8 +132,10 @@ static void HandleSlowmoHbt(privrec_t *me)
                     if (me->out[l].crs < me->out[l].mns)
                         me->out[l].crs = me->out[l].mns;
                 if (DO_DBG) fprintf(stderr, " %d\n", me->out[l].crs);
+#if DO_RETURN_CUR_PARAMS
                 ReturnInt32Datum(me->devid, CHAN_CURSPD,  me->out[l].crs, 0);
                 ReturnInt32Datum(me->devid, CHAN_CURACC, -me->out[l].acs, 0);
+#endif
                 }
                 else if (me->out[l].crs < me->out[l].mxs)
                 {
@@ -137,8 +144,10 @@ static void HandleSlowmoHbt(privrec_t *me)
                     if (me->out[l].crs > me->out[l].mxs)
                         me->out[l].crs = me->out[l].mxs;
                 if (DO_DBG) fprintf(stderr, " %d\n", me->out[l].crs);
+#if DO_RETURN_CUR_PARAMS
                 ReturnInt32Datum(me->devid, CHAN_CURSPD,  me->out[l].crs, 0);
                 ReturnInt32Datum(me->devid, CHAN_CURACC, +me->out[l].acs, 0);
+#endif
                 }
                 else
                 if (DO_DBG) fprintf(stderr, " 0 %+10d %+10d %8d %7d +%-7d %d\n", me->out[l].dsr,  me->out[l].cur, -abs(me->out[l].trg - val), me->out[l].crs, me->out[l].acs, me->out[l].crs);
@@ -202,7 +211,7 @@ static void HandleSlowmoREADDAC_in(privrec_t *me, int l, int32 val)
 
     /* Return data: */
     // - Current
-    ReturnInt32Datum(me->devid, KOZDEV_CHAN_OUT_CUR_n_base + l,
+    ReturnInt32Datum(me->devid, DEVSPEC_CHAN_OUT_CUR_n_base + l,
                      me->out[l].cur, 0);
     // - Immediate-channel, if present
     if (DEVSPEC_CHAN_OUT_IMM_n_base > 0)
@@ -210,13 +219,13 @@ static void HandleSlowmoREADDAC_in(privrec_t *me, int l, int32 val)
                          me->out[l].cur, 0);
     // Setting, if slowmo is not in action
     if (!me->out[l].isc  ||  !SHOW_SET_IMMED)
-        ReturnInt32Datum(me->devid, KOZDEV_CHAN_OUT_n_base + l,
+        ReturnInt32Datum(me->devid, DEVSPEC_CHAN_OUT_n_base + l,
                          me->out[l].cur, 0);
     // Setting, if first answer at begin of slowmo
     else if (me->out[l].fst)
     {
         me->out[l].fst = 0;
-        ReturnInt32Datum(me->devid, KOZDEV_CHAN_OUT_n_base + l,
+        ReturnInt32Datum(me->devid, DEVSPEC_CHAN_OUT_n_base + l,
                          val_to_daccode_to_val(me->out[l].trg), 0);
     }
 }
@@ -227,7 +236,7 @@ static void HandleSlowmoOUT_rw     (privrec_t *me, int chn,
   int          l;     // Line #
 
     //if (action == DRVA_WRITE) fprintf(stderr, "\t[%d]:=%d\n", chn, val);
-    l = chn - KOZDEV_CHAN_OUT_n_base;
+    l = chn - DEVSPEC_CHAN_OUT_n_base;
     /* May we touch this channel now? */
     if (me->out[l].lkd) return;
     
@@ -341,7 +350,7 @@ static void HandleSlowmoOUT_RATE_rw(privrec_t *me, int chn,
 {
   int          l;     // Line #
 
-    l = chn - KOZDEV_CHAN_OUT_RATE_n_base;
+    l = chn - DEVSPEC_CHAN_OUT_RATE_n_base;
     if (action == DRVA_WRITE)
     {
         /* Note: no bounds-checking for value, since it isn't required */

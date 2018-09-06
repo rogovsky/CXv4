@@ -53,7 +53,8 @@ static int cpks8_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE,
                                cpks8_ff, cpks8_in,
-                               CPKS8_NUMCHANS * 2/*!!!*/);
+                               CPKS8_NUMCHANS * 2/*!!!*/,
+                               CANKOZ_LYR_OPTION_NONE);
     if (me->handle < 0) return me->handle;
 
     SetChanReturnType(devid, CPKS8_CHAN_HW_VER, 1, IS_AUTOUPDATED_TRUSTED);

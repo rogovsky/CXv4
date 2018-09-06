@@ -1,0 +1,53 @@
+# cxhw:25 -- klystrons
+
+include(`g0401.devtype')
+include(`g0603.devtype')
+include(`v06xx.devtype')
+include(`c0642.devtype')
+include(`r0601.devtype')
+include(`adc200.devtype')
+include(`f4226.devtype')
+include(`v5k5045.devtype')
+
+# 1:N 2:f4226_count
+define(`ONE_KLS', `
+    # a. Devices
+    dev k$1_pks g0603  ~ 2  b:v5-l-kls$1
+    dev k$1_gvi g0401  ~ 4  b:v5-l-kls$1
+    dev k$1_urr v06xx  ~ 6  b:v5-l-kls$1
+    dev k$1_dac c0642  ~ 8  b:v5-l-kls$1
+    dev k$1_in1 r0601  ~ 10 b:v5-l-kls$1
+    dev k$1_in2 r0601  ~ 11 b:v5-l-kls$1
+    dev k$1_osc adc200 ~ 13 b:v5-l-kls$1
+ifelse(eval($2 >= 1), `0', `', `
+    dev k$1_f_1 f4226  ~ 15 b:v5-l-kls$1
+')
+ifelse(eval($2 >= 2), `0', `', `
+    dev k$1_f_2 f4226  ~ 16 b:v5-l-kls$1
+')
+
+    # b. A common hierarchy for v5k5045-required devices
+    cpoint kls$1_devs {
+        pks k$1_pks
+        gvi k$1_gvi
+        urr k$1_urr
+        dac k$1_dac
+        in1 k$1_in1
+        in2 k$1_in2
+    }
+
+    # c. The "klystron device" itself
+    dev kls$1 v5k5045 ~ - kls$1_devs
+
+    # d. EmanoFedya-required cpoints
+    cpoint ic.linRF.kls$1 {
+        HV.set    kls$1.hvset
+        power.set kls$1.pwrset
+        HV.RBV    kls$1.hvset_cur
+    }
+')
+
+ONE_KLS(1, 0)
+ONE_KLS(2, 1)
+ONE_KLS(3, 2)
+ONE_KLS(4, 0)

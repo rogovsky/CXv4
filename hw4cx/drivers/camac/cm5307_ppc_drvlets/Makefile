@@ -15,3 +15,5 @@ cm5307_test:	$(CM5307_CAMAC_O) $(LIBMISC)
 
 rrund:		%:	$(X_RULES_DIR)/%
 		cp -p $< $@
+
+cm5307_frolov_d16.drvlet:	SPECIFIC_LIBS=-lm

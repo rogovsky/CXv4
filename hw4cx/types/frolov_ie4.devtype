@@ -1,0 +1,26 @@
+devtype frolov_ie4 w40i,w10d,r50i {
+	a<0-3>		0
+	k1_absent	4
+	k<1-3>		5
+	# Ex: v<0-3>		8
+	off<0-3>	12
+	alloff		16
+
+	kclk_n		19
+	fclk_sel	20
+	start_sel	21
+	mode		22
+
+        re_bum		30
+        bum_start	31
+        bum_stop	32
+
+	v<0-3>		40
+
+	f_in_hz		48
+	f_in_ns		49
+
+	ie_bum		60
+	bum_going	61
+	lam_sig		62
+}

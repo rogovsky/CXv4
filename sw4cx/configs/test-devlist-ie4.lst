@@ -1,0 +1,3 @@
+include(`frolov_ie4.devtype')
+
+dev ie4 frolov_ie4/remdrv ~ 4 b:v5-syn

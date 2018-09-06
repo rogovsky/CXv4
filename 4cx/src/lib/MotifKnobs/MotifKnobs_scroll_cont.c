@@ -53,7 +53,7 @@ dataknob_cont_vmt_t motifknobs_scroll_vmt =
         sizeof(scroll_privrec_t), text2scrollopts,
         0,
         CreateScrollCont, MotifKnobs_CommonDestroy_m, NULL, NULL},
-    NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL,
     MotifKnobs_CommonShowAlarm_m, MotifKnobs_CommonAckAlarm_m,
-    MotifKnobs_CommonAlarmNewData_m, NULL, NULL, NULL
+    MotifKnobs_CommonAlarmNewData_m, NULL, NULL, NULL, NULL
 };

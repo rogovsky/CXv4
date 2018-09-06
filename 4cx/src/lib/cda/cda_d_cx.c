@@ -327,7 +327,7 @@ static int  cda_d_cx_new_chan(cda_dataref_t ref, const char *name,
             return CDA_DAT_P_ERROR;
         }
         AddHwrToSrv(me, hwr);
-        cda_dat_p_set_notfound(hi->dataref);
+        cda_dat_p_report_rslvstat(hi->dataref, CDA_RSLVSTAT_SEARCHING);
 
         hi->rslv_type  = RSLV_TYPE_GLBL;
         hi->rslv_state = RSLV_STATE_UNKNOWN;
@@ -519,7 +519,7 @@ static void FailureProc(cda_d_cx_privrec_t *me, int reason)
             AddHwrToSrv  (rs, hwr);
             hi->rslv_state = RSLV_STATE_UNKNOWN;
             cda_dat_p_set_ready(hi->dataref, 0);
-            cda_dat_p_set_notfound(hi->dataref);
+            cda_dat_p_report_rslvstat(hi->dataref, CDA_RSLVSTAT_SEARCHING);
         }
         else if (hi->rslv_type == RSLV_TYPE_NAME)
         {
@@ -554,6 +554,7 @@ static void ProcessCxlibEvent(int uniq, void *unsdptr,
   const cx_rds_info_t       *rdi;
   const cx_strs_info_t      *sti;
   const cx_quant_info_t     *qui;
+  const cx_range_info_t     *rni;
 
   cda_hwcnref_t       hwr;
   hwrinfo_t          *hi;
@@ -609,13 +610,17 @@ static void ProcessCxlibEvent(int uniq, void *unsdptr,
                         cx_setmon(me->cd, 1, &(hi->hwid), &hwr, NULL, hi->on_update);
                         cx_run(me->cd);
                         /*!!! Obtain parameters */
+                        cda_dat_p_set_hwinfo(hi->dataref,
+                                             rsi->rw, rsi->dtype, rsi->nelems,
+                                             rsi->hwid);
+                        cda_dat_p_report_rslvstat(hi->dataref, CDA_RSLVSTAT_FOUND);
                         cda_dat_p_set_ready (hi->dataref, 1);
                     }
                     else
                     {
                         ////fprintf(stderr, "NOTFOUND %s\n", hi->name);
                         hi->rslv_state = RSLV_STATE_ABSENT;
-                        cda_dat_p_set_notfound(hi->dataref);
+                        cda_dat_p_report_rslvstat(hi->dataref, CDA_RSLVSTAT_NOTFOUND);
                     }
                 }
                 else
@@ -675,6 +680,18 @@ static void ProcessCxlibEvent(int uniq, void *unsdptr,
                 hi->in_use)
             {
                 cda_dat_p_set_quant(hi->dataref, qui->q, qui->q_dtype);
+            }
+            break;
+
+        case CAR_RANGE:
+            rni = info;
+            hwr = rni->param1;
+            hi  = AccessHwrSlot(hwr);
+            if (/* "CheckHwr()" */
+                hwr >= HWR_MIN_VAL  &&  hwr < hwrs_list_allocd  &&
+                hi->in_use)
+            {
+                cda_dat_p_set_range(hi->dataref, rni->range, rni->range_dtype);
             }
             break;
 
@@ -939,7 +956,9 @@ static int  cda_d_cx_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 CDA_DEFINE_DAT_PLUGIN(cx, "CX data-access plugin",
                       NULL, NULL,
                       sizeof(cda_d_cx_privrec_t),
+                      CDA_DAT_P_FLAG_CHAN_TYPE_CHANGE_SUPPORTED,
                       '.', ':', '@',
                       cda_d_cx_new_chan, cda_d_cx_del_chan,
+                      NULL,
                       cda_d_cx_snd_data, NULL,
                       cda_d_cx_new_srv,  cda_d_cx_del_srv);

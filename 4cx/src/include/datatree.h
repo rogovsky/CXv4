@@ -91,6 +91,8 @@ void *find_knobs_nearest_upmethod(DataKnob k, int vmtoffset);
 
 int  set_knob_controlvalue(DataKnob k, double      v, int fromlocal);
 int  set_knob_textvalue   (DataKnob k, const char *s, int fromlocal);
+int  set_knob_vectvalue   (DataKnob k, const double *data, int nelems,
+                                                      int fromlocal);
 void show_knob_alarm      (DataKnob k, int onoff);
 void ack_knob_alarm       (DataKnob k);
 void show_knob_props      (DataKnob k);

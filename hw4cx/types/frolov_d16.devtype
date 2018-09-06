@@ -1,7 +1,7 @@
-devtype frolov_d16 w30i {
+devtype frolov_d16 w40i,w10d,r50i {
 	a<0-3>		0
 	b<0-3>		4
-	v<0-3>		8
+	# Ex: v<0-3>		8
 	off<0-3>	12
 	alloff		16
 	do_shot		17
@@ -11,5 +11,14 @@ devtype frolov_d16 w30i {
 	fclk_sel	20
 	start_sel	21
 	mode		22
-	f_in_ns		23
+
+	ones_stop	25
+
+	v<0-3>		40
+
+	f_in_hz		48
+	f_in_ns		49
+
+	was_start	61
+	lam_sig		62
 }

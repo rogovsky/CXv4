@@ -94,7 +94,7 @@ static void ProcessDatarefEvent(int            uniq,
 
     if      (reason == CDA_REF_R_RSLVSTAT)
     {
-        if (ptr2lint(info_ptr) == 0)
+        if (ptr2lint(info_ptr) == CDA_RSLVSTAT_NOTFOUND)
         {
             if (cda_src_of_ref(rp->ur.ref, &src_p) < 0) src_p = "UNKNOWN";
             if (option_relative)                        src_p = rp->ur.spec;
@@ -192,7 +192,7 @@ static int  ActivateChannel(refrec_t *rp, void *privptr)
                               0, NULL, NULL);
     if (rp->ur.ref == CDA_DATAREF_ERROR)
     {
-        fprintf(stderr, "%s %s: cda_add_dchan(\"%s\"): %s\n",
+        fprintf(stderr, "%s %s: cda_add_chan(\"%s\"): %s\n",
                 strcurtime(), argv0, rp->ur.spec, cda_last_err());
         /* Note: we do NOT exit(EC_ERR) and allow other references to proceed */
 

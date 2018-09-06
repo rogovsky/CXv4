@@ -1,4 +1,5 @@
-CLIENTS=	linmag linvac linthermcan linslbpms linipp lin485s linrf_smc \
+CLIENTS=	rfsyn_eng rfsyn \
+		linmag linvac linthermcan linslbpms linipp lin485s linrf_smc \
 		ringmag ringcor23 ringcor45 ringrf ringcurmon \
 		subharmonic lincamsel ringcamsel turnmag \
 		v5h1adc200s \
@@ -8,8 +9,12 @@ CLIENTS=	linmag linvac linthermcan linslbpms linipp lin485s linrf_smc \
 		ttv \
 		ist_cdac20 v1k_cdac20 v3h_a40d16 mps20_ceac124 \
 		k500gid25s \
-		gid25x4 v4gid25s v4k500mag vepp34info v5ringcurmon4v4
+		gid25x4 v4gid25s v4k500mag vepp34info v5ringcurmon4v4 \
+		baachi verona weldcc
 AUX_SCREEN_FILES=	subsys_magx_macros.m4 gid25_subsys_macros.m4
+
+EXPORTSFILES3=	weld_mes_up_mv2mka.lst
+EXPORTSDIR3=	settings/common
 
 #---
 CLIENTS+=	liu

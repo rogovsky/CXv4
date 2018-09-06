@@ -280,9 +280,16 @@ void  CdrDestroyKnobs(DataKnob list, int count)
                 break;
 
             case DATAKNOB_PZFR:
-                safe_free(k->u.z.tree_base);
-                safe_free(k->u.z.src);
-                /*!!! cda_del_chan(k->u.z._devstate_ref); */
+                safe_free(k->u.z.tree_base); k->u.z.tree_base = NULL;
+                safe_free(k->u.z.src);       k->u.z.src       = NULL;
+                cda_del_chan(k->u.z._devstate_ref); k->u.z._devstate_ref = CDA_DATAREF_NONE;
+                break;
+
+            case DATAKNOB_VECT:
+                safe_free(k->u.v.src.src); k->u.v.src.src = NULL;
+#if 0 /*!!! vect:databuf*/
+                safe_free(k->u.v.databuf); k->u.v.databuf = NULL;
+#endif
                 break;
         }
 
@@ -369,6 +376,11 @@ static void FillConnsOfContainer(int        numsrvs,
         else if (k->type == DATAKNOB_PZFR)
         {
             /* No need to do anything: PZFRs are on theirselves */
+        }
+        else if (k->type == DATAKNOB_VECT)
+        {
+            if (cda_ref_is_sensible(k->u.v.ref))
+                cda_srvs_of_ref    (k->u.v.ref,    node->conns_u, conns_u_size);
         }
     }
     /* ...and add our at-proc too */
@@ -468,7 +480,11 @@ int   CdrRealizeSubsystem(DataSubsys  subsys,
                              DSTN_DEFSERVER,
                              FROM_CMDLINE_STR, strlen(FROM_CMDLINE_STR),
                              defserver, strlen(defserver) + 1);
-        if (p == NULL) return -1;
+        if (p == NULL)
+        {
+            CdrSetErr("CdrCreateSection("DSTN_DEFSERVER") failed");
+            return -1;
+        }
         subsys->defserver = p->data;
     }
 
@@ -677,6 +693,8 @@ static cda_dataref_t txt2ref(DataKnob k,
   char        ut_char;
   char       *endptr;
 
+    if (src == NULL  ||  *src == '\0') return CDA_DATAREF_NONE;
+
     chn = src;
     if (*chn == '=') chn++;
     if (*chn == '@')
@@ -760,6 +778,55 @@ static cda_dataref_t pzf2ref(DataKnob k,
     return cda_add_chan(subsys->cid, pzfr_base,
                         "_devstate", 0, CXDTYPE_INT32, 1,
                         0, NULL, NULL);
+}
+
+static cda_dataref_t vec2ref(DataKnob k,
+                             const char    *src_name,
+                             DataSubsys     subsys,
+                             const char    *curbase,
+                             dataknob_vect_src_t src_spec)
+{
+  cda_dataref_t  ref;
+  int         options = CDA_DATAREF_OPT_NONE;
+  const char *chn;
+
+    if (src_spec.src == NULL  ||  src_spec.src[0] == '\0') return CDA_DATAREF_NONE;
+
+    chn = src_spec.src;
+    if (*chn == '=') chn++;
+    if (*chn == '@')
+    {
+        chn++;
+
+        while (1)
+        {
+            if      (*chn == '-') options |= CDA_DATAREF_OPT_PRIVATE;
+            else if (*chn == '.') options |= CDA_DATAREF_OPT_NO_RD_CONV;
+            else if (*chn == '/') options |= CDA_DATAREF_OPT_SHY;
+            else if (*chn == ':') {chn++; goto END_FLAGS;}
+            else break;
+            chn++;
+        }
+
+        /* NOTHING more is allowed here (besides the flags above) */
+        fprintf(stderr, "%s %s: \"%s\": ':' expected after \"@FLAGS\" in \"%s\" spec\n",
+                strcurtime(), __FUNCTION__, k->ident, src_spec.src);
+        return CDA_DATAREF_NONE;
+    }
+ END_FLAGS:;
+
+    ref = cda_add_chan(subsys->cid, curbase,
+                       chn, options, CXDTYPE_DOUBLE, src_spec.max_nelems,
+                       0, NULL, NULL);
+
+    if (ref == CDA_DATAREF_ERROR)
+        fprintf(stderr, "%s \"%s\".%s: %s\n",
+                strcurtime(), k->ident, src_name, cda_last_err());
+
+    /*!!! No, should also check somehow else for bad results --
+     by CXCF_FLAG_NOTFOUND */
+
+    return ref;
 }
 
 static inline int isempty(const char *s)
@@ -851,13 +918,24 @@ int   CdrRealizeKnobs    (DataSubsys  subsys,
                           const char *baseref,
                           DataKnob list, int count)
 {
+  int       r;
   int       n;
   DataKnob  k;
   char      curbase[CDA_PATH_MAX];
   char     *curbptr;
   rflags_t  rflags;
     
-    if (list == NULL  ||  count <= 0) return -1;
+    if (count < 0)
+    {
+        CdrSetErr("%s(): count=%d", __FUNCTION__, count);
+        return -1;
+    }
+    if (count == 0) return 0;
+    if (list == NULL)
+    {
+        CdrSetErr("%s(): list=%d", __FUNCTION__);
+        return -1;
+    }
 
     for (n = 0, k = list;
          n < count;
@@ -884,9 +962,9 @@ int   CdrRealizeKnobs    (DataSubsys  subsys,
                 else
                     curbptr = baseref;
 
-                CdrRealizeKnobs(subsys,
-                                curbptr,
-                                k->u.c.content, k->u.c.count);
+                r = CdrRealizeKnobs(subsys,
+                                    curbptr,
+                                    k->u.c.content, k->u.c.count);
 #else
                 curbase[0] = '\0';
                 if      (k->u.c.refbase != NULL  &&  k->u.c.refbase[0] != '\0')
@@ -895,10 +973,11 @@ int   CdrRealizeKnobs    (DataSubsys  subsys,
                     strzcpy(curbase, baseref, sizeof(curbase));
                 //curbase[0] = '\0';
 
-                CdrRealizeKnobs(subsys,
-                                curbase,
-                                k->u.c.content, k->u.c.count);
+                r = CdrRealizeKnobs(subsys,
+                                    curbase,
+                                    k->u.c.content, k->u.c.count);
 #endif
+                if (r < 0) return r;
 
                 k->u.c.at_init_ref = src2ref(k, "at_init",
                                              subsys, baseref,
@@ -988,6 +1067,25 @@ int   CdrRealizeKnobs    (DataSubsys  subsys,
                     k->u.z.tree_base = strdup(baseref);
                 k->u.z._devstate_ref = pzf2ref(k, subsys, baseref);
                 break;
+
+            case DATAKNOB_VECT:
+#if 0 /*!!! vect:databuf*/
+                k->u.v.databuf = malloc(k->u.v.src.max_nelems *
+                                        sizeof(k->u.v.databuf[0]));
+                if (k->u.v.databuf == NULL) return -1;
+#endif
+
+                k->timestamp = (cx_time_t){CX_TIME_SEC_NEVER_READ,0};
+                k->u.v.ref   = vec2ref(k, "src",
+                                       subsys, baseref,
+                                       k->u.v.src);
+                if ( k->u.v.ref == CDA_DATAREF_ERROR   ||
+                    (k->u.v.ref != CDA_DATAREF_NONE        &&
+                     cda_get_ref_stat(k->u.v.ref,
+                                      &rflags, NULL) >= 0  &&
+                    (rflags & CXCF_FLAG_NOTFOUND) != 0))
+                    k->curstate = KNOBSTATE_NOTFOUND;
+                break;
         }
     }
 
@@ -1050,6 +1148,10 @@ void  CdrProcessKnobs    (DataSubsys subsys, int cause_conn_n, int options,
 
   /* For DATAKNOB_TEXT */
   void       *text_buf;
+
+  /* For DATAKNOB_VECT */
+  double     *vect_buf;
+  int         nelems;
 
     for (n = 0, k = list;
          n < count;
@@ -1260,12 +1362,10 @@ void  CdrProcessKnobs    (DataSubsys subsys, int cause_conn_n, int options,
                 if (cda_ref_is_sensible(k->u.t.ref)  &&
                     cda_acc_ref_data   (k->u.t.ref, &text_buf, NULL) == 0)
                 {
-                    cda_get_ref_stat(k->u.t.ref,
-                                     &(k->currflags),
-                                     &(k->timestamp));
+                    cda_get_ref_stat(k->u.t.ref, &rflags, &(k->timestamp));
                     /* Display the result -- ... */
                     /* ...colorize... */
-                    set_knobstate(k, choose_knobstate(k, k->currflags));
+                    set_knobstate(k, choose_knobstate(k, rflags));
                     /* ...and finally show the value */
                     if (
                         !k->is_rw  ||
@@ -1300,6 +1400,59 @@ void  CdrProcessKnobs    (DataSubsys subsys, int cause_conn_n, int options,
                 {
                 }
                 /*!!!*/
+                break;
+
+            case DATAKNOB_VECT:
+#if 0 /*!!! vect:databuf*/
+                if (cda_ref_is_sensible(k->u.v.ref))
+                {
+                    /* Obtain the data */
+                    k->u.v.cur_nelems = cda_current_nelems_of_ref(k->u.v.ref);
+                    if (k->u.v.cur_nelems < 0) k->u.v.cur_nelems = 0;
+                    if (k->u.v.cur_nelems > k->u.v.src.max_nelems)
+                        k->u.v.cur_nelems = k->u.v.src.max_nelems;
+                    cda_get_ref_data(k->u.v.ref,
+                                     0, sizeof(k->u.v.databuf[0]) * k->u.v.cur_nelems, k->u.v.databuf);
+
+                    cda_get_ref_stat(k->u.v.ref, &rflags, &(k->timestamp));
+                    /* Display the result -- ... */
+                    /* ...colorize... */
+                    set_knobstate(k, choose_knobstate(k, rflags));
+                    /* ...and finally show the value */
+                    if (
+                        !k->is_rw  ||
+                        (
+                         difftime(timenow, k->usertime) > KNOBS_USERINACTIVITYLIMIT  &&
+                         !k->wasjustset
+                        )
+                       )
+                        set_knob_vectvalue(k, k->u.v.databuf, k->u.v.cur_nelems, 0);
+#else
+                if (cda_ref_is_sensible(k->u.v.ref)  &&
+                    cda_acc_ref_data   (k->u.v.ref, &vect_buf, NULL) == 0)
+                {
+                    nelems = cda_current_nelems_of_ref(k->u.v.ref);
+                    if (nelems < 0) nelems = 0;
+                    if (nelems > k->u.v.src.max_nelems)
+                        nelems = k->u.v.src.max_nelems;
+
+                    cda_get_ref_stat(k->u.t.ref, &rflags, &(k->timestamp));
+                    /* Display the result -- ... */
+                    /* ...colorize... */
+                    set_knobstate(k, choose_knobstate(k, rflags));
+                    /* ...and finally show the value */
+                    if (
+                        !k->is_rw  ||
+                        (
+                         difftime(timenow, k->usertime) > KNOBS_USERINACTIVITYLIMIT  &&
+                         !k->wasjustset
+                        )
+                       )
+                        set_knob_vectvalue(k, vect_buf, nelems, 0);
+#endif
+
+                    if ((options & CDR_OPT_SYNTHETIC) == 0) k->wasjustset = 0;
+                }
                 break;
         }
         k->currflags  = rflags;
@@ -1380,6 +1533,40 @@ int   CdrSetKnobText (DataSubsys subsys, DataKnob  k, const char *s, int options
 
     if (s == NULL) s = "";
     ret = cda_snd_ref_data(wr, CXDTYPE_TEXT, strlen(s), s);
+    if (ret != CDA_PROCESS_ERR  &&  (ret & CDA_PROCESS_FLAG_REFRESH) != 0)
+        CdrProcessSubsystem(subsys, -1, CDR_OPT_SYNTHETIC | cda_opts, NULL);
+
+    k->being_modified = 0;
+
+    return ret;
+}
+
+int   CdrSetKnobVect (DataSubsys subsys, DataKnob  k, const double *data, int nelems,
+                                                                     int options)
+{
+  CxDataRef_t  wr;
+  int          ret;
+  int          cda_opts = ((options & CDR_OPT_READONLY) ||
+                           subsys->readonly)? CDA_OPT_READONLY : 0;
+
+    if (k->type != DATAKNOB_VECT  ||  !k->is_rw)
+    {
+        errno = EINVAL;
+        return CDA_PROCESS_ERR;
+    }
+
+    wr                               = k->u.v.ref;
+    if (!cda_ref_is_sensible(wr)) return CDA_PROCESS_DONE;
+
+    /*!!! Should set and later drop being_modified */
+    if (k->being_modified)
+    {
+        errno = EINPROGRESS;
+        return CDA_PROCESS_ERR;
+    }
+    k->being_modified = 1;
+
+    ret = cda_snd_ref_data(wr, CXDTYPE_DOUBLE, nelems, data);
     if (ret != CDA_PROCESS_ERR  &&  (ret & CDA_PROCESS_FLAG_REFRESH) != 0)
         CdrProcessSubsystem(subsys, -1, CDR_OPT_SYNTHETIC | cda_opts, NULL);
 

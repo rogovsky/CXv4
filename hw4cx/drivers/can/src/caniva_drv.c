@@ -70,7 +70,8 @@ static int caniva_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE,
                                caniva_ff, caniva_in,
-                               10);
+                               10,
+                               CANKOZ_LYR_OPTION_NONE);
     if (me->handle < 0) return me->handle;
 
     for (cset = 0;  cset < CANIVA_CHAN_ILIM_n_count; cset++)

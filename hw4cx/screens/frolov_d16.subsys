@@ -2,7 +2,7 @@
 define(`D16_OUT_LINE', `
     knob   a$1 "A" text  "withlabel"   ""    "%5.0f" r:a$1
     knob   b$1 "B" text  "withlabel"   ""    "%3.0f" r:b$1
-    knob   b$1 "=" text  "withlabel"   "ns" "%10.1f" r:v$1
+    knob   v$1 "=" text  "withlabel"   "ns" "%10.1f" r:v$1
     knob off$1 "-" onoff "color=black" ""         "" r:off$1
 ')
 

@@ -178,7 +178,10 @@ typedef struct
 
 static psp_paramdescr_t c061621_params[] =
 {
-    PSP_P_FLAG("calcstats", c061621_privrec_t, nxt_args[C061621_CHAN_CALC_STATS], 1, 0),
+    PSP_P_FLAG("istart",     c061621_privrec_t, nxt_args[C061621_CHAN_ISTART],     1, 0),
+    PSP_P_FLAG("noistart",   c061621_privrec_t, nxt_args[C061621_CHAN_ISTART],     0, 0),
+    PSP_P_FLAG("calcstats",  c061621_privrec_t, nxt_args[C061621_CHAN_CALC_STATS], 1, 0),
+    PSP_P_FLAG("nocalcstats",c061621_privrec_t, nxt_args[C061621_CHAN_CALC_STATS], 0, 0),
     PSP_P_END()
 };
 

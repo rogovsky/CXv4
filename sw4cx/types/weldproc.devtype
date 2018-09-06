@@ -1,0 +1,18 @@
+devtype weldproc w50i,r50i {
+	# 0-9: controls
+	do_start	0
+	do_stop		1
+	reset_state	2
+	time		9
+
+	# 10-29: begin/end matrix
+	beg<0-9>	10
+	end<0-9>	20
+
+	# 50-99: status
+	is_welding	50
+
+	cur<0-9>	60
+
+	vdev_state	99
+}

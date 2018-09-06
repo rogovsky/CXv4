@@ -46,8 +46,8 @@ canserver_drivers.c:	$(LISTOFDRIVERS) Makefile
 
 #
 MONO_C_FILES=			$(CANHAL_PFX)canmon
-EXES=				v4c4lcanserver
-v4c4lcanserver_COMPONENTS=	v4c4lcanserver.o canserver_drivers.o \
+EXES=				v4$(CANHAL_PFX)canserver
+v4$(CANHAL_PFX)canserver_COMPONENTS=	v4$(CANHAL_PFX)canserver.o canserver_drivers.o \
 				$(CANKOZ_LYR_SRCS:.c=.o) \
 				$(CANKOZ_DRV_SRCS:.c=.o)
 
@@ -65,10 +65,10 @@ include		$(PRJDIR)/PrjRules.mk
 GIVEN_DIR=	$(PRJDIR)/given/cangw
 LOCAL_INCLUDES+=-I$(GIVEN_DIR)
 
-v4c4lcanserver.%:	SPECIFIC_DEFINES=-DCANSERVER_ISSUE='"CXv4 CANGW canserver"'
-LOCAL_GNTDFILES+=v4c4lcanserver.c canserver_drivers.c $(CANKOZ_DRV_SRCS)
+v4$(CANHAL_PFX)canserver.%:	SPECIFIC_DEFINES=-DCANSERVER_ISSUE='"CXv4 CANGW canserver"'
+LOCAL_GNTDFILES+=v4$(CANHAL_PFX)canserver.c canserver_drivers.c $(CANKOZ_DRV_SRCS)
 
 #
-v4c4lcanserver:	$(LIBREMSRV) \
-		$(LIBUSEFUL) $(LIBCXSCHEDULER) $(LIBMISC)
-c4lcanmon:	$(LIBMISC)
+v4$(CANHAL_PFX)canserver:	$(LIBREMSRV) \
+				$(LIBUSEFUL) $(LIBCXSCHEDULER) $(LIBMISC)
+$(CANHAL_PFX)canmon:		$(LIBMISC)

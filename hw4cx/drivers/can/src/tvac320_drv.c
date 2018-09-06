@@ -88,7 +88,9 @@ static int  tvac320_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE,
                                tvac320_ff, tvac320_in,
-                               TVAC320_NUMCHANS*2/*!!!*/);
+                               TVAC320_NUMCHANS*2/*!!!*/,
+                               CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET |
+                               CANKOZ_LYR_OPTION_FFPROC_AFTER_RESET);
     if (me->handle < 0) return me->handle;
 
     SetChanRDs       (devid, TVAC320_CHAN_SET_U,     1, 10, 0);
@@ -107,12 +109,12 @@ static void tvac320_ff (int devid, void *devptr, int is_a_reset)
   int        hw_ver;
   int        sw_ver;
 
+    if (is_a_reset == CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET)
+        bzero(&(me->msks), sizeof(me->msks));
+
     me->lvmt->get_dev_ver(me->handle, &hw_ver, &sw_ver, NULL);
     ReturnInt32Datum(me->devid, TVAC320_CHAN_HW_VER, hw_ver, 0);
     ReturnInt32Datum(me->devid, TVAC320_CHAN_SW_VER, sw_ver, 0);
-
-    if (is_a_reset)
-        bzero(&(me->msks), sizeof(me->msks));
 }
 
 static void tvac320_in (int devid, void *devptr,

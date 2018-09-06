@@ -19,6 +19,7 @@ enum
     MOTIFKNOBS_HISTPLOT_FLAG_NO_MODE_SWCH = 1 << 3,
     MOTIFKNOBS_HISTPLOT_FLAG_NO_XSCL_SWCH = 1 << 4,   // "XSCL" -- X-SCaLe
     MOTIFKNOBS_HISTPLOT_FLAG_HORZ_CTLS    = 1 << 5,
+    MOTIFKNOBS_HISTPLOT_FLAG_VIEW_ONLY    = 1 << 6,
 };
 
 enum
@@ -76,6 +77,7 @@ typedef struct MotifKnobs_histplot_t_struct
     GC           bkgdGC;
     GC           axisGC;
     GC           gridGC;
+    GC           reprGC;
     GC           chanGC [2][XH_NUM_DISTINCT_LINE_COLORS];
     XFontStruct *axis_finfo;
     XFontStruct *chan_finfo[XH_NUM_DISTINCT_LINE_COLORS];
@@ -94,6 +96,13 @@ typedef struct MotifKnobs_histplot_t_struct
     int          horz_offset;
     int          o_horzbar_maximum;
     int          o_horzbar_slidersize;
+
+    // (Values-from-history viewing)-related stuff
+    int             view_only;
+    int             x_index;
+    CxWidget        time_dpy;
+    struct timeval *timestamps_ring;
+    int             timestamps_ring_used;
 } MotifKnobs_histplot_t;
 
 typedef struct

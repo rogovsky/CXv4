@@ -313,6 +313,12 @@ static psp_paramdescr_t adc812me_params[] =
     PSP_P_LOOKUP ("range2B",  adc812me_privrec_t, nxt_args[ADC812ME_CHAN_RANGE5],   -1, adc812me_range_lkp),
     PSP_P_LOOKUP ("range3A",  adc812me_privrec_t, nxt_args[ADC812ME_CHAN_RANGE6],   -1, adc812me_range_lkp),
     PSP_P_LOOKUP ("range3B",  adc812me_privrec_t, nxt_args[ADC812ME_CHAN_RANGE7],   -1, adc812me_range_lkp),
+
+    PSP_P_FLAG("istart",      adc812me_privrec_t, nxt_args[ADC812ME_CHAN_ISTART],     1, 0),
+    PSP_P_FLAG("noistart",    adc812me_privrec_t, nxt_args[ADC812ME_CHAN_ISTART],     0, 0),
+    PSP_P_FLAG("calcstats",   adc812me_privrec_t, nxt_args[ADC812ME_CHAN_CALC_STATS], 1, 0),
+    PSP_P_FLAG("nocalcstats", adc812me_privrec_t, nxt_args[ADC812ME_CHAN_CALC_STATS], 0, 1),
+
     PSP_P_END()
 };
 

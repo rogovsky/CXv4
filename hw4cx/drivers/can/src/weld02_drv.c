@@ -40,6 +40,8 @@ typedef struct
     int              devid;
     int              handle;
 
+    int              supports_adc9;
+
     struct
     {
         int32  vals[WELD02_NUMCHANS];
@@ -80,7 +82,8 @@ static int weld02_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE,
                                weld02_ff, weld02_in,
-                               WELD02_NUMCHANS*2/*!!!*/);
+                               WELD02_NUMCHANS*2/*!!!*/,
+                               CANKOZ_LYR_OPTION_NONE);
     if (me->handle < 0) return me->handle;
 
     ////sl_enq_tout_after(devid, devptr, HEARTBEAT_USECS, weld02_hbt, NULL);
@@ -100,6 +103,7 @@ static int weld02_init_d(int devid, void *devptr,
     SetChanRDs       (devid, WELD02_CHAN_MES_U_HEAT, 1,   4095.0/2.5,      0.0);
     SetChanRDs       (devid, WELD02_CHAN_MES_U_HIGH, 1,   4095.0/6000,     0.0);
     SetChanRDs       (devid, WELD02_CHAN_MES_U_POWR, 1,   4095.0/50.0,     0.0);
+    SetChanRDs       (devid, WELD02_CHAN_MES_I_INDR, 1,   4095.0/250.0,    0.0);
 
     return DEVSTATE_OPERATING;
 }
@@ -128,7 +132,15 @@ static inline void ReSendSetting(int devid, privrec_t *me, int cn)
 
 static void weld02_ff (int devid, void *devptr, int is_a_reset)
 {
-  privrec_t  *me    = (privrec_t *) devptr;
+  privrec_t *me    = (privrec_t *) devptr;
+  int        sw_ver;
+
+    me->lvmt->get_dev_ver(me->handle, NULL, &sw_ver, NULL);
+    me->supports_adc9 = (sw_ver >= 9);
+
+    SetChanRDs(devid, WELD02_CHAN_MES_UN, 1,
+               (sw_ver <= 8)? 4095.0/125 : 4095.0/25, 
+               0.0);
 
     if (is_a_reset)
     {
@@ -275,7 +287,7 @@ static void weld02_rw_p(int devid, void *devptr,
         }
         else if (chn >= WELD02_CHAN_MES_base  &&
                  chn <= WELD02_CHAN_MES_base + WELD02_MES_n_count-1  &&
-                 chn != WELD02_CHAN_MES_RSRVD)
+                 (chn != WELD02_CHAN_MES_I_INDR  ||  me->supports_adc9))
         {
             attr = chn - WELD02_CHAN_MES_base;
             me->lvmt->q_enq_v(me->handle, SQ_IF_ABSENT, 2,

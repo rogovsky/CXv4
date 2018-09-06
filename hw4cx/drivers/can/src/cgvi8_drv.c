@@ -131,7 +131,9 @@ static int  cgvi8_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE_CGVI8,
                                cgvi8_ff, cgvi8_in,
-                               CGVI8_NUMCHANS*2/*!!!*/);
+                               CGVI8_NUMCHANS*2/*!!!*/,
+                               CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET |
+                               CANKOZ_LYR_OPTION_FFPROC_AFTER_RESET);
     if (me->handle < 0) return me->handle;
     me->lvmt->add_devcode(me->handle, DEVTYPE_CGVI8M);
     me->lvmt->has_regs(me->handle, CGVI8_CHAN_REGS_base);
@@ -151,13 +153,13 @@ static void cgvi8_ff (int devid, void *devptr, int is_a_reset)
 {
   privrec_t *me = devptr;
 
-    me->lvmt->get_dev_ver(me->handle, &(me->hw_ver), &(me->sw_ver), NULL);
-    if (is_a_reset)
+    if (is_a_reset == CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET)
     {
         bzero(me->cur_codes_read, sizeof(me->cur_codes_read));
         bzero(&(me->mode), sizeof(me->mode));
     }
 
+    me->lvmt->get_dev_ver(me->handle, &(me->hw_ver), &(me->sw_ver), NULL);
     ReturnInt32Datum(me->devid, CGVI8_CHAN_HW_VER, me->hw_ver, 0);
     ReturnInt32Datum(me->devid, CGVI8_CHAN_SW_VER, me->sw_ver, 0);
 }

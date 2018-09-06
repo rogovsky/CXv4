@@ -102,6 +102,10 @@ enum
     DEVSPEC_CHAN_ADC_n_count         = CEAC124_CHAN_ADC_n_count,
     DEVSPEC_CHAN_OUT_n_count         = CEAC124_CHAN_OUT_n_count,
 
+    DEVSPEC_CHAN_OUT_n_base          = KOZDEV_CHAN_OUT_n_base,
+    DEVSPEC_CHAN_OUT_RATE_n_base     = KOZDEV_CHAN_OUT_RATE_n_base,
+    DEVSPEC_CHAN_OUT_CUR_n_base      = KOZDEV_CHAN_OUT_CUR_n_base,
+
     DEVSPEC_CHAN_OUT_IMM_n_base      = CEAC124_CHAN_OUT_IMM_n_base,
     DEVSPEC_CHAN_OUT_TAC_n_base      = CEAC124_CHAN_OUT_TAC_n_base,
 
@@ -402,7 +406,8 @@ static int  ceac124_init_d(int devid, void *devptr,
                                DEVTYPE,
                                ceac124_ff, ceac124_in,
                                KOZDEV_NUMCHANS*2/*!!!*/ +
-                               (DEVSPEC_TABLE_MAX_FILE_BYTES / 7 + 1)*2 /* *2 because of GETDEVSTAT packets */);
+                               (DEVSPEC_TABLE_MAX_FILE_BYTES / 7 + 1)*2 /* *2 because of GETDEVSTAT packets */,
+                               CANKOZ_LYR_OPTION_NONE);
     if (me->handle < 0) return me->handle;
     me->lvmt->has_regs(me->handle, KOZDEV_CHAN_REGS_base);
 
@@ -705,7 +710,9 @@ static void ceac124_rw_p(int devid, void *devptr,
             if (me->out[l].rcv)
                 ReturnInt32Datum(devid, chn, me->out[l].cur, 0);
         }
+#if DO_RETURN_CUR_PARAMS
         else if (chn == CHAN_CURSPD  ||  chn == CHAN_CURACC) ;
+#endif
         else if ((chn >= KOZDEV_CHAN_DO_TAB_base  &&
                   chn <  KOZDEV_CHAN_DO_TAB_base + KOZDEV_CHAN_DO_TAB_cnt)  ||
                  chn == KOZDEV_CHAN_OUT_TAB_ID     ||

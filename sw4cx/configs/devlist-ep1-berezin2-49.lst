@@ -1,0 +1,41 @@
+# ep1-berezin2:49 -- weld control, CXv4-based version
+
+include(`senkov_vip.devtype')
+include(`weld02.devtype')
+include(`cac208.devtype')
+include(`ceac124.devtype')
+include(`frolov_bfp.devtype')
+include(`frolov_bfp2.devtype')
+include(`dds300.devtype')
+
+
+dev vip    senkov_vip@sktcankoz  ~ 0,10
+dev gun    weld02@sktcankoz      ~ 0,12
+dev vac    cac208@sktcankoz      ~ 0,14 b:cangw-vch300 beg=0 end=1
+dev mag1   cac208@sktcankoz      ~ 0,15 b:cangw-vch300 beg=0 end=15
+
+dev mod    frolov_bfp2@sktcankoz ~ 7
+
+cpoint magsys {
+  i_x_s mag1.out4  10000000.0 #!!!FLOAT: 1000000*(10/1.0)
+  i_y_s mag1.out5  10000000.0 #!!!FLOAT: 1000000*(10/1.0)
+  i_f_s mag1.out6  10000000.0 #!!!FLOAT: 1000000*(10/1.0)
+  i_r_s mag1.out7  10000000.0 #!!!FLOAT: 1000000*(10/1.0)
+
+  i_x_m mag1.adc8   2000000.0 #!!!FLOAT: 1000000*(2.0/1.0)
+  i_y_m mag1.adc10  2000000.0 #!!!FLOAT: 1000000*(2.0/1.0)
+  i_f_m mag1.adc12  2000000.0 #!!!FLOAT: 1000000*(2.0/1.0)
+  i_r_m mag1.adc14  2000000.0 #!!!FLOAT: 1000000*(2.0/1.0)
+
+  i_x_v mag1.adc9   3139534.9 #!!!FLOAT: 1000000*(2.7/0.86)
+  i_y_v mag1.adc11  3139534.9 #!!!FLOAT: 1000000*(2.7/0.86)
+  i_f_v mag1.adc13  3139534.9 #!!!FLOAT: 1000000*(2.7/0.86)
+  i_r_v mag1.adc15  3139534.9 #!!!FLOAT: 1000000*(2.7/0.86)
+}
+
+cpoint baachi {
+  cpoint gunctl {
+  }
+
+  cpoint magsys.is magsys # Maps to GLOBAL magsys namespace
+}

@@ -3,13 +3,69 @@ winname  main senkov_vip
 winclass main SenkovVIP
 winopts  main compact,notoolbar,nostatusline
 
-grouping main senkov_vip "Senkov VIP" grid "nodecor" 3 content:3 {
-    container ctl "Control" grid noshadow,nocoltitles,norowtitles content:8 {
+# 1:id 2:label 3:"Off" 4:"On" 5:c_state 5:c_off 6:c_on
+define(`RGSWCH',
+       `knob/ign_otherop $1 $2 choicebs nolabel items:"#T$3\b\blit=red\t$4\b\blit=green" \
+               r:$5 w:"_all_code; qryval; putchan $7; \
+               push 1; qryval; sub; putchan $6; ret;"')
+
+grouping main senkov_vip "Senkov VIP" grid "nodecor" 4 content:4 {
+    container ctl "Control" grid nohline,nofold,noshadow,nocoltitles,norowtitles content:8 {
         container - "Settings" grid notitle,noshadow,nocoltitles content:2 {
             knob u_high "U high" text - kV %4.1f set_dac_uout alwdrange:0-60
             knob k_corr "K corr" text - -  %4.0f set_dac_corr alwdrange:0-255
         }
+        disp pwr "3-phase power" led r:mode_power_on
+        disp act "Actuator on"   led r:mode_actuator_on
+        container onoff "On/Off" grid "notitle,noshadow,nocoltitles" content:2 {
+            RGSWCH(vip, VIP,  Off, On, mode_vip_on,  cmd_vip_off, cmd_vip_on)
+            RGSWCH(hvl, High, Off, On, mode_operate, cmd_hvl_off, cmd_hvl_on)
+        }
+        disp manu "Manual mode" led           r:mode_manual
+        disp lock "Interlock"   led color=red r:mode_vip_blocked
+        noop - " "
+        container service "Service channels..." subwin \
+                subwintitle:"VIP service channels" content:1 {
+            container "" "" grid "noshadow,notitle,nocoltitles" content:5 {
+                knob reserved3     "Резервный канал"                  text "" ""   %6.0f set_reserved3
+                knob uso_coeff     "Коэфф. усиления УСО"              text "" ""   %6.0f set_uso_coeff
+                knob vip_invrt_frq "k частоты работы инвертора ВИП"   text "" ""   %6.0f set_vip_invrt_frq
+                knob vip_iout_prot "Защита по выходному току ВИП"     text "" "mA" %6.0f set_vip_iout_prot
+                knob brkdn_count   "Число пробоев/1с для выкл. на 1с" text "" ""   %6.0f set_brkdn_counter
+            }
+        } layinfo:horz=center
     }
+
     noop - - vseparator layinfo:vert=fill
-    noop
+
+    container mes "Measurements" grid nohline,nofold,noshadow,nocoltitles content:12 {
+        disp vip_uout      "Uвых ВИП"          text "" "kV"    %5.2f mes_vip_uout
+        disp vip_iout_full "Iвых ВИП (полн.)"  text "" "mA"    %6.1f mes_vip_iout_full
+        disp vip_iout_prec "Iвых ВИП (<100мА)" text "" "mA"    %6.2f mes_vip_iout_prec
+        disp transf_iin    "Iвх ВВ трансф."    text "" "A"     %3.0f mes_transf_iin
+        disp vip_3furect   "Uвыпр 3ф-сети"     text "" "V"     %3.0f mes_vip_3furect
+        disp vip_3fi       "Iпотр 3ф-сети"     text "" "A"     %3.0f mes_vip_3fi
+        disp vip_t_trrad   "T транзисторов"    text "" "\xb0C" %3.0f mes_vip_t_trrad
+        disp tank_t        "T внутри ВВ бака"  text "" "\xb0C" %3.0f mes_tank_t
+        disp reserved9     "резерв"            text "" ""      %3.0f mes_reserved9
+        disp vip_iout_auto "Iвых ВИП (авто)"   text "" "mA"    %6.1f mes_vip_iout_auto
+        disp vip_iout_avg  "Iвых ВИП (усред.)" text "" "mA"    %6.0f mes_vip_iout_avg
+        disp brkdn_count   "Число пробоев"     text "" ""      %3.0f cur_brkdn_count
+    }
+
+    container stat "?" grid nohline,nofold,noshadow,nocoltitles,norowtitles content:13 {
+        disp vip_uout_gt_70kv   "Uвых>70"   led color=red r:stat_vip_uout_gt_70kv
+        disp vip_iout_gt_1100ma "Iвых>1100" led color=red r:stat_vip_iout_gt_1100ma
+        disp feedback_break     "Обрыв ОС"  led color=red r:stat_feedback_break
+        disp transf_iin_gt_300a "Iтрнс>300" led color=red r:stat_transf_iin_gt_300a
+        disp phase_break        "Обр.фазы"  led color=red r:stat_phase_break
+        disp vip_iin_gt_250a    "Iвх>250"   led color=red r:stat_vip_iin_gt_250a
+        disp ttemp_gt_45c       "Tтранз>45" led color=red r:stat_ttemp_gt_45c
+        disp tank_t_gt_60c      "Tбака>60"  led color=red r:stat_tank_t_gt_60c
+        disp no_water           "Нет воды"  led color=red r:stat_no_water
+        disp ext_block1_ubs     "Б1 УБС"    led color=red r:stat_ext_block1_ubs
+        disp ext_block2_ubs     "Б2 УБС"    led color=red r:stat_ext_block2_ubs
+        disp constant_brkdn     "Постоянн"  led color=red r:stat_constant_brkdn
+        disp igbt_protection    "IGBT"      led color=red r:stat_igbt_protection
+    }
 }

@@ -1,10 +1,12 @@
 include(`candac16.devtype')
 include(`canadc40.devtype')
 
-dev dac0 candac16/remdrv ~ 0,47 b:cangw-rst1:8002              # 47=63-16
-dev dac1 candac16/remdrv ~ 0,46 b:cangw-rst1:8002              # 46=62-16
-dev adc0 canadc40/remdrv ~ 0,45 b:cangw-rst1:8002 beg=0 end=19 # 45=61-16
-dev adc1 canadc40/remdrv ~ 0,44 b:cangw-rst1:8002 beg=0 end=19 # 44=60-16
+include(`canhw_CAN_LINES_LIST.m4')
+
+dev dac0 candac16@sktcankoz ~ L_RST1,47               # 47=63-16
+dev dac1 candac16@sktcankoz ~ L_RST1,46               # 46=62-16
+dev adc0 canadc40@sktcankoz ~ L_RST1,45  beg=0 end=19 # 45=61-16
+dev adc1 canadc40@sktcankoz ~ L_RST1,44  beg=0 end=19 # 44=60-16
 dev grn0 noop w10d -
 dev grn1 noop w10d -
 

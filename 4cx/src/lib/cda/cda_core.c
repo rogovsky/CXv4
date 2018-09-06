@@ -96,6 +96,8 @@ typedef struct
         uint8        physmodified;
         uint8        isinitialized;
     }                orange;
+    CxAnyVal_t       range[2];
+    cxdtype_t        range_dtype;
 
     void            *current_val;      // Pointer to current-value-buffer (if !=NULL)...
     int              current_nelems;   // ...and # of units in it
@@ -119,6 +121,11 @@ typedef struct
 
     ref_cbrec_t     *cb_list;
     int              cb_list_allocd;
+
+    int              hwinfo_rw;
+    cxdtype_t        hwinfo_dtype;
+    int              hwinfo_nelems;
+    int              hwinfo_srv_hwid;
 } refinfo_t;
 
 typedef struct
@@ -259,12 +266,14 @@ static void RlsRefSlot(cda_dataref_t ref)
         /* Do nothing */
     }
 
-    DestroyRefCbSlotArray(ri);
+    DestroyRefCbSlotArray(ri); // This also does safe_free(cb_list)
 
     safe_free(ri->reference);
     safe_free(ri->fla_privptr);
     safe_free(ri->strings_buf);
+    safe_free(ri->alc_phys_rds);
     safe_free(ri->current_val);
+    safe_free(ri->sndbuf);
 }
 
 static int CheckRef(cda_dataref_t ref)
@@ -978,6 +987,14 @@ static int ctx_ref_checker(refinfo_t *ri, void *privptr)
         ri->max_nelems == model->max_nelems;
 }
 
+static void reset_hwinfo(refinfo_t *ri)
+{
+    ri->hwinfo_rw       = -1;
+    ri->hwinfo_dtype    = CXDTYPE_UNKNOWN;
+    ri->hwinfo_nelems   = -1;
+    ri->hwinfo_srv_hwid = -1;
+}
+
 cda_dataref_t  cda_add_chan   (cda_context_t         cid,
                                const char           *base,
                                const char           *spec,
@@ -1050,6 +1067,7 @@ cda_dataref_t  cda_add_chan   (cda_context_t         cid,
     ref = GetRefSlot();
     if (ref < 0) return ref;
     ri = AccessRefSlot(ref);
+    reset_hwinfo(ri);
     // Fill data
     ri->in_use = REF_TYPE_CHN;
     if ((ri->reference = strdup(nameptr)) == NULL)
@@ -1154,6 +1172,69 @@ int            cda_del_chan   (cda_dataref_t ref)
     }
 
     RlsRefSlot(ref);
+
+    return 0;
+}
+
+int            cda_set_type   (cda_dataref_t ref,
+                               cxdtype_t dtype, int max_nelems)
+{
+  refinfo_t   *ri = AccessRefSlot(ref);
+  srvinfo_t   *si;
+
+  size_t           usize;                // Size of data-units
+  size_t           csize;                // Channel data size
+
+  uint8       *dst;
+
+    if (CheckRef(ref) != 0) return -1;
+    if (ri->in_use != REF_TYPE_CHN  ||
+        ri->sid <= 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    si = AccessSrvSlot(ri->sid);
+
+    /* Is this operation supported? */
+    if ((si->metric->flags & CDA_DAT_P_FLAG_CHAN_TYPE_CHANGE_SUPPORTED) == 0)
+    {
+        errno = ENOSYS;
+        return -1;
+    }
+
+    /* A default? */
+    if (max_nelems < 1) max_nelems = 1;
+    /* Is a real change? */
+    if (dtype == ri->dtype  &&  max_nelems == ri->max_nelems) return 0;
+
+    usize = sizeof_cxdtype(dtype);
+    csize = usize * max_nelems;
+    if (reprof_cxdtype(dtype) == CXDTYPE_REPR_TEXT) csize += usize; /* A cell for terminating NUL */
+
+    /*!!!*/
+    /*!!! Try to allocate buffers for new variant*/
+
+    /* Reset to just-created state */
+    /* a. Drop send-buffer */
+    ri->snd_rqd = 0;
+    /* b. "Forget" current value */
+    ri->rflags     = 0;
+    ri->timestamp  = (cx_time_t){CX_TIME_SEC_NEVER_READ,0};
+    // A special case: scalar double
+    if (dtype == CXDTYPE_DOUBLE  &&  max_nelems == 1)
+    {
+        // This code differs from cda_add_chan()'s because previous incarnation could have allocated the buffer
+        dst = ri->current_val;
+        if (dst == NULL) dst = (void*)&(ri->valbuf);
+        *((float64*)dst)   = NAN;
+        ri->current_nelems = 1;
+    }
+    else
+        ri->current_nelems = 0;
+    ri->curraw_dtype = CXDTYPE_UNKNOWN;
+    //??? Anything else? current_dtype,current_usize?
 
     return 0;
 }
@@ -1645,6 +1726,18 @@ int            cda_quant_of_ref         (cda_dataref_t ref,
     return ri->q_dtype != CXDTYPE_UNKNOWN;
 }
 
+int            cda_range_of_ref         (cda_dataref_t ref,
+                                         CxAnyVal_t    range[], cxdtype_t *range_dtype_p)
+{
+  refinfo_t      *ri = AccessRefSlot(ref);
+
+    if (CheckRef(ref) != 0) return -1;
+    range[0]       = ri->range[0];
+    range[1]       = ri->range[1];
+    *range_dtype_p = ri->range_dtype;
+    return ri->range_dtype != CXDTYPE_UNKNOWN;
+}
+
 int            cda_current_dtype_of_ref (cda_dataref_t ref)
 {
   refinfo_t      *ri = AccessRefSlot(ref);
@@ -1655,14 +1748,14 @@ int            cda_current_dtype_of_ref (cda_dataref_t ref)
 }
 
 int            cda_strings_of_ref       (cda_dataref_t  ref,
-                                         char    **ident_p,
-                                         char    **label_p,
-                                         char    **tip_p,
-                                         char    **comment_p,
-                                         char    **geoinfo_p,
-                                         char    **rsrvd6_p,
-                                         char    **units_p,
-                                         char    **dpyfmt_p)
+                                         char     **ident_p,
+                                         char     **label_p,
+                                         char     **tip_p,
+                                         char     **comment_p,
+                                         char     **geoinfo_p,
+                                         char     **rsrvd6_p,
+                                         char     **units_p,
+                                         char     **dpyfmt_p)
 {
   refinfo_t      *ri = AccessRefSlot(ref);
 
@@ -1681,19 +1774,46 @@ int            cda_strings_of_ref       (cda_dataref_t  ref,
 }
 
 int            cda_phys_rds_of_ref      (cda_dataref_t  ref,
-                                         int      *phys_count_p,
-                                         double  **rds_p)
+                                         int       *phys_count_p,
+                                         double   **rds_p)
 {
   refinfo_t      *ri = AccessRefSlot(ref);
   double         *rdp;
 
     if (CheckRef(ref) != 0) return -1;
 
+    /* Is it a channel? */
+    if (ri->in_use != REF_TYPE_CHN)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
     rdp = ri->alc_phys_rds;
     if (rdp == NULL) rdp = ri->imm_phys_rds;
 
     if (phys_count_p != NULL) *phys_count_p = ri->phys_count;
     if (rds_p        != NULL) *rds_p        = rdp;
+
+    return 0;
+}
+
+int            cda_hwinfo_of_ref        (cda_dataref_t  ref,
+                                         int       *rw_p,
+                                         cxdtype_t *dtype_p,
+                                         int       *nelems_p,
+                                         int       *srv_hwid_p,
+                                         int       *cln_hwr_p)
+{
+  refinfo_t      *ri = AccessRefSlot(ref);
+
+    if (CheckRef(ref) != 0) return -1;
+
+    if (rw_p       != NULL) *rw_p       = ri->hwinfo_rw;
+    if (dtype_p    != NULL) *dtype_p    = ri->hwinfo_dtype;
+    if (nelems_p   != NULL) *nelems_p   = ri->hwinfo_nelems;
+    if (srv_hwid_p != NULL) *srv_hwid_p = ri->hwinfo_srv_hwid;
+    if (cln_hwr_p  != NULL) *cln_hwr_p  = ri->hwr;
 
     return 0;
 }
@@ -2708,7 +2828,32 @@ void  cda_dat_p_set_hwr            (cda_dataref_t  ref, cda_hwcnref_t hwr)
     }
 }
 
-void  cda_dat_p_set_notfound       (cda_dataref_t  ref)
+void  cda_dat_p_set_hwinfo         (cda_dataref_t  ref,
+                                    int rw, cxdtype_t dtype, int nelems,
+                                    int srv_hwid)
+{
+  refinfo_t     *ri;
+
+    if (CheckRef(ref) != 0)
+    {
+        /*!!!Bark? */
+        return;
+    }
+    ri = AccessRefSlot(ref);
+
+    if (ri->in_use != REF_TYPE_CHN)
+    {
+        /*!!!Bark? */
+        return;
+    }
+
+    ri->hwinfo_rw       = rw;
+    ri->hwinfo_dtype    = dtype;
+    ri->hwinfo_nelems   = nelems;
+    ri->hwinfo_srv_hwid = srv_hwid;
+}
+
+void  cda_dat_p_report_rslvstat    (cda_dataref_t  ref, int rslvstat)
 {
   refinfo_t       *ri;
   ctxinfo_t       *ci;
@@ -2728,8 +2873,12 @@ void  cda_dat_p_set_notfound       (cda_dataref_t  ref)
     }
 
     /* Mark as NOTFOUND */
-    ri->rflags    = CXCF_FLAG_NOTFOUND;
-    ri->timestamp = (cx_time_t){CX_TIME_SEC_NEVER_READ,0};
+    if (rslvstat != CDA_RSLVSTAT_FOUND)
+    {
+        ri->rflags    = CXCF_FLAG_NOTFOUND;
+        ri->timestamp = (cx_time_t){CX_TIME_SEC_NEVER_READ,0};
+        reset_hwinfo(ri);
+    }
 
     /* Notify interested */
     ci = AccessCtxSlot(ri->cid);
@@ -2740,7 +2889,7 @@ void  cda_dat_p_set_notfound       (cda_dataref_t  ref)
     call_info.privptr1 = ci->privptr1;
     call_info.reason   = CDA_REF_R_RSLVSTAT;
     call_info.evmask   = 1 << call_info.reason;
-    call_info.info_ptr = NULL;
+    call_info.info_ptr = lint2ptr(rslvstat);
     call_info.ref      = ref;
     ForeachRefCbSlot(ref_evproc_caller, &call_info, ri);
 
@@ -2901,7 +3050,6 @@ void  cda_dat_p_set_quant          (cda_dataref_t  ref,
 
   ref_call_info_t  call_info;
 
-
     if (CheckRef(ref) != 0)
     {
         /*!!!Bark? */
@@ -2927,6 +3075,53 @@ void  cda_dat_p_set_quant          (cda_dataref_t  ref,
     call_info.uniq     = ci->uniq;
     call_info.privptr1 = ci->privptr1;
     call_info.reason   = CDA_REF_R_QUANTCHG;
+    call_info.evmask   = 1 << call_info.reason;
+    call_info.info_ptr = NULL;
+    call_info.ref      = ref;
+    ForeachRefCbSlot(ref_evproc_caller, &call_info, ri);
+
+    ci->being_processed--;
+    if (ci->being_processed == 0  &&  ci->being_destroyed)
+    {
+        TryToReleaseContext(ci);
+        return;
+    }
+}
+
+void  cda_dat_p_set_range          (cda_dataref_t  ref,
+                                    CxAnyVal_t    *range, cxdtype_t range_dtype)
+{
+  refinfo_t     *ri;
+  ctxinfo_t     *ci;
+
+  ref_call_info_t  call_info;
+
+    if (CheckRef(ref) != 0)
+    {
+        /*!!!Bark? */
+        return;
+    }
+    ri = AccessRefSlot(ref);
+
+    if (ri->in_use != REF_TYPE_CHN)
+    {
+        /*!!!Bark? */
+        return;
+    }
+    /*!!! Are any other checks sensible? */
+
+    ri->range[0]    = range[0];
+    ri->range[1]    = range[1];
+    ri->range_dtype = range_dtype;
+
+    /* Notify who requested */
+    ci = AccessCtxSlot(ri->cid);
+
+    ci->being_processed++;
+
+    call_info.uniq     = ci->uniq;
+    call_info.privptr1 = ci->privptr1;
+    call_info.reason   = CDA_REF_R_RANGECHG;
     call_info.evmask   = 1 << call_info.reason;
     call_info.info_ptr = NULL;
     call_info.ref      = ref;

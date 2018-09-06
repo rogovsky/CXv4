@@ -1,0 +1,77 @@
+# romeo:48 -- weld control, CXv4-based version
+
+include(`senkov_vip.devtype')
+include(`weld02.devtype')
+include(`cac208.devtype')
+include(`ceac124.devtype')
+include(`frolov_bfp.devtype')
+include(`frolov_bfp2.devtype')
+include(`dds300.devtype')
+
+
+dev vip    senkov_vip@sktcankoz  ~ 0,10
+dev gun    weld02@sktcankoz      ~ 0,12
+dev vac    cac208@sktcankoz      ~ 0,13 beg=0 end=5
+dev mag1_a ceac124@sktcankoz     ~ 0,14
+dev mag1_b ceac124@sktcankoz     ~ 0,15
+
+dev o_m    frolov_bfp@sktcankoz  ~ 2
+dev dds    dds300@sktcankoz      ~ 4
+dev mod    frolov_bfp2@sktcankoz ~ 7
+
+cpoint vac.tokoosedanie vac.adc1 0.5      #!!!FLOAT: 1.0/2
+cpoint vac.vacuum_mes   vac.adc0 # Just volts
+cpoint vac.second_emiss vac.adc3 0.01     #!!!FLOAT: 10.0/1000 # 10V<->1mA
+cpoint vac.revs_per_sec vac.adc5 0.006666 #!!!FLOAT: 10.0/1500 # 10V<->1500rps
+
+cpoint magsys {
+  i_acx_s  mag1_b.out2 6.6666666 #!!!FLOAT: (10/1.5)
+  i_acy_s  mag1_b.out3 6.6666666 #!!!FLOAT: (10/1.5)
+  i_afc_s  mag1_a.out0 6.6666666 #!!!FLOAT: (10/1.5)
+  i_foc_s  mag1_a.out1 6.6666666 #!!!FLOAT: (10/1.5)
+  i_c2x_s  mag1_b.out0 6.6666666 #!!!FLOAT: (10/1.5)
+  i_c2y_s  mag1_b.out1 6.6666666 #!!!FLOAT: (10/1.5)
+  i_dc1x_s mag1_a.out2 6.6666666 #!!!FLOAT: (10/1.5)
+  i_dc1y_s mag1_a.out3 6.6666666 #!!!FLOAT: (10/1.5)
+
+  i_acx_m  mag1_b.adc4 2.0 #!!!FLOAT: 2.0/1.0 # 2*2+0
+  i_acy_m  mag1_b.adc6 2.0 #!!!FLOAT: 2.0/1.0 # 3*2+0
+  i_afc_m  mag1_a.adc0 2.0 #!!!FLOAT: 2.0/1.0 # 0*2+0
+  i_foc_m  mag1_a.adc2 2.0 #!!!FLOAT: 2.0/1.0 # 1*2+0
+  i_c2x_m  mag1_b.adc0 2.0 #!!!FLOAT: 2.0/1.0 # 0*2+0
+  i_c2y_m  mag1_b.adc2 2.0 #!!!FLOAT: 2.0/1.0 # 1*2+0
+  i_dc1x_m mag1_a.adc4 2.0 #!!!FLOAT: 2.0/1.0 # 2*2+0
+  i_dc1y_m mag1_a.adc6 2.0 #!!!FLOAT: 2.0/1.0 # 3*2+0
+
+  i_acx_v  mag1_b.adc5 3.13953 #!!!FLOAT: 2.7/0.86 # 2*2+1
+  i_acy_v  mag1_b.adc7 3.13953 #!!!FLOAT: 2.7/0.86 # 3*2+1
+  i_afc_v  mag1_a.adc1 3.13953 #!!!FLOAT: 2.7/0.86 # 0*2+1
+  i_foc_v  mag1_a.adc3 3.13953 #!!!FLOAT: 2.7/0.86 # 1*2+1
+  i_c2x_v  mag1_b.adc1 3.13953 #!!!FLOAT: 2.7/0.86 # 0*2+1
+  i_c2y_v  mag1_b.adc3 3.13953 #!!!FLOAT: 2.7/0.86 # 1*2+1
+  i_dc1x_v mag1_a.adc5 3.13953 #!!!FLOAT: 2.7/0.86 # 2*2+1
+  i_dc1y_v mag1_a.adc7 3.13953 #!!!FLOAT: 2.7/0.86 # 3*2+1 
+}
+
+cpoint verona {
+  cpoint vip {
+    cpoint setts {
+    }
+    cpoint mes {
+    }
+  }
+
+  cpoint gunctl {
+  }
+
+  cpoint magsys.is magsys # Maps to GLOBAL magsys namespace
+
+  cpoint frolov_bfp16{
+  }
+
+  cpoint sync.dds300 {
+  }
+
+  cpoint alarms {
+  }
+}

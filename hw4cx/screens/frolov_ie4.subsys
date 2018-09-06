@@ -1,0 +1,58 @@
+
+define(`IE4_OUT_LINE', `
+    knob   a$1 "A"  text  "withlabel"   ""    "%4.0f" r:a$1
+    disp   v$1 "=>" text  "withlabel"   "ns" "%10.1f" r:v$1
+    ifelse($1, `0', `noop', `
+    knob   k$1 "/"  text  "withlabel"   ""    "%2.0f" r:k$1
+    ')
+    knob off$1 "-"  onoff "color=black" ""         "" r:off$1
+')
+
+grouping main IE4 "Frolov's IE4" \
+         grid "noshadow,notitle,nocoltitles,norowtitles" \
+	 1 0 0 "" "" "" 5 {
+    
+    container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+              3 content:3 {
+        container "" "" grid "noshadow,notitle,nocoltitles" \
+                str2:"Fclk\tFin\tKclk" content:3 {
+            selector fclk    "Fclk" selector "nolabel,align=left" r:fclk_sel \
+                     items:"#TFin\tQuartz 25MHz\t-locked-\tQuartz 25MHz"
+            knob     fin_qns "Fin"  text "" "ns" "%7.1f"          r:f_in_ns
+            selector kclk    "/" selector "align=right"           r:kclk_n   \
+                     items:"#T1\t2\t4\t8" layinfo:horz=right
+        }
+        noop - - vseparator layinfo:vert=fill
+        container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
+                content:3 {
+            selector start   "Start"   selector ""                 r:start_sel \
+                     items:"#TSTART\tCAMAC Y1\t50Hz"  layinfo:horz=right
+            selector mode    "Mode"    selector                    r:mode    \
+                     items:"#TContinuous\tBUM"        layinfo:horz=right
+            knob   disable "Disable" onoff  "color=black" r:alloff \
+                                                      layinfo:horz=right
+        }
+    }
+    noop - - hseparator layinfo:horz=fill
+    container bum "" grid "noshadow,notitle,nocoltitles" \
+            rowtitles:"BUM" ncols:5 content:5 {
+        knob   reBUM "" text - - "%4.0f" r:re_bum
+        button start "Start" button      r:bum_start
+        button stop  "Stop"  button      r:bum_stop
+        disp   going ""      led         r:bum_going
+        disp   ieBUM "" text - - "%4.0f" r:ie_bum
+    }
+    noop - - hseparator layinfo:horz=fill
+    container "" "" grid "noshadow,notitle,nocoltitles" 4 \
+            str2:"1\t2\t3\t4" content:16 {
+        IE4_OUT_LINE(0)
+        IE4_OUT_LINE(1)
+        IE4_OUT_LINE(2)
+        IE4_OUT_LINE(3)
+    }
+}
+
+wintitle main "Frolov's IE4 diagnostic app"
+winname  main frolov_ie4
+winclass main Frolov_IE4
+winopts  main compact

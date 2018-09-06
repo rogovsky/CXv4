@@ -105,12 +105,10 @@ static void PzframeDataEvproc(int            uniq,
 ////fprintf(stderr, "%s %s %p\n", strcurtime(), __FUNCTION__, pfr);
     if (reason == CDA_REF_R_RSLVSTAT)
     {
-        if (ptr2lint(info_ptr) == 0)
-        {
+        if (ptr2lint(info_ptr) != CDA_RSLVSTAT_FOUND)
             for (cn = 0;  cn < ftd->chan_count;  cn++)
                 pfr->cur_data[cn].rflags = CXCF_FLAG_NOTFOUND;
-            PzframeDataCallCBs(pfr, PZFRAME_REASON_RSLVSTAT, 0);
-        }
+        PzframeDataCallCBs(pfr, PZFRAME_REASON_RSLVSTAT, ptr2lint(info_ptr));
         return;
     }
 

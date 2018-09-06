@@ -46,6 +46,8 @@ int main(int argc, char *argv[])
   const char   *p_cl; // ':'
   const char   *p_dt; // '.'
 
+  int           r;
+
     set_signal(SIGPIPE, SIG_IGN);
 
     MotifKnobs_cdaRegisterKnobset();
@@ -155,6 +157,17 @@ int main(int argc, char *argv[])
                {R,D}-conversion till {R,D}s become known */
             file_to_load = argv[arg_n];
     }
+
+    /* Check if sysname wasn't specified */
+    if (ds == NULL)
+    {
+        fprintf(stderr,
+                "%s: this program should be run either via symlink or as\n"
+                "%s <SYSNAME>\n",
+                argv[0], argv[0]);
+        exit(1);
+    }
+
     CdrSetSubsystemRO(ds, option_readonly);
 #else
     arg_n = 1;
@@ -195,6 +208,16 @@ int main(int argc, char *argv[])
         fprintf(stderr, "%s: Realize(%s): %s\n",
                 argv[0], sysname, CdrLastErr());
         exit(1);
+    }
+
+    if (file_to_load != NULL)
+    {
+        r = CdrLoadSubsystemMode(ds, file_to_load,
+                                 CDR_MODE_OPT_PART_EVERYTHING,
+                                 NULL, 0);
+        if (r != 0)
+            fprintf(stderr, "%s: failed to load \"%s\": %s\n",
+                    argv[0], file_to_load, strerror(errno));
     }
 
     /* Finally, run the application */

@@ -463,6 +463,8 @@ int         ppf4td_nextc     (ppf4td_ctx_t *ctx, int *ch_p)
 int         ppf4td_ungetchars(ppf4td_ctx_t *ctx, const char *buf, int len)
 {
     UnGetStr(ctx, buf, len);
+
+    return 0; /*!!! Should better get "overflow" result from UnGetStr() */
 }
 
 int         ppf4td_is_at_eol (ppf4td_ctx_t *ctx)
@@ -499,12 +501,15 @@ int         ppf4td_get_ident (ppf4td_ctx_t *ctx, int flags, char *buf, size_t bu
             ((flags & PPF4TD_FLAG_DASH) == 0  ||  ch != '-')  &&
             ((flags & PPF4TD_FLAG_DOT)  == 0  ||  ch != '.')) break;
 
-        if (x >= bufsize)
+        if ((flags & PPF4TD_FLAG_JUST_SKIP) == 0)
         {
-            errno = PPF4TD_E2LONG;
-            return -1;
+            if (x >= bufsize)
+            {
+                errno = PPF4TD_E2LONG;
+                return -1;
+            }
+            buf[x++] = ch;
         }
-        buf[x++] = ch;
         ppf4td_nextc(ctx, &ch);
     }
     if (x == 0)
@@ -512,13 +517,13 @@ int         ppf4td_get_ident (ppf4td_ctx_t *ctx, int flags, char *buf, size_t bu
         errno = PPF4TD_EIDENT;
         return -1;
     }
-    buf[x++] = '\0';
+    if ((flags & PPF4TD_FLAG_JUST_SKIP) == 0) buf[x++] = '\0';
 
     //fprintf(stderr, ":%d[%d]=<%s>\n", ctx->_curline, x, buf);
     return 0;
 }
 
-int         ppf4td_get_int   (ppf4td_ctx_t *ctx, int flags, int  *vp,  int   *base_p)
+int         ppf4td_get_int   (ppf4td_ctx_t *ctx, int flags, int  *vp,  int defbase, int *base_p)
 {
   int  r;
   int  ch;
@@ -530,12 +535,18 @@ int         ppf4td_get_int   (ppf4td_ctx_t *ctx, int flags, int  *vp,  int   *ba
   int  val;
   int  neg;
 
-
-    for (base = 10, pos = 0, rqd = 1, val = 0, neg = 0;
-         ;
-                    pos++)
+    if (defbase < 0)
     {
-        r = ppf4td_nextc(ctx, &ch);
+        errno = EINVAL;
+        return -1;
+    }
+
+    base = defbase > 0? defbase : 10;
+    for (pos = 0, rqd = 1, val = 0, neg = 0;
+         ;
+         pos++)
+    {
+        r = ppf4td_peekc(ctx, &ch);
         if (r <= 0) goto END_PARSE;
 
         if      (ch >= '0'  &&  ch <= '9') digit = ch - '0';
@@ -552,17 +563,23 @@ int         ppf4td_get_int   (ppf4td_ctx_t *ctx, int flags, int  *vp,  int   *ba
         {
             val = (val * base) + digit;
             rqd = 0;
-            if (pos == 0  &&  digit == 0) base = 8;
+            if (pos == 0  &&  digit == 0  &&  defbase <= 0) base = 8;
         }
         else if (pos == 1  &&  val == 0  &&
-                 (ch == 'b'  ||  ch == 'B'  ||  ch == 'x'  ||  ch == 'X'))
+                 (
+                  ((ch == 'b'  ||  ch == 'B')  &&  (defbase <= 0  ||  defbase == 2))
+                  ||
+                  ((ch == 'x'  ||  ch == 'X')  &&  (defbase <= 0  ||  defbase == 16))
+                 )
+                )
         {
             base = (toupper(ch) == 'B')? 2 : 16;
             rqd = 1;
         }
         else goto END_PARSE;
 
- NEXT_CH:;
+ NEXT_CH:
+        ppf4td_nextc(ctx, &ch);
     }
  END_PARSE:
     if      (r < 0)
@@ -722,16 +739,19 @@ int         ppf4td_get_string(ppf4td_ctx_t *ctx, int flags, char *buf, size_t bu
         }
 
         /* Okay, finally store the character */
-        if (x >= bufsize)
+        if ((flags & PPF4TD_FLAG_JUST_SKIP) == 0)
         {
-            errno = PPF4TD_E2LONG;
-            return -1;
+            if (x >= bufsize)
+            {
+                errno = PPF4TD_E2LONG;
+                return -1;
+            }
+            buf[x++] = ch;
         }
-        buf[x++] = ch;
  NEXT_CHAR:;
     }
  END_READ:
-    buf[x++] = '\0';
+    if ((flags & PPF4TD_FLAG_JUST_SKIP) == 0) buf[x++] = '\0';
 
     //fprintf(stderr, ".%d[%d]=<%s>\n", ctx->_curline, x, buf);
     return 0;

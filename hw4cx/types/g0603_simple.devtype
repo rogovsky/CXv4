@@ -1,0 +1,4 @@
+devtype g0603_simple w8i {
+	code<0-7>	0
+	code_imm<0-7>	0
+}

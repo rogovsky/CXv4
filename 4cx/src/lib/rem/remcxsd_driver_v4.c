@@ -357,6 +357,37 @@ void SetChanQuant     (int devid,
         FreeDevID(devid);
 }
 
+void SetChanRange     (int devid,
+                       int first, int count,
+                       CxAnyVal_t minv, CxAnyVal_t maxv, cxdtype_t range_dtype)
+{
+  remcxsd_dev_t       *dev = remcxsd_devices + devid;
+  struct
+  {
+      remdrv_pkt_header_t            hdr;
+      remdrv_data_set_range_t        data;
+  } pkt;
+  size_t               r_size = sizeof_cxdtype(range_dtype);
+
+    CHECK_SANITY_OF_DEVID();
+    CHECK_LOG_CORRECT(r_size > sizeof(pkt.data.range_min),
+                      return,
+                      "(%d,%d) range_dtype=%d, sizeof_cxdtype()=%zd, >sizeof(range_min)=%zd",
+                      first, count,
+                      (int)range_dtype, r_size, sizeof(pkt.data.range_min));
+
+    bzero(&pkt, sizeof(pkt));
+    pkt.hdr.pktsize = sizeof(pkt);
+    pkt.hdr.command = REMDRV_C_RANGE;
+    pkt.hdr.var.group.first = first;
+    pkt.hdr.var.group.count = count;
+    pkt.data.range_dtype    = range_dtype;
+    memcpy(pkt.data.range_min, &minv, r_size);
+    memcpy(pkt.data.range_max, &maxv, r_size);
+    if (fdio_send(dev->fhandle, &pkt, sizeof(pkt)) < 0)
+        FreeDevID(devid);
+}
+
 void SetChanReturnType(int devid,
                        int first, int count,
                        int is_autoupdated)

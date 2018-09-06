@@ -840,6 +840,7 @@ static void ProcessInData     (int devid, privrec_t *me,
   remdrv_data_set_rds_t         *rds_p;
   remdrv_data_set_fresh_age_t   *fra_p;
   remdrv_data_set_quant_t       *qnt_p;
+  remdrv_data_set_range_t       *rng_p;
   remdrv_data_set_return_type_t *rtt_p;
 
   int                            cur_loglevel;
@@ -876,6 +877,10 @@ static void ProcessInData     (int devid, privrec_t *me,
   cxdtype_t            q_dtype;
   size_t               q_dsize;
   CxAnyVal_t           q_val;
+
+  cxdtype_t            range_dtype;
+  size_t               range_dsize;
+  CxAnyVal_t           range_val[2];
 
     ////fprintf(stderr, "inpktsize=%d command=0x%08x\n", inpktsize, command);
     switch (command)
@@ -1085,7 +1090,7 @@ static void ProcessInData     (int devid, privrec_t *me,
             if (q_dsize > sizeof(qnt_p->q_data))
             {
                 DoDriverLog(devid, DRIVERLOG_ERR,
-                            "REMDRV_C_QUANT (first=%d,count=%d): q_dtype=%d, sizeof_cxdtype()=%zd, >sizeof(q_data)=%d",
+                            "REMDRV_C_QUANT (first=%d,count=%d): q_dtype=%d, sizeof_cxdtype()=%zd, >sizeof(q_data)=%zd",
                             me->r2l_i32(pkt->var.group.first),
                             me->r2l_i32(pkt->var.group.count),
                             q_dtype, q_dsize, sizeof(qnt_p->q_data));
@@ -1103,6 +1108,54 @@ static void ProcessInData     (int devid, privrec_t *me,
                          me->r2l_i32(pkt->var.group.first),
                          me->r2l_i32(pkt->var.group.count),
                          q_val, q_dtype);
+            break;
+
+        case REMDRV_C_RANGE:
+            me->fail_count = 0;
+            expsize = sizeof(*pkt) + sizeof(*rng_p);
+            if (inpktsize < expsize)
+            {
+                DoDriverLog(devid, DRIVERLOG_ERR,
+                            "REMDRV_C_RANGE inpktsize=%zd, less than %zd",
+                            inpktsize, expsize);
+                return;
+            }
+            rng_p = (void *)(pkt->data);
+            range_dtype = me->r2l_i32(rng_p->range_dtype);
+            range_dsize = sizeof_cxdtype(range_dtype);
+            if (range_dsize > sizeof(rng_p->range_min))
+            {
+                DoDriverLog(devid, DRIVERLOG_ERR,
+                            "REMDRV_C_RANGE (first=%d,count=%d): range_dtype=%d, sizeof_cxdtype()=%zd, >sizeof(range_min)=%zd",
+                            me->r2l_i32(pkt->var.group.first),
+                            me->r2l_i32(pkt->var.group.count),
+                            range_dtype, range_dsize, sizeof(rng_p->range_min));
+            }
+            bzero(range_val, sizeof(range_val));
+            if      (range_dsize == 2)
+            {
+                me->memcpy_r2l_i16((void*)(range_val + 0), (void*)(rng_p->range_min), 1);
+                me->memcpy_r2l_i16((void*)(range_val + 1), (void*)(rng_p->range_max), 1);
+            }
+            else if (range_dsize == 4)
+            {
+                me->memcpy_r2l_i32((void*)(range_val + 0), (void*)(rng_p->range_min), 1);
+                me->memcpy_r2l_i32((void*)(range_val + 1), (void*)(rng_p->range_max), 1);
+            }
+            else if (range_dsize == 8)
+            {
+                me->memcpy_r2l_i64((void*)(range_val + 0), (void*)(rng_p->range_min), 1);
+                me->memcpy_r2l_i64((void*)(range_val + 1), (void*)(rng_p->range_max), 1);
+            }
+            else
+            {
+                memcpy(range_val + 0, rng_p->range_min, range_dsize);
+                memcpy(range_val + 1, rng_p->range_max, range_dsize);
+            }
+            SetChanRange(devid,
+                         me->r2l_i32(pkt->var.group.first),
+                         me->r2l_i32(pkt->var.group.count),
+                         range_val[0], range_val[1], range_dtype);
             break;
 
         case REMDRV_C_RTTYPE:

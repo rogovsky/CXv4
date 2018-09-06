@@ -53,9 +53,10 @@ static int rp2rn(refrec_t *rp)
 static FILE          *outfile         = NULL;
 
 static int            option_noexpand = 0;
-static char          *option_baseref = NULL;
-static char          *option_defpfx  = NULL;
+static char          *option_baseref  = NULL;
+static char          *option_defpfx   = NULL;
 static int            option_help     = 0;
+static int            option_headers  = 0;
 static const char    *option_outfile  = NULL;
 static int            option_period   = 0;
 static int            option_times    = 0;
@@ -64,6 +65,9 @@ static double         option_timelim  = 0;
 
 static cda_context_t  the_cid;
 static int            nrefs          = 0;
+
+static struct timeval time1st;
+static int            time1st_got    = 0;
 
 static int            times_done;
 
@@ -77,7 +81,21 @@ static int data_printer(refrec_t *rp, void *privptr)
 }
 static void PrintAllData(void)
 {
-    fprintf(outfile, "%s ", strcurtime_msc());
+  struct timeval timenow;
+  struct timeval timeage; // "Time Age", or akin "mileage"
+
+    gettimeofday(&timenow, NULL);
+    if (!time1st_got)
+    {
+        time1st     = timenow;
+        time1st_got = 1;
+    }
+    timeval_subtract(&timeage, &timenow, &time1st);
+
+    fprintf(outfile, "%lu.%03d %s %7lu.%03d ",
+            (long) timenow.tv_sec, (int)(timenow.tv_usec / 1000),
+            stroftime_msc(&timenow, "-"),
+            (long) timeage.tv_sec, (int)(timeage.tv_usec / 1000));
     ForeachRefRecSlot(data_printer, NULL);
     fprintf(outfile, "\n");
     
@@ -110,7 +128,7 @@ static void ProcessDatarefEvent(int            uniq,
 
     if      (reason == CDA_REF_R_RSLVSTAT)
     {
-        if (ptr2lint(info_ptr) == 0)
+        if (ptr2lint(info_ptr) == CDA_RSLVSTAT_NOTFOUND)
         {
             if (cda_src_of_ref(rp->ur.ref, &src_p) < 0) src_p = "UNKNOWN";
             if (option_relative)                        src_p = rp->ur.spec;
@@ -197,7 +215,7 @@ static int  ActivateChannel(refrec_t *rp, void *privptr)
                               0, NULL, NULL);
     if (rp->ur.ref == CDA_DATAREF_ERROR)
     {
-        fprintf(stderr, "%s %s: cda_add_dchan(\"%s\"): %s\n",
+        fprintf(stderr, "%s %s: cda_add_chan(\"%s\"): %s\n",
                 strcurtime(), argv0, rp->ur.spec, cda_last_err());
         /* Note: we do NOT exit(EC_ERR) and allow other references to proceed */
 
@@ -255,6 +273,15 @@ static void finish_proc(int uniq, void *privptr1,
     sl_break();
 }
 
+static int header_printer(refrec_t *rp, void *privptr)
+{
+    fprintf(outfile, " ");
+    if (reprof_cxdtype(rp->ur.dtype) == CXDTYPE_REPR_FLOAT) 
+        fprintf(outfile, "%s:", rp->ur.dpyfmt);
+    fprintf    (outfile, "%s",  rp->ur.spec);
+
+    return 0;
+}
 int main(int argc, char *argv[])
 {
   int            c;
@@ -269,7 +296,7 @@ int main(int argc, char *argv[])
 
     set_signal(SIGPIPE, SIG_IGN);
 
-    while ((c = getopt(argc, argv, "1b:d:f:hp:o:rt:T:")) != EOF)
+    while ((c = getopt(argc, argv, "1b:d:f:hHp:o:rt:T:")) != EOF)
         switch (c)
         {
             case '1':
@@ -289,7 +316,11 @@ int main(int argc, char *argv[])
                 break;
 
             case 'h':
-                option_help = 1;
+                option_help     = 1;
+                break;
+
+            case 'H':
+                option_headers  = 1;
                 break;
 
             case 'o':
@@ -327,6 +358,7 @@ int main(int argc, char *argv[])
                "  -1          -- do NOT expand {} and <> in channel names\n"
                "  -b BASEREF\n"
                "  -f FILENAME -- read list of channels from FILENAME (one per line)\n"
+               "  -H          -- print line of headers at start\n"
                "  -p PERIOD   -- print all data every PERIOD milliseconds\n"
                "  -o OUTFILE  -- send output to OUTFILE\n"
                "  -r          -- ignored (for compatibility)\n"
@@ -391,6 +423,13 @@ int main(int argc, char *argv[])
                     nth == 0? "" : ", ",
                     nth, cda_status_srv_name(the_cid, nth));
         fprintf(outfile, "}\n");
+    }
+
+    if (option_headers)
+    {
+        fprintf(outfile, "#Time(s-01.01.1970) YYYY-MM-DD-HH:MM:SS.mss secs-since0");
+        ForeachRefRecSlot(header_printer, NULL);
+        fprintf(outfile, "\n");
     }
 
     if (option_timelim > 0)

@@ -41,7 +41,14 @@ grouping main CDAC20 "CDAC20" \
                       3 nattl:2 content:5 {
                 disp t_mode "" text dpyfmt:%1.0f r:__t_mode
                 mesg descr  "" text "columns=30" r:@t100:out_tab_errdescr
-                noop
+                container "" "" grid notitle,noshadow,norowtitles \
+                        ncols:eval(CDAC20_CHAN_OUT_n_COUNT+1) \
+                        content:eval(CDAC20_CHAN_OUT_n_COUNT+1) {
+                    vector times Times matrix number_cells "%7.3f" 31:out_tab_times
+                    forloop(`N', 0, eval(CDAC20_CHAN_OUT_n_COUNT-1), `
+                    vector tabN  N     matrix -            "%7.4f" 31:out_tab`'N
+                    ')
+                }
                 noop - - vseparator layinfo:vert=fill
                 container "" "" grid "noshadow,notitle,nocoltitles,norowtitles" \
                           content:6 {

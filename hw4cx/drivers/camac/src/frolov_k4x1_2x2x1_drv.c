@@ -77,7 +77,7 @@ static void frolov_k4x1_2x2x1_rw_p(int devid, void *devptr,
 }
 
 
-DEFINE_CXSD_DRIVER(frolov_k4x1_2x2x1, "Frolov K2X1 2x 2x1",
+DEFINE_CXSD_DRIVER(frolov_k4x1_2x2x1, "Frolov K4X1 2x 2x1",
                    NULL, NULL,
                    sizeof(frolov_k4x1_2x2x1_privrec_t), NULL,
                    1, 1,

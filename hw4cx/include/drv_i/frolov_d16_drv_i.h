@@ -2,31 +2,40 @@
 #define __FROLOV_D16_DRV_I_H
 
 
-// w30i
+// w40i,w10d,r50i
 enum
 {
-    FROLOV_D16_NUMOUTPUTS     = 4,
+    FROLOV_D16_NUMOUTPUTS      = 4,
     
-    FROLOV_D16_CHAN_A_BASE    = 0,
-    FROLOV_D16_CHAN_B_BASE    = 4,
-    FROLOV_D16_CHAN_V_BASE    = 8,
-    FROLOV_D16_CHAN_OFF_BASE  = 12,
-    FROLOV_D16_CHAN_ALLOFF    = 16, // This chan MUST follow individual offs
-    FROLOV_D16_CHAN_DO_SHOT   = 17,
+    FROLOV_D16_CHAN_A_n_base   = 0,
+    FROLOV_D16_CHAN_B_n_base   = 4,
+    // Ex-_V_n_base   = 8,
+    FROLOV_D16_CHAN_OFF_n_base = 12,
+    FROLOV_D16_CHAN_ALLOFF     = 16, // This chan MUST follow individual offs
+    FROLOV_D16_CHAN_DO_SHOT    = 17,
 
-    FROLOV_D16_CHAN_KSTART    = 18,
-    FROLOV_D16_CHAN_KCLK_N    = 19,
-    FROLOV_D16_CHAN_FCLK_SEL  = 20,
-    FROLOV_D16_CHAN_START_SEL = 21,
-    FROLOV_D16_CHAN_MODE      = 22,
-    FROLOV_D16_CHAN_F_IN_NS   = 23,
-    FROLOV_D16_CHAN_WAITING   = 24,
-    FROLOV_D16_CHAN_UNUSED2   = 25,
+    FROLOV_D16_CHAN_KSTART     = 18,
+    FROLOV_D16_CHAN_KCLK_N     = 19,
+    FROLOV_D16_CHAN_FCLK_SEL   = 20,
+    FROLOV_D16_CHAN_START_SEL  = 21,
+    FROLOV_D16_CHAN_MODE       = 22,
+    FROLOV_D16_CHAN_UNUSED23   = 23,
+    FROLOV_D16_CHAN_UNUSED24   = 24,
+    FROLOV_D16_CHAN_ONES_STOP  = 25,
 
-    FROLOV_D16_CHAN_AUTO_SHOT = 26,
-    FROLOV_D16_CHAN_AUTO_SECS = 27,
+    FROLOV_D16_CHAN_AUTO_SHOT  = 26,
+    FROLOV_D16_CHAN_AUTO_SECS  = 27,
 
-    FROLOV_D16_NUMCHANS       = 30
+    FROLOV_D16_DOUBLE_CHAN_base = 40, FROLOV_D16_DOUBLE_CHAN_count = 10,
+
+    FROLOV_D16_CHAN_V_n_base   = 40,  // double
+    FROLOV_D16_CHAN_F_IN_HZ    = 48,  // double
+    FROLOV_D16_CHAN_F_IN_NS    = 49,  // double
+
+    FROLOV_D16_CHAN_WAS_START  = 61,
+    FROLOV_D16_CHAN_LAM_SIG    = 62,
+
+    FROLOV_D16_NUMCHANS        = 100
 };
 
 enum

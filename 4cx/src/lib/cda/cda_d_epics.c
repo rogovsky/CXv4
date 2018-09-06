@@ -142,7 +142,9 @@ static int  cda_d_epics_init_m(void)
 CDA_DEFINE_DAT_PLUGIN(epics, "EPICS (Channel Access) data-access plugin",
                       cda_d_epics_init_m, NULL,
                       sizeof(cda_d_epics_privrec_t),
+                      CDA_DAT_P_FLAG_CHAN_TYPE_CHANGE_SUPPORTED/*!!!???*/,
                       '.', ':', '@',
                       cda_d_epics_new_chan, NULL,
+                      NULL,
                       NULL,                 NULL,
                       cda_d_epics_new_srv,  cda_d_epics_del_srv);

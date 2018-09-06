@@ -85,7 +85,9 @@ static int smc8_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE,
                                smc8_ff, smc8_in,
-                               SMC8_NUMCHANS*2/*!!!*/);
+                               SMC8_NUMCHANS*2/*!!!*/,
+                               CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET |
+                               CANKOZ_LYR_OPTION_FFPROC_AFTER_RESET);
     if (me->handle < 0) return me->handle;
 
     SetChanReturnType(devid, SMC8_CHAN_HW_VER, 1, IS_AUTOUPDATED_TRUSTED);
@@ -102,14 +104,14 @@ static void smc8_ff (int   devid    __attribute__((unused)),
   int         hw_ver;
   int         sw_ver;
 
-    me->lvmt->get_dev_ver(me->handle, &hw_ver, &sw_ver, NULL);
-    ReturnInt32Datum(me->devid, SMC8_CHAN_HW_VER, hw_ver, 0);
-    ReturnInt32Datum(me->devid, SMC8_CHAN_SW_VER, sw_ver, 0);
-
-    if (is_a_reset)
+    if (is_a_reset == CANKOZ_LYR_OPTION_FFPROC_BEFORE_RESET)
     {
         bzero(&(me->ctl), sizeof(me->ctl));
     }
+
+    me->lvmt->get_dev_ver(me->handle, &hw_ver, &sw_ver, NULL);
+    ReturnInt32Datum(me->devid, SMC8_CHAN_HW_VER, hw_ver, 0);
+    ReturnInt32Datum(me->devid, SMC8_CHAN_SW_VER, sw_ver, 0);
 }
 
 static void send_wrctl_cmd(privrec_t *me, int l)

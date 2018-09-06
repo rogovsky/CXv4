@@ -1,4 +1,4 @@
-devtype kurrez_cac208 w50i,r50i {
+devtype kurrez_cac208 w50i,r42i,r6d,r1t100,r1i {
 	Uset		0
 	Iexc		1
 	Finj		2
@@ -25,10 +25,15 @@ devtype kurrez_cac208 w50i,r50i {
 
 	ilk		82
 
-	Uset_min	90,
-	Iexc_min	91,
+	Uset_min	90
+	Iexc_min	91
 
-	errdescr	98,
+        Pincd1		92
+        Prefl1		93
+        Pincd2		94
+        Prefl2		95
+
+	errdescr	98
 
 	vdev_state	99
 }

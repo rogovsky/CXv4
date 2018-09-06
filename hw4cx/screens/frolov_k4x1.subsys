@@ -1,0 +1,11 @@
+grouping main K4X1 "Frolov's K4X1" \
+        grid "nodecor" ncols:2 content:2 {
+
+    selector in  "Input" choicebs r:in_sel  items:"-\t1\t2\t3\t4"
+    selector out "->"    choicebs r:out_sel items:"none\tOut1\tOutIn\tOut1+OutIn"
+}
+
+wintitle main "Frolov's K4X1 diagnostic app"
+winname  main frolov_k4x1
+winclass main Frolov_K4X1
+winopts  main ""

@@ -55,6 +55,8 @@ void  CdrProcessKnobs    (DataSubsys subsys, int cause_conn_n,  int options,
 
 int   CdrSetKnobValue(DataSubsys subsys, DataKnob  k, double      v, int options);
 int   CdrSetKnobText (DataSubsys subsys, DataKnob  k, const char *s, int options);
+int   CdrSetKnobVect (DataSubsys subsys, DataKnob  k, const double *data, int nelems,
+                                                                     int options);
 
 int   CdrAddHistory  (DataKnob  k, int histring_len);
 void  CdrShiftHistory(DataSubsys subsys);

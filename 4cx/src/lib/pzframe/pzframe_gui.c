@@ -140,7 +140,7 @@ static void PzframeGuiEventProc(pzframe_data_t *pfr,
     }
     else if (reason == PZFRAME_REASON_RSLVSTAT)
     {
-        if (info_int == 0)
+        if (info_int != CDA_RSLVSTAT_FOUND)
             for (cn = 0;  cn < ftd->chan_count;  cn++)
                 if (gui->k_params[cn] != NULL)
                     SetSimpleKnobState(gui->k_params[cn], KNOBSTATE_NOTFOUND);

@@ -20,13 +20,10 @@ define(`DL200ME_F_I_LINE', `
 ')
 
 define(`DL200ME_F_TITLE_s',
-       ifelse(DL200ME_F_TITLE,     `',
-       `"Fast DL200ME"',
-       DL200ME_F_TITLE))
+       ifdef(DL200ME_F_TITLE, DL200ME_F_TITLE, `"Fast DL200ME"'))
 define(`DL200ME_F_ROWTITLES_s',
-       ifelse(DL200ME_F_ROWTITLES, `',
-       `"forloop(`N', 1, DL200ME_F_NUMOUTPUTS, `N\t')"',
-       DL200ME_F_ROWTITLES))
+       ifdef(DL200ME_F_ROWTITLES, DL200ME_F_ROWTITLES,
+       `"forloop(`N', 1, DL200ME_F_NUMOUTPUTS, `N\t')"'))
 
 grouping main DL200ME_F DL200ME_F_TITLE_s \
          grid "nocoltitles,norowtitles" param3:2 content:5 {

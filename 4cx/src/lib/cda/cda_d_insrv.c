@@ -214,11 +214,33 @@ static void UnRegisterInsrvHwr(insrv_lcn_t    lcn,
                                cxsd_gchnid_t  gcid, cda_hwcnref_t  client_hwr)
 {
   lcninfo_t     *p          = AccessLcnSlot(lcn);
+  int            n;
+  int            left;
 
     CxsdHwDelChanEvproc(p->uniq, lint2ptr(lcn),
                         gcid,
                         GCN_EVMASK,
                         GcnEvproc, lint2ptr(client_hwr));
+
+#if 0
+    /* NO-o-o-o!!!
+       We can NOT just ditch all gcid occurences in periodics[],
+       because those can correspond to OTHER hwrs mapping to same
+       hardware channels (via different names/cpoints).
+       So, we just comment-out this unfinished piece of code... */
+    for (n = 0;  n < p->periodics_used;  /* NO "n++"! It is done inside */)
+        if (p->periodics[n] == gcid)
+        {
+            left = p->periodics_used - n - 1;
+            if (left > 0)
+                memcpy(p->periodics + n,
+                       p->periodics + n + 1,
+                       sizeof(p->periodics[0]) * left);
+            p->periodics_used--;
+        }
+        else
+            n++;
+#endif
 }
 
 //#### Data-access plugin ############################################
@@ -456,6 +478,8 @@ static int  cda_d_insrv_new_chan(cda_dataref_t ref, const char *name,
     chn_p = cxsd_hw_channels + hi->gcid;
 
     cda_dat_p_set_hwr      (ref, hwr);
+    cda_dat_p_set_hwinfo   (ref, chn_p->rw, chn_p->dtype, chn_p->max_nelems, cpid);
+    cda_dat_p_report_rslvstat(ref, CDA_RSLVSTAT_FOUND);
     cda_dat_p_set_ready    (ref, 1);
     // Set properties
     cda_dat_p_set_phys_rds (ref, phys_count, rds_buf);
@@ -603,7 +627,9 @@ static void cda_d_insrv_term_m(void)
 CDA_DEFINE_DAT_PLUGIN(insrv, "Insrv (inserver) data-access plugin",
                       cda_d_insrv_init_m, cda_d_insrv_term_m,
                       sizeof(cda_d_insrv_privrec_t),
+                      CDA_DAT_P_FLAG_CHAN_TYPE_CHANGE_SUPPORTED,
                       '.', ':', '\0',
                       cda_d_insrv_new_chan, cda_d_insrv_del_chan,
+                      NULL,
                       cda_d_insrv_snd_data, NULL,
                       cda_d_insrv_new_srv,  cda_d_insrv_del_srv);

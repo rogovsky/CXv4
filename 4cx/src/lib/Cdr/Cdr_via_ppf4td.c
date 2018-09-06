@@ -281,7 +281,7 @@ static int RNG_fparser(parse_rec_t *rp, const char *name, void *kfp)
 static int STR_fparser(parse_rec_t *rp, const char *name, void *kfp)
 {
   char  **dp = kfp;
-  char    buf[1000];
+  char    buf[4000]; // 21.08.2018: was 1000, but too little for long formulas
   int     r;
 
     r = ppf4td_get_string(rp->ctx, STRING_PARSE_FLAGS, buf, sizeof(buf));
@@ -482,6 +482,28 @@ static int REF_fparser(parse_rec_t *rp, const char *name, void *kfp)
     return MSTR_fparser(rp, name, kfp);
 }
 
+static int VECTREF_fparser(parse_rec_t *rp, const char *name, void *kfp)
+{
+  dataknob_vect_src_t *dp = kfp;
+  int                  r;
+  int                  ch;
+
+    r = ppf4td_get_int(rp->ctx, 0, &(dp->max_nelems), 10, NULL);
+    if (r < 0)
+        return BARK("MAX_NELEMS (integer) expected in %s specification; %s",
+                    name, ppf4td_strerror(errno));
+    if (dp->max_nelems < 1)
+        return BARK("max_nelems should be >=1 (not %d) in %s specification",
+                    dp->max_nelems, name);
+
+    /* An opening brace */
+    if (NextCh(rp, name, &ch) < 0) return -1;
+    if (ch != ':')
+        return BARK("':' expected in %s specification", name);
+
+    return REF_fparser(rp, name, &(dp->src));
+}
+
 static int CONTENT_fparser(parse_rec_t *rp, const char *name, void *kfp)
 {
   DataKnob  k  = (DataKnob)(((int8 *)kfp) - offsetof(data_knob_t, u.c.content));
@@ -631,8 +653,18 @@ static int CONTENT_fparser(parse_rec_t *rp, const char *name, void *kfp)
         }
         else if (strcasecmp(type_buf, "users")     == 0)
             type      = DATAKNOB_USER;
-        else if (strcasecmp(type_buf, "pzframe")     == 0)
+        else if (strcasecmp(type_buf, "pzframe")   == 0)
             type      = DATAKNOB_PZFR;
+        else if (strcasecmp(type_buf, "vector")    == 0)
+        {
+            type      = DATAKNOB_VECT;
+            kind      = DATAKNOB_KIND_WRITE;
+        }
+        else if (strcasecmp(type_buf, "column")    == 0)
+        {
+            type      = DATAKNOB_VECT;
+            kind      = DATAKNOB_KIND_READ;
+        }
         /* To allow inclusion of other .subsys files: */
         /* 1. Treat grouping as "container", additionally swallowing extra parameter */
         else if (strcasecmp(type_buf, "grouping")  == 0)
@@ -931,6 +963,25 @@ static kfielddescr_t PZFR_fields[] =
     KFD_END
 };
 
+static kfielddescr_t VECT_fields[] =
+{
+    KFD_LINE("ident",     ident,        MSTR),
+    KFD_LINE("label",     label,        STR),
+    KFD_LINE("look",      look,         MSTR),
+    KFD_LINE("options",   options,      MSTR),
+    KFD_LINE("dpyfmt",    u.v.dpyfmt,   DPYFMT),
+    KFD_LINE("r",         u.v.src,      VECTREF),
+
+    KFD_BRK,
+    KFD_LINE("colz",      colz_style,   COLZ),
+    KFD_LINE("tip",       tip,          MSTR),
+    KFD_LINE("comment",   comment,      MSTR),
+    KFD_LINE("style",     style,        MSTR),
+    KFD_LINE("layinfo",   layinfo,      MSTR),
+    KFD_LINE("geoinfo",   geoinfo,      MSTR),
+    KFD_END
+};
+
 // ----
 
 static int ParseKnobDescr(parse_rec_t *rp,
@@ -962,6 +1013,7 @@ static int ParseKnobDescr(parse_rec_t *rp,
         case DATAKNOB_TEXT: table = TEXT_fields; break;
         case DATAKNOB_USER: table = USER_fields; break;
         case DATAKNOB_PZFR: table = PZFR_fields; break;
+        case DATAKNOB_VECT: table = VECT_fields; break;
         default:
             return BARK("INTERNAL ERROR: parsing of unknown knob type %d requested",
                         type);
@@ -975,6 +1027,10 @@ static int ParseKnobDescr(parse_rec_t *rp,
         k->is_rw     = (k->u.k.kind == DATAKNOB_KIND_WRITE);
     }
     if (type == DATAKNOB_TEXT)
+    {
+        k->is_rw     = kind == DATAKNOB_KIND_WRITE;
+    }
+    if (type == DATAKNOB_VECT)
     {
         k->is_rw     = kind == DATAKNOB_KIND_WRITE;
     }
@@ -998,7 +1054,7 @@ static int ParseKnobDescr(parse_rec_t *rp,
             BARK("unexpected error; %s\n", ppf4td_strerror(errno));
             goto CLEANUP;
         }
-        if (isletnum(ch))
+        if (isalpha(ch))
         {
             for (keylen = 0;  keylen < sizeof(keybuf) - 1;  keylen++)
             {

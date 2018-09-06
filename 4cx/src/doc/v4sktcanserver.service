@@ -1,0 +1,11 @@
+[Unit]
+Description=CXv4 sktcanserver (remote-CAN) service
+After=multi-user.target
+
+[Service]
+User=oper
+ExecStart=/export/ctlhomes/oper/4pult/lib/server/drivers/v4sktcanserver
+Type=forking
+
+[Install]
+WantedBy=multi-user.target

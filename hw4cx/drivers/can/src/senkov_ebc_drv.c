@@ -52,7 +52,8 @@ static int senkov_ebc_init_d(int devid, void *devptr,
                                businfocount, businfo,
                                DEVTYPE,
                                NULL, senkov_ebc_in,
-                               SENKOV_EBC_NUMCHANS * 2);
+                               SENKOV_EBC_NUMCHANS * 2,
+                               CANKOZ_LYR_OPTION_NONE);
     if (me->handle < 0) return me->handle;
     me->lvmt->has_regs(me->handle, SENKOV_EBC_CHAN_REGS_base);
 

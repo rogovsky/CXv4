@@ -52,12 +52,12 @@ dataknob_cont_vmt_t motifknobs_loggia_vmt =
         0, NULL,
         0,
         CreateLoggiaCont, MotifKnobs_CommonDestroy_m, NULL, NULL},
-    NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL,
 #if 0 /* If "1" then alarm propagates to parent (which contains [Button]),
          instead of blinking in the content */
     MotifKnobs_CommonShowAlarm_m, MotifKnobs_CommonAckAlarm_m,
 #else
     NULL, NULL,
 #endif
-    NULL, NULL, NULL, NULL
+    NULL, NULL, NULL, NULL, NULL
 };

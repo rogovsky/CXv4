@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -20,6 +21,15 @@ int ppf4td_pipe_open (ppf4td_ctx_t *ctx, char *const cmdline[])
   int             fds[2];
   int             r;
   int             saved_errno;
+
+    /* Check availability of command first */
+    if (access(cmdline[0], X_OK) != 0)
+    {
+        fprintf(stderr, "unable to exec(\"%s\"): %s\n",
+                cmdline[0], strerror(errno));
+        errno = ENOEXEC;
+        return -1;
+    }
 
     if (pipe(fds) != 0) return -1;
 

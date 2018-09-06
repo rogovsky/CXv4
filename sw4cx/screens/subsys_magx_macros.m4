@@ -252,20 +252,20 @@ define(`MAGX_IST_CDAC20_LINE',
                     container "" "" grid nodecor 3 content:3 {
                         container "mes" "Measurements" grid noshadow,nocoltitles \
                                 content:8 {
-                            disp dcct1  "DCCT1"   text - "A" "%9.1f" r:dcct1    disprange:-2500-+2500
-                            disp dcct2  "DCCT2"   text - "A" "%9.1f" r:dcct2    disprange:-2500-+2500 \
+                            disp dcct1  "DCCT1"   text - "A" "%9.1f" r:dcct1      disprange:-2500-+2500
+                            disp dcct2  "DCCT2"   text - "A" "%9.1f" r:dcct2      disprange:-2500-+2500 \
                                     ifelse($7, 1, c:MAGX_CFWEIRD100(dcct1,dcct2,Iset_cur))
-                            disp dacmes "DAC"     text - "A" "%9.1f" r:dac_mes  disprange:-2500-+2500
+                            disp dacmes "DAC"     text - "A" "%9.1f" r:dac_mes    disprange:-2500-+2500
                         ifelse($9, 1, `
-                            disp u2     "Uout-"   text - "V" "%9.1f" r:u2       disprange:-10-+10
-                            disp adc4   "Uout+"   text - "V" "%9.6f" r:adc4     disprange:-10-+10
+                            disp u2     "Uout-"   text - "V" "%9.1f" r:uout_minus disprange:-10-+10
+                            disp adc4   "Uout+"   text - "V" "%9.6f" r:uout_plus  disprange:-10-+10
                         ', `
-                            disp u2     "U2"      text - "V" "%9.1f" r:u2       disprange:-10-+10
-                            disp adc4   "ADC4"    text - "V" "%9.6f" r:adc4     disprange:-10-+10
+                            disp u2     "U2"      text - "V" "%9.1f" r:u2         disprange:-10-+10
+                            disp adc4   "ADC4"    text - "V" "%9.6f" r:adc4       disprange:-10-+10
                         ')
-                            disp adcdac "DAC@ADC" text - "A" "%9.1f" r:adc_dac  disprange:-2500-+2500
-                            disp 0v     "0V"      text - "V" "%9.6f" r:adc_0v   disprange:-10-+10
-                            disp 10v    "10V"     text - "V" "%9.6f" r:adc_p10v disprange:-10-+10
+                            disp adcdac "DAC@ADC" text - "A" "%9.1f" r:adc_dac    disprange:-2500-+2500
+                            disp 0v     "0V"      text - "V" "%9.6f" r:adc_0v     disprange:-10-+10
+                            disp 10v    "10V"     text - "V" "%9.6f" r:adc_p10v   disprange:-10-+10
                         }
                         noop - - vseparator layinfo:vert=fill
                         container "ilk" "Interlocks" grid \
@@ -274,21 +274,21 @@ define(`MAGX_IST_CDAC20_LINE',
                             button rst "Reset" button r:rst_ilks
                             button rci "R"     button r:reset_c_ilks
                         ifelse($9, 1, `
-                            MAGX_IST_CDAC20_ILK_LINE("out_prot", "Out Prot 1")
-                            MAGX_IST_CDAC20_ILK_LINE("water",    "Out Prot 2")
-                            MAGX_IST_CDAC20_ILK_LINE("imax",     "Temp")
-                            MAGX_IST_CDAC20_ILK_LINE("umax",     "Inverter")
-                            MAGX_IST_CDAC20_ILK_LINE("battery",  "Phase")
-                            MAGX_IST_CDAC20_ILK_LINE("phase",    "OutProt 3")
-                            MAGX_IST_CDAC20_ILK_LINE("temp",     "Imax")
+                            MAGX_IST_CDAC20_ILK_LINE("out_prot1", "Out Prot 1")
+                            MAGX_IST_CDAC20_ILK_LINE("out_prot2", "Out Prot 2")
+                            MAGX_IST_CDAC20_ILK_LINE("temp",      "Temp")
+                            MAGX_IST_CDAC20_ILK_LINE("inverter",  "Inverter")
+                            MAGX_IST_CDAC20_ILK_LINE("phase",     "Phase")
+                            MAGX_IST_CDAC20_ILK_LINE("out_prot3", "OutProt 3")
+                            MAGX_IST_CDAC20_ILK_LINE("imax",      "Imax")
                         ', `
-                            MAGX_IST_CDAC20_ILK_LINE("out_prot", "Out Prot")
-                            MAGX_IST_CDAC20_ILK_LINE("water",    "Water")
-                            MAGX_IST_CDAC20_ILK_LINE("imax",     "Imax")
-                            MAGX_IST_CDAC20_ILK_LINE("umax",     "Umax")
-                            MAGX_IST_CDAC20_ILK_LINE("battery",  "Battery")
-                            MAGX_IST_CDAC20_ILK_LINE("phase",    "Phase")
-                            MAGX_IST_CDAC20_ILK_LINE("temp",     "Tempr")
+                            MAGX_IST_CDAC20_ILK_LINE("out_prot",  "Out Prot")
+                            MAGX_IST_CDAC20_ILK_LINE("water",     "Water")
+                            MAGX_IST_CDAC20_ILK_LINE("imax",      "Imax")
+                            MAGX_IST_CDAC20_ILK_LINE("umax",      "Umax")
+                            MAGX_IST_CDAC20_ILK_LINE("battery",   "Battery")
+                            MAGX_IST_CDAC20_ILK_LINE("phase",     "Phase")
+                            MAGX_IST_CDAC20_ILK_LINE("temp",      "Tempr")
                         ')
                         }
                     }

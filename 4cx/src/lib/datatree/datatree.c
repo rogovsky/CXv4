@@ -344,6 +344,56 @@ int  set_knob_textvalue   (DataKnob k, const char *s, int fromlocal)
     return ret;
 }
 
+int  set_knob_vectvalue   (DataKnob k, const double *data, int nelems,
+                                                      int fromlocal)
+{
+  int                   ret     = 0;
+  dataknob_vect_vmt_t  *vmtlink = (dataknob_vect_vmt_t *)(k->vmtlink);
+  _k_sndvect_f          SndVect;
+
+    /* Is it a text at all? */
+    if (k->type != DATAKNOB_VECT) return -1;
+
+    /* Set the value in widget */
+    if (
+        (!fromlocal)                                   &&
+        vmtlink != NULL                                &&
+        vmtlink->unif.type == DATAKNOB_VECT            &&
+        vmtlink->SetVect != NULL)
+        vmtlink->SetVect(k, data, nelems);
+
+    if (!k->is_rw) return ret;
+    
+    /* And mark as requiring to be updated */
+    if (k->usertime != 0)
+    {
+        k->usertime = 0;
+        if (editstate_hook != NULL) editstate_hook(k, 0);
+    }
+
+    /* ...but a cycle later */
+    if (fromlocal  &&
+        (k->behaviour & DATAKNOB_B_NO_WASJUSTSET) == 0)
+        k->wasjustset = 1;
+
+    /* And reset the "attention" (OTHEROP, RELAX) state, recolorizing accordingly */
+    if (fromlocal)
+    {
+        set_attn     (k, KNOBSTATE_NONE, 0, 0);
+        set_knobstate(k, choose_knobstate(k, k->currflags));
+    }
+    
+    /* And set physical channel(s) value(s) */
+    if (fromlocal)
+    {
+        SndVect = find_knobs_nearest_upmethod(k, offsetof(dataknob_cont_vmt_t, SndVect));
+        if (SndVect != NULL)
+            SndVect(k, data, nelems);
+    }
+    
+    return ret;
+}
+
 
 void show_knob_alarm      (DataKnob k, int onoff)
 {
@@ -453,8 +503,10 @@ void cancel_knob_editing    (DataKnob k)
                                                       : k->u.k.curv,
                                   0);
         }
-        else if (k->type == DATAKNOB_TEXT)
+        else if (k->type == DATAKNOB_TEXT  ||
+                 k->type == DATAKNOB_VECT)
         {
+            k->usertime = 0;
             if (editstate_hook != NULL) editstate_hook(k, 0);
         }
     }

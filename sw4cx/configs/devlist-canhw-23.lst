@@ -1,0 +1,208 @@
+include(`ceac124.devtype')
+include(`cgvi8.devtype')
+include(`vsdc2.devtype')
+include(`cdac20.devtype')
+include(`cac208.devtype')
+include(`cpks8.devtype')
+include(`canipp.devtype')
+include(`ist_cdac20.devtype')
+include(`devlist_magx_macros.m4')
+
+include(`canhw_CAN_LINES_LIST.m4')
+
+dev ipp_gw1 canipp@sktcankoz ~ L_GIDIPP,52 def_kind=cherepanov 
+dev ipp_gw2 canipp@sktcankoz ~ L_GIDIPP,54 def_kind=cherepanov
+dev ipp_gw3 canipp@sktcankoz ~ L_GIDIPP,55 def_kind=cherepanov
+dev ipp_gw4 canipp@sktcankoz ~ L_GIDIPP,56 def_kind=cherepanov
+
+# 1: 0-6,8,9
+# 2: 0,1,3,4,6
+# 3: 0-4,6,7
+# 4: 0-3,5-9,11-13
+
+# 1:id 2:base_dev 3:box_n
+define(`IPP_BOX', `
+    cpoint box_$1 {
+        data	$2.box$3.data
+        online	$2.box$3.online
+        cur_M	$2.box$3.cur_M
+        cur_P	$2.box$3.cur_P
+        M	$2.box$3.M
+        P	$2.box$3.P
+    }
+')
+
+IPP_BOX(4DT1,    ipp_gw1, 9)
+IPP_BOX(3DT1,    ipp_gw1, 8)
+IPP_BOX(5DT1,    ipp_gw1, 0)
+IPP_BOX(5DT2,    ipp_gw1, 1)
+IPP_BOX(5DT3,    ipp_gw1, 2)
+IPP_BOX(5DT4,    ipp_gw1, 3)
+IPP_BOX(5DT5,    ipp_gw1, 4)
+IPP_BOX(5DT6,    ipp_gw1, 5)
+IPP_BOX(5DT7,    ipp_gw1, 6)
+
+IPP_BOX(6PIC_1,  ipp_gw2, 0)
+IPP_BOX(6PIC_2,  ipp_gw2, 1)
+IPP_BOX(6PIC_3,  ipp_gw2, 2) #
+IPP_BOX(6PIC_4,  ipp_gw2, 3)
+IPP_BOX(6PIC_5,  ipp_gw2, 4)
+IPP_BOX(6PIC_6,  ipp_gw2, 5) #
+IPP_BOX(6PIC_7,  ipp_gw2, 6)
+IPP_BOX(6PIC_8,  ipp_gw2, 7) #
+
+IPP_BOX(6PIC_9,  ipp_gw3, 0)
+IPP_BOX(6PIC_10, ipp_gw3, 1)
+IPP_BOX(6PIC_11, ipp_gw3, 2)
+IPP_BOX(6PIC_12, ipp_gw3, 3)
+IPP_BOX(6PIC_13, ipp_gw3, 4)
+IPP_BOX(6PIC_14, ipp_gw3, 5) #
+IPP_BOX(6PIC_15, ipp_gw3, 6)
+IPP_BOX(6PIC_16, ipp_gw3, 7) #
+
+IPP_BOX(5DT8,    ipp_gw4, 10) #
+IPP_BOX(5DT9,    ipp_gw4, 8)
+IPP_BOX(5DT10,   ipp_gw4, 9)
+IPP_BOX(5DT11,   ipp_gw4, 11)
+IPP_BOX(5DT12,   ipp_gw4, 12)
+IPP_BOX(5DT13,   ipp_gw4, 13)
+IPP_BOX(6PIC_17, ipp_gw4, 0)
+IPP_BOX(6PIC_18, ipp_gw4, 1)
+IPP_BOX(6PIC_19, ipp_gw4, 2)
+IPP_BOX(6PIC_20, ipp_gw4, 3)
+IPP_BOX(6PIC_22, ipp_gw4, 5)
+IPP_BOX(6PIC_23, ipp_gw4, 6)
+IPP_BOX(6PIC_24, ipp_gw4, 7)
+
+#=====================================================================
+
+define(`RAW2VOLTS', 0.01)
+#define(`RAW2AMPS',  0.000000752305) #!!!FLOAT: 278353/370./1e9
+define(`RAW2AMPS',  0.0000001) #!!!FLOAT: 1e-6
+# GID25X4_CPLINE(group_name, n) n=[0-3]
+define(`GID25X4_CPLINE', `
+    row$2.onoff		$1_ceac.outrb$2
+    row$2.err		$1_ceac.inprb$2
+    row$2.ena_gid	$1_gvi.mask_bit_`'eval(4+$2)
+    row$2.ena_vsdc	$1_gvi.mask_bit_`'eval(0+$2)
+    row$2.Uset		$1_ceac.out$2               RAW2VOLTS
+    row$2.Umes		$1_t_uizm$2.0               RAW2VOLTS
+    row$2.Umes_raw	$1_ceac.adc`'eval(($2*2)+0) RAW2VOLTS
+    row$2.Uuvh		$1_t_uuvh$2.0               RAW2VOLTS
+    row$2.Uuvh_raw	$1_ceac.adc`'eval(($2*2)+1) RAW2VOLTS
+#    row$2.adc0		$1_ceac.adc`'eval(($2*2)+0)
+#    row$2.adc1		$1_ceac.adc`'eval(($2*2)+1)
+    row$2.Imes		$1_biip_`'substr(`ab', eval($2/2), 1).int`'eval($2%2) RAW2AMPS
+    row$2.Dly_gid	$1_gvi.quant`'eval(4+$2)
+    row$2.Dly_vsdc	$1_gvi.quant`'eval(0+$2)
+
+    row$2.osc.gain	$1_biip_`'substr(`ab', eval($2/2), 1).gain`'eval($2%2)
+    row$2.osc.int	$1_biip_`'substr(`ab', eval($2/2), 1).int`'eval($2%2)
+    row$2.osc.data	$1_biip_`'substr(`ab', eval($2/2), 1).line`'eval($2%2)
+    row$2.osc.get	$1_biip_`'substr(`ab', eval($2/2), 1).get_osc`'eval($2%2)
+    row$2.osc.ptsofs	$1_biip_`'substr(`ab', eval($2/2), 1).ptsofs`'eval($2%2)
+    row$2.osc.cur_ptsofs $1_biip_`'substr(`ab', eval($2/2), 1).cur_ptsofs`'eval($2%2)
+    row$2.osc.cur_numpts $1_biip_`'substr(`ab', eval($2/2), 1).cur_numpts`'eval($2%2)
+    row$2.osc.write_addr $1_biip_`'substr(`ab', eval($2/2), 1).write_addr`'eval($2%2)
+')
+# GID25X4_LINE(group_name, ceac124_kid, gvi8_kid, biip_a_kid, biip_b_kid)
+define(`GID25X4_LINE', `
+    dev	$1_ceac		ceac124@sktcankoz	~ L_GIDIPP,$2	beg=0 end=7 adc_timecode=3
+    dev	$1_gvi		cgvi8@sktcankoz		~ L_GIDIPP,$3	
+    dev $1_biip_a	vsdc2@sktcankoz		~ L_GIDIPP,$4	ch0start=stop0 ch0stop=start0 ch1start=stop1 ch1stop=start0
+    dev $1_biip_b	vsdc2@sktcankoz		~ L_GIDIPP,$5	ch0start=stop0 ch0stop=start0 ch1start=stop1 ch1stop=start0
+
+    dev $1_t_uizm0	trig_read		r1i -	$1_biip_a.int0//$1_ceac.adc0
+    dev $1_t_uizm1	trig_read		r1i -	$1_biip_a.int1//$1_ceac.adc2
+    dev $1_t_uizm2	trig_read		r1i -	$1_biip_b.int0//$1_ceac.adc4
+    dev $1_t_uizm3	trig_read		r1i -	$1_biip_b.int1//$1_ceac.adc6
+    dev $1_t_uuvh0	trig_read		r1i -	$1_biip_a.int0//$1_ceac.adc1
+    dev $1_t_uuvh1	trig_read		r1i -	$1_biip_a.int1//$1_ceac.adc3
+    dev $1_t_uuvh2	trig_read		r1i -	$1_biip_b.int0//$1_ceac.adc5
+    dev $1_t_uuvh3	trig_read		r1i -	$1_biip_b.int1//$1_ceac.adc7
+
+    cpoint $1 {
+        ceac	$1_ceac
+        gvi	$1_gvi
+        biip0	$1_biip_a
+        biip1	$1_biip_b
+
+        GID25X4_CPLINE($1, 0)
+        GID25X4_CPLINE($1, 1)
+        GID25X4_CPLINE($1, 2)
+        GID25X4_CPLINE($1, 3)
+    }
+')
+
+GID25X4_LINE(gid25_group0,  7,  5,  1,  2)
+GID25X4_LINE(gid25_group1,  8,  6,  3,  4)
+GID25X4_LINE(gid25_group2, 15, 13,  9, 10)
+GID25X4_LINE(gid25_group3, 16, 14, 11, 12)
+GID25X4_LINE(gid25_group4, 23, 21, 17, 18)
+GID25X4_LINE(gid25_group5, 24, 22, 19, 20)
+GID25X4_LINE(gid25_group6, 31, 29, 25, 26)
+GID25X4_LINE(gid25_group7, 32, 30, 27, 28)
+GID25X4_LINE(gid25_group8, 39, 37, 33, 34)
+GID25X4_LINE(gid25_group9, 40, 38, 35, 36)
+
+# Rack 1
+cpoint G5L1	gid25_group0.row0
+cpoint G5L2	gid25_group0.row1
+cpoint G5L3	gid25_group0.row2
+cpoint G5L4	gid25_group0.row3
+#-
+cpoint G5L5	gid25_group1.row0
+cpoint G5L6	gid25_group1.row1
+cpoint G5L7	gid25_group1.row2
+cpoint G5L8	gid25_group1.row3
+# Rack 2
+cpoint G5KL2X	gid25_group2.row0
+cpoint G5KL3Z	gid25_group2.row1
+cpoint G5L9	gid25_group2.row2
+cpoint G5L10	gid25_group2.row3
+#-
+cpoint GTest1	gid25_group3.row0
+cpoint GTest2	gid25_group3.row1
+cpoint GTest3	gid25_group3.row2
+cpoint GTest4	gid25_group3.row3
+# Rack 3
+cpoint G6L_1	gid25_group4.row0
+cpoint G6L_2	gid25_group4.row1
+cpoint G6L_3	gid25_group4.row2
+cpoint G6L_4	gid25_group4.row3
+#-
+cpoint G6L_5	gid25_group5.row0
+cpoint G6KZL_1	gid25_group5.row1
+cpoint G6KXL_2	gid25_group5.row2
+cpoint G6KZL_3	gid25_group5.row3
+# Rack 4
+cpoint G6L_6	gid25_group6.row0
+cpoint G6L_7	gid25_group6.row1
+cpoint G6L_8	gid25_group6.row2
+cpoint G6L_9	gid25_group6.row3
+#-
+cpoint G6L_20	gid25_group7.row0
+cpoint G6L_21	gid25_group7.row1
+cpoint G6L_32	gid25_group7.row2
+cpoint G6L_33	gid25_group7.row3
+# Rack 5
+cpoint G6L_42	gid25_group8.row0
+cpoint G6L_43	gid25_group8.row1
+cpoint G6L_51	gid25_group8.row2
+cpoint G6L_52	gid25_group8.row3
+#-
+cpoint G6L_53	gid25_group9.row0
+cpoint G6L_54	gid25_group9.row1
+cpoint G6KZL_25	gid25_group9.row2
+cpoint G6KXL_26	gid25_group9.row3
+
+#---------------------------------------------------------------------
+# From m4-1.4.1-7.src.rpm::m4-1.4.1.tar.gz#utar/m4-1.4.1/examples/foreach.m4
+# foreach(x, (item_1, item_2, ..., item_n), stmt)
+define(`foreach', `pushdef(`$1', `')_foreach(`$1', `$2', `$3')popdef(`$1')')
+define(`_arg1', `$1')
+define(`_foreach',
+        `ifelse(`$2', `()', ,
+                `define(`$1', _arg1$2)$3`'_foreach(`$1', (shift$2), `$3')')')
+#---------------------------------------------------------------------
+dev tyk_all mux_write w1i - foreach(`x', `(0,1,2,3,4,5,6,7,8,9)', `gid25_group`'x.gvi.progstart ')

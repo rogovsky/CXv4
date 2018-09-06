@@ -6,67 +6,70 @@ include(`candac16.devtype')
 include(`cdac20.devtype')
 include(`ceac124.devtype')
 include(`ist_cdac20.devtype')
+include(`vnn_ceac51.devtype')
 include(`v1k_cdac20.devtype')
 include(`v3h_a40d16.devtype')
 include(`mps20_ceac124.devtype')
 include(`iset_walker.devtype')
 include(`devlist_magx_macros.m4')
 
+include(`canhw_CAN_LINES_LIST.m4')
+
 #### 1. Hardware #####################################################
 
 # Magcor rack RST2 (rightmost)
-dev rst2_a40_0 canadc40/remdrv ~ 0,31    b:cangw-rst2n3:8002 adc_timecode=2 gain=0 end=31
-dev rst2_c16_0 candac16/remdrv ~ 0,30    b:cangw-rst2n3:8002
-dev rst2_a40_1 canadc40/remdrv ~ 0,29    b:cangw-rst2n3:8002 adc_timecode=2 gain=0 end=31
-dev rst2_c16_1 candac16/remdrv ~ 0,28    b:cangw-rst2n3:8002
-dev rst2_a40_2 canadc40/remdrv ~ 0,27    b:cangw-rst2n3:8002 adc_timecode=2 gain=0 end=31
-dev rst2_c16_2 candac16/remdrv ~ 0,26    b:cangw-rst2n3:8002
+dev rst2_a40_0 canadc40@sktcankoz ~ L_RST2N3,31     adc_timecode=2 gain=0 end=31
+dev rst2_c16_0 candac16@sktcankoz ~ L_RST2N3,30    
+dev rst2_a40_1 canadc40@sktcankoz ~ L_RST2N3,29     adc_timecode=2 gain=0 end=31
+dev rst2_c16_1 candac16@sktcankoz ~ L_RST2N3,28    
+dev rst2_a40_2 canadc40@sktcankoz ~ L_RST2N3,27     adc_timecode=2 gain=0 end=31
+dev rst2_c16_2 candac16@sktcankoz ~ L_RST2N3,26    
 
 # Magcor rack RST3
-dev rst3_a40_0 canadc40/remdrv ~ 0,15    b:cangw-rst2n3:8002 adc_timecode=2 gain=0 end=31
-dev rst3_c16_0 candac16/remdrv ~ 0,14    b:cangw-rst2n3:8002
-dev rst3_a40_1 canadc40/remdrv ~ 0,13    b:cangw-rst2n3:8002 adc_timecode=2 gain=0 end=31
-dev rst3_c16_1 candac16/remdrv ~ 0,12    b:cangw-rst2n3:8002
-dev rst3_a40_2 canadc40/remdrv ~ 0,11    b:cangw-rst2n3:8002 adc_timecode=2 gain=0 end=31
-dev rst3_c16_2 candac16/remdrv ~ 0,10    b:cangw-rst2n3:8002
+dev rst3_a40_0 canadc40@sktcankoz ~ L_RST2N3,15     adc_timecode=2 gain=0 end=31
+dev rst3_c16_0 candac16@sktcankoz ~ L_RST2N3,14    
+dev rst3_a40_1 canadc40@sktcankoz ~ L_RST2N3,13     adc_timecode=2 gain=0 end=31
+dev rst3_c16_1 candac16@sktcankoz ~ L_RST2N3,12    
+dev rst3_a40_2 canadc40@sktcankoz ~ L_RST2N3,11     adc_timecode=2 gain=0 end=31
+dev rst3_c16_2 candac16@sktcankoz ~ L_RST2N3,10    
 
 # Magcor rack RST4
-dev rst4_r0    cac208/remdrv   ~ 0,63    b:cangw-rst4n5:8002 spd=-540000
-dev rst4_r1    cac208/remdrv   ~ 0,62    b:cangw-rst4n5:8002 spd=-540000
-dev rst4_r2    cac208/remdrv   ~ 0,61    b:cangw-rst4n5:8002 spd=-540000
-dev rst4_r3    cac208/remdrv   ~ 0,60    b:cangw-rst4n5:8002 spd=-540000
-dev rst4_r4    cac208/remdrv   ~ 0,59    b:cangw-rst4n5:8002 spd=-540000
-dev rst4_r5    cac208/remdrv   ~ 0,58    b:cangw-rst4n5:8002 spd=-540000
+dev rst4_r0    cac208@sktcankoz   ~ L_RST4N5,63     spd=-540000
+dev rst4_r1    cac208@sktcankoz   ~ L_RST4N5,62     spd=-540000
+dev rst4_r2    cac208@sktcankoz   ~ L_RST4N5,61     spd=-540000
+dev rst4_r3    cac208@sktcankoz   ~ L_RST4N5,60     spd=-540000
+dev rst4_r4    cac208@sktcankoz   ~ L_RST4N5,59     spd=-540000
+dev rst4_r5    cac208@sktcankoz   ~ L_RST4N5,58     spd=-540000
 
 # Magcor rack RST5
-dev rst5_r0    cac208/remdrv   ~ 0,47    b:cangw-rst4n5:8002 spd=-1666666
-dev rst5_r1    cac208/remdrv   ~ 0,46    b:cangw-rst4n5:8002 spd=-1666666
-dev rst5_r2    cac208/remdrv   ~ 0,45    b:cangw-rst4n5:8002 spd=-1000000
-dev rst5_r3    cac208/remdrv   ~ 0,44    b:cangw-rst4n5:8002 spd=-1666666
-dev rst5_r4    cac208/remdrv   ~ 0,43    b:cangw-rst4n5:8002 spd=-1666666
-dev rst5_r5    cac208/remdrv   ~ 0,42    b:cangw-rst4n5:8002 spd=-1666666
-dev rst5_r6    cac208/remdrv   ~ 0,41    b:cangw-rst4n5:8002 spd=-1666666
-dev rst5_r7    cac208/remdrv   ~ 0,40    b:cangw-rst4n5:8002 spd=-1666666
+dev rst5_r0    cac208@sktcankoz   ~ L_RST4N5,47     spd=-1666666
+dev rst5_r1    cac208@sktcankoz   ~ L_RST4N5,46     spd=-1666666
+dev rst5_r2    cac208@sktcankoz   ~ L_RST4N5,45     spd=-1000000
+dev rst5_r3    cac208@sktcankoz   ~ L_RST4N5,44     spd=-1666666
+dev rst5_r4    cac208@sktcankoz   ~ L_RST4N5,43     spd=-1666666
+dev rst5_r5    cac208@sktcankoz   ~ L_RST4N5,42     spd=-1666666
+dev rst5_r6    cac208@sktcankoz   ~ L_RST4N5,41     spd=-1666666
+dev rst5_r7    cac208@sktcankoz   ~ L_RST4N5,40     spd=-1666666
 
-dev rst5_mps1  ceac124/remdrv  ~ 0,31    b:cangw-rst4n5:8002
-dev rst5_mps2  ceac124/remdrv  ~ 0,30    b:cangw-rst4n5:8002
+dev rst5_mps1  ceac124@sktcankoz  ~ L_RST4N5,31    
+dev rst5_mps2  ceac124@sktcankoz  ~ L_RST4N5,30    
 # Belikov's (RST6?)
-dev rst6_mps5  ceac124/remdrv  ~ 0,39    b:cangw-rst4n5:8002
-dev rst6_mps4  ceac124/remdrv  ~ 0,38    b:cangw-rst4n5:8002
-dev rst6_mps3  ceac124/remdrv  ~ 0,37    b:cangw-rst4n5:8002
-dev rst6_mps2  ceac124/remdrv  ~ 0,36    b:cangw-rst4n5:8002
-dev rst6_mps1  ceac124/remdrv  ~ 0,35    b:cangw-rst4n5:8002
+dev rst6_mps5  ceac124@sktcankoz  ~ L_RST4N5,39    
+dev rst6_mps4  ceac124@sktcankoz  ~ L_RST4N5,38    
+dev rst6_mps3  ceac124@sktcankoz  ~ L_RST4N5,37    
+dev rst6_mps2  ceac124@sktcankoz  ~ L_RST4N5,36    
+dev rst6_mps1  ceac124@sktcankoz  ~ L_RST4N5,35    
 
 # VCh400 @IP-1
-dev v4h_a40 canadc40/remdrv ~ 0,40 b:cangw-ip1ist:8002 adc_timecode=4 gain=0
-dev v4h_d16 candac16/remdrv ~ 0,39 b:cangw-ip1ist:8002 spd=-1333330  # -50A
+dev v4h_a40 canadc40@sktcankoz ~ L_IP1IST,40  adc_timecode=4 gain=0
+dev v4h_d16 candac16@sktcankoz ~ L_IP1IST,39  spd=-1333330  # -50A
 
 # 5x V1000s @IP-2
-dev vcd_1l0 cdac20/remdrv ~ 0,15 b:cangw-ip2:8002 spd=-400000 tac=10
-dev vcd_1l1 cdac20/remdrv ~ 0,14 b:cangw-ip2:8002 spd=-400000 tac=10
-dev vcd_1l2 cdac20/remdrv ~ 0,13 b:cangw-ip2:8002 spd=-400000 tac=10
-dev vcd_1l3 cdac20/remdrv ~ 0,12 b:cangw-ip2:8002 spd=-400000 tac=10
-dev vcd_1l4 cdac20/remdrv ~ 0,11 b:cangw-ip2:8002 spd=-400000 tac=10
+dev vcd_1l0 cdac20@sktcankoz ~ L_MAGSYS,15  spd=-400000 tac=10
+dev vcd_1l1 cdac20@sktcankoz ~ L_MAGSYS,14  spd=-400000 tac=10
+dev vcd_1l2 cdac20@sktcankoz ~ L_MAGSYS,13  spd=-400000 tac=10
+dev vcd_1l3 cdac20@sktcankoz ~ L_MAGSYS,12  spd=-400000 tac=10
+dev vcd_1l4 cdac20@sktcankoz ~ L_MAGSYS,11  spd=-400000 tac=10
 ### ?x MPS20/MPS25 @VCH-blok; 32-39
 ##dev vch_mps5 ceac124/remdrv ~ 0,39 b:cangw-ip2:8002
 ##dev vch_mps4 ceac124/remdrv ~ 0,38 b:cangw-ip2:8002
@@ -76,30 +79,30 @@ dev vcd_1l4 cdac20/remdrv ~ 0,11 b:cangw-ip2:8002 spd=-400000 tac=10
 
 # "v1000"-ISTs @IP-1
 # {icd,ist}_{3m4,4m4,3m1,4m1,r14,d1,sm,1l7,r8,r9}
-dev icd_3m4 cdac20/remdrv ~ 0,24 b:cangw-ip1v1k:8002 spd=-400000 tac=10
-dev icd_4m4 cdac20/remdrv ~ 0,23 b:cangw-ip1v1k:8002 spd=-400000 tac=10
-dev icd_3m1 cdac20/remdrv ~ 0,22 b:cangw-ip1v1k:8002 spd=-400000 tac=10
-dev icd_4m1 cdac20/remdrv ~ 0,21 b:cangw-ip1v1k:8002 spd=-400000 tac=10
+dev icd_3m4 cdac20@sktcankoz ~ L_IP1IST,24  spd=-400000 tac=10
+dev icd_4m4 cdac20@sktcankoz ~ L_IP1IST,23  spd=-400000 tac=10
+dev icd_3m1 cdac20@sktcankoz ~ L_IP1IST,22  spd=-400000 tac=10
+dev icd_4m1 cdac20@sktcankoz ~ L_IP1IST,21  spd=-400000 tac=10
 # vvv kid=20
-dev icd_r14 cdac20/remdrv ~ 0,99 b:cangw-ip1v1k:8002 spd=-400000 tac=10
-dev icd_d1  cdac20/remdrv ~ 0,27 b:cangw-ip1v1k:8002 spd=-400000 tac=10
-dev icd_sm  cdac20/remdrv ~ 0,26 b:cangw-ip1v1k:8002 spd=-400000 tac=10
-dev icd_1l7 cdac20/remdrv ~ 0,25 b:cangw-ip1v1k:8002 spd=-400000 tac=10
-dev icd_r8  cdac20/remdrv ~ 0,99 b:cangw-ip1v1k:8002 spd=-400000 tac=10
-dev icd_r9  cdac20/remdrv ~ 0,99 b:cangw-ip1v1k:8002 spd=-400000 tac=10
+dev icd_r14 cdac20@sktcankoz ~ L_IP1IST,99  spd=-400000 tac=10
+dev icd_d1  cdac20@sktcankoz ~ L_IP1IST,27  spd=-400000 tac=10
+dev icd_sm  cdac20@sktcankoz ~ L_IP1IST,26  spd=-400000 tac=10
+dev icd_1l7 cdac20@sktcankoz ~ L_IP1IST,25  spd=-400000 tac=10
+dev icd_r8  cdac20@sktcankoz ~ L_IP1IST,99  spd=-400000 tac=10
+dev icd_r9  cdac20@sktcankoz ~ L_IP1IST,99  spd=-400000 tac=10
 
 # ISTs @IP-1 
 # icd_{rm,1m5,d3,d2,f4,f3,f1,i12,i13,i14}
-dev icd_rm  cdac20/remdrv ~ 0,31 b:cangw-ip1ist:8002 spd=-400000 tac=10
-dev icd_1m5 cdac20/remdrv ~ 0,32 b:cangw-ip1ist:8002 spd=-400000 tac=10
-dev icd_d3  cdac20/remdrv ~ 0,33 b:cangw-ip1ist:8002 spd=-400000 tac=10
-dev icd_d2  cdac20/remdrv ~ 0,34 b:cangw-ip1ist:8002 spd=-400000 tac=10
-dev icd_f4  cdac20/remdrv ~ 0,35 b:cangw-ip1ist:8002 spd=-400000 tac=10
-dev icd_f3  cdac20/remdrv ~ 0,36 b:cangw-ip1ist:8002 spd=-400000 tac=10
-dev icd_f1  cdac20/remdrv ~ 0,37 b:cangw-ip1ist:8002 spd=-400000 tac=10
-dev icd_i12 cdac20/remdrv ~ 0,42 b:cangw-ip1ist:8002 spd=-400000 tac=10
-dev icd_i13 cdac20/remdrv ~ 0,43 b:cangw-ip1ist:8002 spd=-400000 tac=10
-dev icd_i14 cdac20/remdrv ~ 0,44 b:cangw-ip1ist:8002 spd=-400000 tac=10
+dev icd_rm  cdac20@sktcankoz ~ L_IP1IST,31  spd=-400000 tac=10
+dev icd_1m5 cdac20@sktcankoz ~ L_IP1IST,32  spd=-400000 tac=10
+dev icd_d3  cdac20@sktcankoz ~ L_IP1IST,33  spd=-400000 tac=10
+dev icd_d2  cdac20@sktcankoz ~ L_IP1IST,34  spd=-400000 tac=10
+dev icd_f4  cdac20@sktcankoz ~ L_IP1IST,35  spd=-400000 tac=10
+dev icd_f3  cdac20@sktcankoz ~ L_IP1IST,36  spd=-400000 tac=10
+dev icd_f1  cdac20@sktcankoz ~ L_IP1IST,37  spd=-400000 tac=10
+dev icd_i12 cdac20@sktcankoz ~ L_IP1IST,42  spd=-400000 tac=10
+dev icd_i13 cdac20@sktcankoz ~ L_IP1IST,43  spd=-400000 tac=10
+dev icd_i14 cdac20@sktcankoz ~ L_IP1IST,44  spd=-400000 tac=10
 
 #### 2. Cpoints and virtual hardware #################################
 
@@ -169,12 +172,12 @@ MAGX_V3H_A40D16_DEV(q2l4,  v4h, 5, 0.0266666) #!!!FLOAT: 8./300
 MAGX_V3H_A40D16_DEV(q2l5,  v4h, 6, 0.0266666) #!!!FLOAT: 8./300
 MAGX_V3H_A40D16_DEV(qv4hrsrv, v4h, 7, 0.0266666) #!!!FLOAT: 8./300
 
-# 5x V1000s @IP-2
-MAGX_V1K_CDAC20_DEV(q1l0,   vcd_1l0, 0.008) #!!!FLOAT: 1./125
-MAGX_V1K_CDAC20_DEV(q1l1,   vcd_1l1, 0.008) #!!!FLOAT: 1./125
-MAGX_V1K_CDAC20_DEV(q1l2n6, vcd_1l2, 0.008) #!!!FLOAT: 1./125
-MAGX_V1K_CDAC20_DEV(q1l3n5, vcd_1l3, 0.008) #!!!FLOAT: 1./125
-MAGX_V1K_CDAC20_DEV(q1l4n8, vcd_1l4, 0.008) #!!!FLOAT: 1./125
+# 5x V1000s @IP-2 # ?900,900,1000,400,550?
+MAGX_VNN_CEAC51_DEV(q1l0,   vcd_1l0, 0.008, 0) #!!!FLOAT: 1./125
+MAGX_VNN_CEAC51_DEV(q1l1,   vcd_1l1, 0.008, 0) #!!!FLOAT: 1./125
+MAGX_VNN_CEAC51_DEV(q1l2n6, vcd_1l2, 0.008, 0) #!!!FLOAT: 1./125
+MAGX_VNN_CEAC51_DEV(q1l3n5, vcd_1l3, 0.008, 0) #!!!FLOAT: 1./125
+MAGX_VNN_CEAC51_DEV(q1l4n8, vcd_1l4, 0.008, 0) #!!!FLOAT: 1./125
 # 5x MPS-20/25s @VCH-blok
 ##MAGX_MPS25_CEAC124_DEV(ic_ring_kls_sol_c5, /vch_mps5)
 ##MAGX_MPS20_CEAC124_DEV(ic_ring_kls_sol_c4, vch_mps4)
