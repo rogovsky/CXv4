@@ -2,7 +2,7 @@ CLIENTS=	kozdev cac208 canadc40 candac16 cdac20 ceac124 \
 		cgvi8 cpks8 curvv \
 		\
 		v06xx \
-		g0401 \
+		g0401 g0603 \
 		\
 		kshd485 \
 		vsdc2 \

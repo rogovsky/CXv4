@@ -42,6 +42,8 @@ devtype ist_cdac20 w50i,r50i {
 	c_ilk_phase	74
 	c_ilk_temp	75
 
+	vdev_condition	97
 	cur_polarity	98
-	ist_state	99
+	vdev_state	99
+	ist_state	vdev_state
 }

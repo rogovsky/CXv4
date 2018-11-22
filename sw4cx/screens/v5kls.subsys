@@ -1,0 +1,154 @@
+
+define(`RGSWCH',
+       `knob/ign_otherop $1 $2 choicebs nolabel items:"#T$3\b\blit=red\t$4\b\blit=green" \
+               r:$5 w:"_all_code; qryval; putchan $7; \
+               push 1; qryval; sub; putchan $6; ret;"')
+
+# 1:n 2:text 3/opt:aux_parameters
+define(`ONE_ILK', `
+    disp ilk_$1 $2 led "shape=circle,color=red"   r:ilk$1   yelwrange:-0.1-+0.1 $3
+    disp -      "" led "shape=circle,color=amber" r:c_ilk$1
+')
+
+# 1:kls_n 2:num_f4226s
+define(`ONE_KLS', `
+    container kls$1 "Klystron $1" grid "nocoltitles,norowtitles" \
+            base:kls$1 nattl:3 content:5 {
+
+        ifelse(eval($2 >= 1), `0', `noop', `
+        container ":" "~~" subwin "resizable,compact,noclsbtn" \
+                tip:"F4226" subwintitle:"Klystron $1 F4226" content:1 {
+            container ":" "" canvas "nodecor" content:$2 {
+                pzframe adc1 "" f4226 "" .k$1_f_1 \
+                        layinfo:"left=0,right=0,top=0"ifelse(eval($2 == 1), `1', `",bottom=0"')
+                ifelse(eval($2 > 1), `0', `', `
+                pzframe adc2 "" f4226 "" .k$1_f_2 \
+                        layinfo:"left=0,right=0,top=0@adc1,bottom=0"
+                ')
+            }
+        }
+        ')
+
+        RGSWCH(onoff, "", 0, 1, is_on, switch_off, switch_on)
+
+        container -ctl "..." subwin subwintitle:"Klystron $1 extended controls" \
+                content:1 {
+            container "" "" grid nodecor 1 content:2 {
+
+                container - "" grid nodecor ncols:3 content:3 {
+                    container - "Kls $1" grid noshadow,norowtitles \
+                            ncols:3 nattl:3 content:eval(3+3) {
+                        RGSWCH(onoff, "", Off, On, is_on, switch_off, switch_on)
+                        disp   v_state "V_S" text dpyfmt:"%3.0f" r:vdev_state
+                        button rst       "R"   button            r:reset_state
+
+                        knob hvset     "High V."  text - - %5.0f r:hvset      step:100
+                        knob hvset_spd "Spd, 1/s" text - - %5.0f r:hvset_rate
+                        disp hvset_cur "Cur"      text - - %5.0f r:hvset_cur
+                    }
+                    noop - - vseparator layinfo:vert=fill,horz=fill
+                    container delays "Delays" grid noshadow,notitle,nocoltitles content:3 {
+                        knob delay1 "Delay 1" text - us %7.1f delay1
+                        knob delay2 "Delay 2" text - us %7.1f delay2
+                        knob delay3 "Delay 3" text - us %7.1f delay3
+                    }
+                } layinfo:horz=fill
+
+                container ilks "Interlocks" grid "noshadow,nocoltitles,norowtitles" \
+                        ncols:3 nattl:4 content:eval(4+3) {
+
+                    button rst "Reset" button r:rst_ilks
+                    disp   b0  b0      led "shape=circle,color=blue" r:.k$1_urr.bit0
+                    disp   b1  b1      led "shape=circle,color=blue" r:.k$1_urr.bit1
+                    button r_c "Rst C" button r:reset_c_ilks
+
+                    container slow "Slow" grid noshadow,nocoltitles,norowtitles \
+                            ncols:2 content:eval(12*2+1) {
+                        ONE_ILK(0,  "Water: thyratron")
+                        ONE_ILK(1,  "Water: modulator")
+                        ONE_ILK(2,  "Water: klystron + imp.transf.")
+                        ONE_ILK(3,  "Water: kls. load")
+                        ONE_ILK(4,  "Vacuum of klystron")
+                        ONE_ILK(5,  "Clarkson")
+                        ONE_ILK(6,  "Focus magnet")
+                        ONE_ILK(7,  "Heat readiness: thyratron")
+                        ONE_ILK(8,  "Heat readiness: klystron")
+                        ONE_ILK(9,  `"Shtangi, RMB, doors"')
+                        ONE_ILK(10, "PU readiness")
+                        ONE_ILK(11, "BBZ")
+                        button rst " \n  Reset  \n " button r:rst_ilks \
+                                style:V2STYLE:size=huge layinfo:horz=right
+                    }
+
+                    noop - - vseparator layinfo:vert=fill
+
+                    container fast "Fast" grid noshadow,nocoltitles,norowtitles \
+                            ncols:2 content:eval(20*2) {
+                        ONE_ILK(16, "I network")
+                        ONE_ILK(17, "U25 overstrain")
+                        ONE_ILK(18, "Current relay")
+                        ONE_ILK(19, "U50 overstrain")
+                        ONE_ILK(20, "Excess I: charge")
+                        ONE_ILK(21, "Excess I: charge 3x")
+                        ONE_ILK(22, "Excess I: clip.diode")
+                        ONE_ILK(23, "Excess I: stabilization")
+                        ONE_ILK(24, "Excess I: thyratron")
+                        ONE_ILK(25, "Thyratron Is asymmetry")
+                        ONE_ILK(26, "Excess U2 klystron voltage")
+                        ONE_ILK(27, "Thermocontrol")
+                        ONE_ILK(28, "Excess I2 klystron current")
+                        ONE_ILK(29, "RF fall impulse short")
+                        ONE_ILK(30, "RF refl excess")
+                        ONE_ILK(31, "Feeder vacuum")
+                        ONE_ILK(12, "Perveance")
+                        ONE_ILK(13, "I solenoid")
+                        ONE_ILK(14, "I demagn")
+                        ONE_ILK(15, "Auto-grounder", colz:hilited)
+                    }
+                }
+            }
+        }
+
+        container settings "" grid "noshadow,notitle,nocoltitles" \
+                ncols:2 content:5 {
+            knob hvset     "High V." text - - %6.0f r:hvset      step:100
+            disp hvset_cur ""        text - - %6.0f r:hvset_cur
+            knob power     "Power"   text - V %6.3f r:pwrset
+            noop
+            knob phase     "Phase"   text - * %6.2f r:phase      step:0.1
+        }
+
+        container ilks "" grid "nodecor" ncols:4 content:4 {
+            knob   sound ">|<"   onoff  "color=blue" r:%kls$1_sound \
+                    tip:"Audible beep on alarms"
+            alarm  slow  "Slow"  alarm  \
+                    r:"_all_code; getchan ilk_slow_any;
+                       push 4; getchan %kls$1_sound; mul 3; sub;
+                       mul; ret;" \
+                    yelwrange:0-0.5 colz:important
+
+            alarm  fast  "Fast"  alarm  \
+                    r:"_all_code; getchan ilk_fast_any;
+                       push 4; getchan %kls$1_sound; mul 3; sub;
+                       mul; ret;" \
+                    yelwrange:0-0.5 colz:important
+
+            button reset "R" button r:rst_ilks
+        }
+
+    }
+')
+
+grouping main V5KLS_grouping "VEPP-5 Klystrons" lrtb "vertical" content:4 {
+    ONE_KLS(1, 0)
+    ONE_KLS(2, 1)
+    ONE_KLS(3, 2)
+    ONE_KLS(4, 0)
+}
+
+sysname   v5kls
+defserver cxhw:25
+wintitle  main "VEPP-5 Klystrons"
+winname   main v5kls
+winclass  main V5Kls
+winopts   main ""

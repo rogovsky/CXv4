@@ -15,6 +15,7 @@ typedef struct
 {
     int       N;
 
+    int       creg_supported;
     int       t_quant_mode;
     int       break_on_ch7;
     rflags_t  creg_rfl;
@@ -65,15 +66,23 @@ static int g0401_init_d(int devid, void *devptr,
 
     // Read current period-mode setting...
     me->creg_rfl = status2rflags(DO_NAF(CAMAC_REF, me->N, 8, 0, &w));
-    if (me->t_quant_mode < 0)
-        me->t_quant_mode = w & CREG_T_QUANT_MODE_mask;
-    // ...plus break_on_ch7 setting, if not pre-set in auxinfo...
-    if (me->break_on_ch7 < 0)
-        me->break_on_ch7 = ((w & CREG_BREAK_ON_OUT7) != 0);
-    // ...and pre-program (reset) "disable copy on end" state
-    w = (me->t_quant_mode & CREG_T_QUANT_MODE_mask) |
-        (me->break_on_ch7 ? CREG_BREAK_ON_OUT7 : 0);
-    DO_NAF(CAMAC_REF, me->N, 8, 16, &w);
+    me->creg_supported = (me->creg_rfl & (CXRF_CAMAC_NO_X|CXRF_CAMAC_NO_Q)) == 0;
+    if (me->creg_supported)
+    {
+        if (me->t_quant_mode < 0)
+            me->t_quant_mode = w & CREG_T_QUANT_MODE_mask;
+        // ...plus break_on_ch7 setting, if not pre-set in auxinfo...
+        if (me->break_on_ch7 < 0)
+            me->break_on_ch7 = ((w & CREG_BREAK_ON_OUT7) != 0);
+        // ...and pre-program (reset) "disable copy on end" state
+        w = (me->t_quant_mode & CREG_T_QUANT_MODE_mask) |
+            (me->break_on_ch7 ? CREG_BREAK_ON_OUT7 : 0);
+        DO_NAF(CAMAC_REF, me->N, 8, 16, &w);
+    }
+    else
+    {
+        me->t_quant_mode = 7; // G0604 default "100ns" mode; no way to support "1mks" mode?
+    };
 
     SetChanRDs(devid, G0401_CHAN_QUANT_N_base, G0401_CHAN_OUT_count,
                10.0, 0.0);
@@ -98,6 +107,18 @@ static void g0401_rw_p(int devid, void *devptr,
   int              w;
 
   int              quant;
+
+  static int       c_q_addrs[G0401_CHAN_OUT_count] =
+  {
+      G0401_CHAN_QUANT_N_base + 0,
+      G0401_CHAN_QUANT_N_base + 1,
+      G0401_CHAN_QUANT_N_base + 2,
+      G0401_CHAN_QUANT_N_base + 3,
+      G0401_CHAN_QUANT_N_base + 4,
+      G0401_CHAN_QUANT_N_base + 5,
+      G0401_CHAN_QUANT_N_base + 6,
+      G0401_CHAN_QUANT_N_base + 7,
+  };
 
     for (n = 0;  n < count;  n++)
     {
@@ -126,6 +147,9 @@ static void g0401_rw_p(int devid, void *devptr,
                 me->val_cache[line] = value;
                 w = value;
                 me->rfl_cache[line] = status2rflags(DO_NAF(CAMAC_REF, me->N, line, 16, &w));
+                // G0604 at Klystron4 NEVER returns Q
+                if (me->creg_supported == 0)
+                    me->rfl_cache[line] &=~ CXRF_CAMAC_NO_Q;
                 // Return alias-chan value
                 quant = (1 << (7 - me->t_quant_mode));
                 ReturnInt32Datum(devid, G0401_CHAN_QUANT_N_base + line,
@@ -149,6 +173,9 @@ static void g0401_rw_p(int devid, void *devptr,
                 me->val_cache[line] = value;
                 w = value;
                 me->rfl_cache[line] = status2rflags(DO_NAF(CAMAC_REF, me->N, line, 16, &w));
+                // G0604 at Klystron4 NEVER returns Q
+                if (me->creg_supported == 0)
+                    me->rfl_cache[line] &=~ CXRF_CAMAC_NO_Q;
                 // Return alias-chan value
                 ReturnInt32Datum(devid, G0401_CHAN_RAW_V_n_base + line,
                                  me->val_cache[line], me->rfl_cache[line]);
@@ -163,7 +190,7 @@ static void g0401_rw_p(int devid, void *devptr,
             value  = 0;
             rflags = 0;
         }
-        else if (chn == G0401_CHAN_T_QUANT_MODE)
+        else if (chn == G0401_CHAN_T_QUANT_MODE  &&  me->creg_supported)
         {
             if (action == DRVA_WRITE)
             {
@@ -171,12 +198,16 @@ static void g0401_rw_p(int devid, void *devptr,
                 if (value > 7) value = 7;
                 me->t_quant_mode = value;
                 w = value;
-                me->creg_rfl = status2rflags(DO_NAF(CAMAC_REF, me->N, 8, 0, &w));
+                me->creg_rfl = status2rflags(DO_NAF(CAMAC_REF, me->N, 8, 16, &w));
+                g0401_rw_p(devid, devptr,
+                           DRVA_READ,
+                           countof(c_q_addrs), c_q_addrs,
+                           NULL, NULL, NULL);
             }
             value  = me->t_quant_mode;
             rflags = me->creg_rfl;
         }
-        else if (chn == G0401_CHAN_BREAK_ON_CH7)
+        else if (chn == G0401_CHAN_BREAK_ON_CH7  &&  me->creg_supported)
         {
             if (action == DRVA_WRITE)
             {

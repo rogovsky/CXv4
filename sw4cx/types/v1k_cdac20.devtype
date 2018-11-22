@@ -36,5 +36,7 @@ devtype v1k_cdac20 w50i,r50i {
 	c_ilk_currprot	71
 	c_ilk_loadovrh	72
 
-	v1k_state	99
+	vdev_condition	97
+	vdev_state	99
+	v1k_state	vdev_state
 }

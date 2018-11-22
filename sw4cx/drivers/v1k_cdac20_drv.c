@@ -124,18 +124,20 @@ enum
     V1K_STATE_RST_ILK_DRP,       // 4
     V1K_STATE_RST_ILK_CHK,       // 5
 
-    V1K_STATE_IS_OFF,            // 6
+    V1K_STATE_CUT_OFF,           // 6
 
-    V1K_STATE_SW_ON_ENABLE,      // 7
-    V1K_STATE_SW_ON_SET_ON,      // 8
-    V1K_STATE_SW_ON_DRP_ON,      // 9
-    V1K_STATE_SW_ON_UP,          // 10
+    V1K_STATE_IS_OFF,            // 7
 
-    V1K_STATE_IS_ON,             // 11
+    V1K_STATE_SW_ON_ENABLE,      // 8
+    V1K_STATE_SW_ON_SET_ON,      // 9
+    V1K_STATE_SW_ON_DRP_ON,      // 10
+    V1K_STATE_SW_ON_UP,          // 11
 
-    V1K_STATE_SW_OFF_DOWN,       // 12
-    V1K_STATE_SW_OFF_CHK_I,      // 13
-    V1K_STATE_SW_OFF_CHK_E,      // 14
+    V1K_STATE_IS_ON,             // 12
+
+    V1K_STATE_SW_OFF_DOWN,       // 13
+    V1K_STATE_SW_OFF_CHK_I,      // 14
+    V1K_STATE_SW_OFF_CHK_E,      // 15
 
     V1K_STATE_count
 };
@@ -233,6 +235,15 @@ static void SwchToRST_ILK_DRP(void *devptr, int prev_state __attribute__((unused
     SndCVal(me, C20C_RST_ILKS, 0);
 }
 
+static void SwchToCUT_OFF(void *devptr, int prev_state __attribute__((unused)))
+{
+  privrec_t *me = devptr;
+
+    SndCVal(me, C20C_OUT,       0);
+    SndCVal(me, C20C_SW_ON,     0);
+    SndCVal(me, C20C_SW_OFF,    1);
+}
+
 static int  IsAlwdSW_ON_ENABLE(void *devptr, int prev_state)
 {
   privrec_t *me = devptr;
@@ -243,7 +254,8 @@ static int  IsAlwdSW_ON_ENABLE(void *devptr, int prev_state)
         ilk |= !(me->cur[C20C_ILK_base + x].v.i32); // Note: Invert
 
     return
-        (prev_state == V1K_STATE_IS_OFF  ||
+        (prev_state == V1K_STATE_IS_OFF   ||
+         prev_state == V1K_STATE_CUT_OFF  ||
          prev_state == V1K_STATE_INTERLOCK)  &&
         me->cur[C20C_OUT_CUR].v.i32 == 0     &&
         ilk == 0;
@@ -353,6 +365,8 @@ static vdev_state_dsc_t state_descr[] =
     [V1K_STATE_RST_ILK_DRP]  = {500000,  V1K_STATE_RST_ILK_CHK,  NULL,               SwchToRST_ILK_DRP,  NULL},
     [V1K_STATE_RST_ILK_CHK]  = {1,       V1K_STATE_IS_OFF,       IsAlwdRST_ILK_CHK,  NULL,               (int[]){C20C_ILK_OVERHEAT, C20C_ILK_EMERGSHT, C20C_ILK_CURRPROT, C20C_ILK_LOADOVRH, -1}},
 
+    [V1K_STATE_CUT_OFF]      = {0,       -1,                     NULL,               SwchToCUT_OFF,      NULL},
+
     [V1K_STATE_IS_OFF]       = {0,       -1,                     NULL,               NULL,               NULL},
 
     [V1K_STATE_SW_ON_ENABLE] = { 500000, V1K_STATE_SW_ON_SET_ON, IsAlwdSW_ON_ENABLE, SwchToON_ENABLE,    NULL},
@@ -408,6 +422,7 @@ static vdev_sr_chan_dsc_t state_related_channels[] =
     {V1K_CDAC20_CHAN_SWITCH_OFF, V1K_STATE_SW_OFF_DOWN,  0,                 CX_VALUE_DISABLED_MASK},
     {V1K_CDAC20_CHAN_RST_ILKS,   V1K_STATE_RST_ILK_SET,  CX_VALUE_LIT_MASK, 0},
     {V1K_CDAC20_CHAN_IS_ON,      -1,                     0,                 0},
+    {V1K_CDAC20_CHAN_VDEV_CONDITION, -1,                 0,                 0},
     {-1,                         -1,                     0,                 0},
 };
 
@@ -436,7 +451,7 @@ static int v1k_cdac20_init_d(int devid, void *devptr,
     me->ctx.sodc_cb        = v1k_cdac20_sodc_cb;
 
     me->ctx.our_numchans             = V1K_CDAC20_NUMCHANS;
-    me->ctx.chan_state_n             = V1K_CDAC20_CHAN_V1K_STATE;
+    me->ctx.chan_state_n             = V1K_CDAC20_CHAN_VDEV_STATE;
     me->ctx.state_unknown_val        = V1K_STATE_UNKNOWN;
     me->ctx.state_determine_val      = V1K_STATE_DETERMINE;
     me->ctx.state_count              = countof(state_descr);
@@ -453,6 +468,10 @@ static int v1k_cdac20_init_d(int devid, void *devptr,
                               V1K_CDAC20_CHAN_ILK_count,   IS_AUTOUPDATED_YES);
     SetChanReturnType(devid, V1K_CDAC20_CHAN_C_ILK_base,
                               V1K_CDAC20_CHAN_C_ILK_count, IS_AUTOUPDATED_TRUSTED);
+    SetChanReturnType(devid, V1K_CDAC20_CHAN_VDEV_CONDITION,
+                              1,                           IS_AUTOUPDATED_TRUSTED);
+    ReturnInt32Datum (devid, V1K_CDAC20_CHAN_VDEV_CONDITION,
+                             VDEV_PS_CONDITION_OFFLINE, 0);
 
     return vdev_init(&(me->ctx), devid, devptr, WORK_HEARTBEAT_PERIOD, p);
 }
@@ -502,7 +521,7 @@ static void v1k_cdac20_sodc_cb(int devid, void *devptr,
               me->ctx.cur_state == V1K_STATE_SW_ON_UP      ||
               me->ctx.cur_state == V1K_STATE_IS_ON))
     {
-        vdev_set_state(&(me->ctx), V1K_STATE_SW_OFF_DOWN);
+        vdev_set_state(&(me->ctx), V1K_STATE_CUT_OFF);
     }
 }
 
@@ -605,7 +624,23 @@ static void v1k_cdac20_rw_p(int devid, void *devptr,
                    me->ctx.cur_state <= V1K_STATE_IS_ON);
             ReturnInt32Datum(devid, chn, val, 0);
         }
-        else if (chn == V1K_CDAC20_CHAN_V1K_STATE)
+        else if (chn == V1K_CDAC20_CHAN_VDEV_CONDITION)
+        {
+            if      (me->ctx.cur_state == me->ctx.state_unknown_val  ||
+                     me->ctx.cur_state == me->ctx.state_determine_val)
+                val = VDEV_PS_CONDITION_OFFLINE;
+            else if (me->ctx.cur_state >= V1K_STATE_INTERLOCK  &&
+                     me->ctx.cur_state <= V1K_STATE_RST_ILK_CHK)
+                val = VDEV_PS_CONDITION_INTERLOCK;
+            else if (me->ctx.cur_state == V1K_STATE_CUT_OFF)
+                val = VDEV_PS_CONDITION_CUT_OFF;
+            else if (me->ctx.cur_state == V1K_STATE_IS_OFF)
+                val = VDEV_PS_CONDITION_IS_OFF;
+            else
+                val = VDEV_PS_CONDITION_IS_ON;
+            ReturnInt32Datum(devid, chn, val, 0);
+        }
+        else if (chn == V1K_CDAC20_CHAN_VDEV_STATE)
         {
             ReturnInt32Datum(devid, chn, me->ctx.cur_state, 0);
         }

@@ -1,0 +1,217 @@
+
+# 1:id 2:label 3:units 4:dpyfmt.precision 5:r_base
+define(`SYN_LINE', `
+    knob           $1_s $2 text - $3 %10.$4`'f              r:$5.dly.set
+    knob           $1_d "" onoff "offcol=green color=black" r:$5.mask
+')
+
+# 1:id 2:label 3:units 4:dpyfmt.precision 5:r_base
+define(`SYG_LINE', `
+    knob/groupable $1_s $2 text - $3 %10.$4`'f              r:$5.dly.set
+    knob           $1_d "" onoff "offcol=green color=black" r:$5.mask
+')
+
+grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertical" \
+        content:10 {
+
+    container linac_rf "Linac: RF"    grid "nocoltitles" \
+            base:ic.syn ncols:2 nattl:1 content:eval(1 + 2*17) {
+
+        selector - "" selector "align=right" r:linRF.repRate.set \
+                items:"#TOff\t\n50Hz\t\n25Hz\t16.6Hz\t12.5Hz\t10Hz\t\n8.3Hz\t\n7.14Hz"
+#                items:"#T-0-\t50Hz\t25Hz\t12.5Hz\t10Hz\t5Hz\t2.5Hz\t2Hz"
+
+        SYN_LINE(, "Linac RF",       ms,  3, linRF)
+        SYN_LINE(, " -Mod. delay",   mks, 5, mods)
+        SYN_LINE(, "  --Mod 1",      mks, 5, mod1)
+        SYN_LINE(, "  --Mod 2",      mks, 5, mod2)
+        SYN_LINE(, "  --Mod 3",      mks, 5, mod3)
+        SYN_LINE(, "  --Mod 4",      mks, 5, mod4)
+        SYN_LINE(, " -RF delay",     mks, 5, RF)
+        SYN_LINE(, "  --Kls 3 RF",   ns,  2, kl3RF)
+        SYN_LINE(, "  --Kls 3 PT",   ns,  2, kl3Ph180)
+        SYN_LINE(, "  --Kls 2 RF",   ns,  2, kl2RF)
+        SYN_LINE(, "  --Kls 2 PT",   ns,  2, kl2Ph180)
+        SYN_LINE(, "  --Kls 1 RF",   ns,  2, kl1RF)
+        SYN_LINE(, "  --Kls 1 PT",   ns,  2, kl1Ph180)
+        SYN_LINE(, "  --Kls 4 RF",   ns,  2, kl4RF)
+        SYN_LINE(, "  --Kls 4 PT",   ns,  2, kl4Ph180)
+        SYN_LINE(, " -RF ADC",     mks, 3, RF_ADC)
+        SYN_LINE(, " -Synchr.3",   mks, 3, syn3)
+    } layinfo:newline
+
+    container - "" loggia content:1 {
+        container 0 "" grid nodecor base:ic.syn ncols:6 content:6 {
+#            knob alloff   "Disable Starts"  onoff "offcol=green color=black" r:all.mask
+            selector alloff "Starts" choicebs "" items:"#TEnable\b\blit=green\tDisable\b\blit=red" r:all.mask
+            noop - - vseparator layinfo:vert=fill
+            knob subbun_s "SubBunch" text withlabel "ms" %8.3f                r:subbun.dly.set
+            knob subbun_d ""         onoff "offcol=green color=black" r:subbun.mask
+            noop - - vseparator layinfo:vert=fill
+            knob freq "Master generator" text withlabel "kHz" %7.0f r:::ic.linRF.frq.set
+        }
+    }
+
+    container linac    "Linac: beam"  grid "nocoltitles" \
+            base:ic.syn ncols:2 nattl:2 content:eval(2 + 2*17) {
+
+        #T-0-\t50Hz\t25Hz\t12.5Hz\t10Hz\t5Hz\t1Hz
+        selector - "" selector "align=right" r:linBeam.repRate.set \
+                items:"#TOff\t/1\t/2\t\n/3\t\n/4\t/5\t\n/6\t\n/7"\
+                      "\t\n/8\t\n/9\t/10\t\n/11\t\n/12\t\n/13\t\n/14\t\n/15"\
+                      "\t\n/16\t\n/17\t\n/18\t\n/19\t/20\t\n/21\t\n/22\t\n/23"\
+                      "\t\n/24\t\n/25\t\n/26\t\n/27\t\n/28\t\n/29\t\n/30\t\n/31"
+#                items:"#T-0-\t50Hz\t25Hz\t12.5Hz\t10Hz\t5Hz\t2Hz\t1Hz"
+        disp hzs "=" text "withlabel" "Hz" %4.1f \
+                "_all_code;
+                 getchan linRF.repRate.set;   cmp_if_lt 0.5; ret 0;
+                 getchan linBeam.repRate.set; cmp_if_lt 0.5; ret 0;
+                 push 50;
+                 getchan linRF.repRate.set;   div;
+                 getchan linBeam.repRate.set; div;
+                 ret;"
+
+        SYN_LINE(, "Linac",            ms,  3, linBeam)
+        SYN_LINE(, " -Inj-Ext e-",     mks, 5, inject)
+        SYN_LINE(, " -Inj-Ext e+",     mks, 5, bps700)
+        SYN_LINE(, " -Beam delay",     mks, 5, beam)
+        SYN_LINE(, "  --Gun&Diag",     mks, 5, gun_diag)
+        SYN_LINE(, "   ---Gun HV",     ns,  2, gunHV)
+        SYN_LINE(, "   ---Gun grid" ,  ns,  2, gunGrid)
+        SYN_LINE(, "   ---ADC200",     ns,  2, ADC200)
+        SYN_LINE(, "   ---Synchr.2",   ns,  2, syn2)
+        SYN_LINE(, "   ---BPM",        ns,  2, linBPM)
+        SYN_LINE(, "   ---IPP",        ns,  2, linIPP)
+        SYN_LINE(, "   ---Phase 2856", ns,  2, PhMeas)
+        SYN_LINE(, "   ---Pickup 2",   ns,  2, ringBPM)
+        SYN_LINE(, "  --Rsrv.6-2",     mks, 5, reserve6_2)
+        SYN_LINE(, "  --ADC conc.",    mks, 5, FC_ADC)
+        SYN_LINE(, "  --Magn.conc.",   mks, 5, FC)
+        SYN_LINE(, " -Synchr.1",       mks, 5, syn1)
+    } layinfo:newline
+
+    container xfr      "Transfer"     grid "nocoltitles" \
+            base:"ic.syn.xfer" nattl:1 ncols:2 content:eval(1 + 2*12) {
+
+        selector dest "->" selector r:.ic.extractor.clockSrc \
+                items:"#Toff\tVEPP-2000\tVEPP-3\tTest\t\n???"
+
+        SYN_LINE(, "Extraction",   ms,  3, extract)
+        SYN_LINE(, "BEP",          ms,  3, BEP)
+        SYN_LINE(, "VEPP3",        ms,  3, VEPP3)
+        SYN_LINE(, "reserved",     ms,  3, tests)
+        SYN_LINE(, "Kickers",      mks, 5, extr.kickers)
+        SYN_LINE(, "K500 m.start", mks, 5, extr.K500MagStart)
+        SYN_LINE(, "K500 m.stop",  mks, 5, extr.K500MagStop)
+        SYN_LINE(, "K500 IPP",     mks, 5, extr.K500IPP)
+        SYN_LINE(, "hbz 1",        mks, 5, test1)
+        SYN_LINE(, "hbz 2",        mks, 5, test2)
+        SYN_LINE(, "hbz 3",        mks, 5, test3)
+        SYN_LINE(, "hbz 4",        mks, 5, test4)
+    } layinfo:newline
+
+    container cameras  "CCD etc."     grid "nocoltitles" \
+            base:ic.syn ncols:2 nattl:1 content:eval(1 + 2*5) {
+
+        selector - "" selector "align=right"                      r:BProbe.repRate.set \
+                items:"#TOff\t1\t2\t3\t4\t5\t6\t7"
+
+        SYN_LINE(, "B.Probe",       ms,  3, BProbe)
+        SYN_LINE(, " -1: H1 esens", ns,  3, pp)
+        SYN_LINE(, " -2: H1 camrs", ns,  3, cam)
+        SYN_LINE(, " -3: H2 esens", ns,  3, bp)
+        SYN_LINE(, " -4: H2 camrs", ns,  3, bp4)
+    }
+
+    container injextr_e "I/E: e-"     grid "nocoltitles" \
+            base:ic.eKickers nattl:4 ncols:2 content:eval(4 + 2*8) {
+
+        container - - invisible "with_content" content:1 {
+            disp - "" onoff victim=:kstart r:StartSrc.set
+        }
+
+        knob starts ""  choicebs items:"#TExt\tLcl\b\blit=yellow" r:StartSrc.set \
+                w:"_all_code;
+                   qryval; putchan StartSrc.set; 
+                   push 1; qryval; cmp_if_lt 0.5; putchan repRate.set; # Ext: set kstart:=1
+                   push 5; qryval; cmp_if_gt 0.5; putchan repRate.set; # Lcl: set kstart:=5
+                   ret;"
+        knob/fixedranges \
+             kstart "/" text  "withlabel" "" %3.0f       r:repRate.set alwdrange:5-255
+        knob alloff ""  onoff "offcol=green color=black" r:all.mask
+
+        SYG_LINE(, "Run!",     mks, 5, run)
+        SYG_LINE(, "HV start", mks, 5, chargeStart)
+        SYG_LINE(, "HV stop",  mks, 5, chargeStop)
+        SYG_LINE(, "ADC200",   mks, 5, ADC)
+        SYG_LINE(, "PreK +",   ns,  2, preKickP)
+        SYG_LINE(, "PreK -",   ns,  2, preKickN)
+        SYG_LINE(, "Kick +",   ns,  2, kickP)
+        SYG_LINE(, "Kick -",   ns,  2, kickN)
+    } layinfo:newline
+    container injextr_e_accords "" grid "nodecor" \
+            base:ic.eKickers ncols:3 content:3 {
+        knob accord1 "A1" text "withlabel,withunits,noincdec" "V" \
+                %5.3f alwdrange:0-4.3 r:preKickU.set
+        knob accord2 "A2" text "withlabel,withunits,noincdec" "V" \
+                %5.3f alwdrange:0-4.3 r:KickU.set
+        container ":" "~~" subwin "resizable,compact,noclsbtn" \
+                        tip:"Accords 1 & 2 ADC200" \
+                subwintitle:"Accords 1 & 2 ADC200" \
+                content:1 {
+            pzframe adc "" adc200 "" .ie_adc200_10
+        }
+    } layinfo:offset=0
+    selector ie_mode "" selector r:ic.kickers.mode.set \
+            items:"#Te-\te+\t\n?" \
+            layinfo:offset=0
+
+    container injextr_p "I/E: e+"     grid "nocoltitles" \
+            base:ic.pKickers nattl:4 ncols:2 content:eval(4 + 2*8) {
+
+        container - - invisible "with_content" content:1 {
+            disp - "" onoff victim=:kstart r:StartSrc.set
+        }
+
+        knob starts ""  choicebs items:"#TExt\tLcl\b\blit=yellow" r:StartSrc.set \
+                w:"_all_code;
+                   qryval; putchan StartSrc.set; 
+                   push 1; qryval; cmp_if_lt 0.5; putchan repRate.set; # Ext: set kstart:=1
+                   push 5; qryval; cmp_if_gt 0.5; putchan repRate.set; # Lcl: set kstart:=5
+                   ret;"
+        knob/fixedranges \
+             kstart "/" text  "withlabel" "" %3.0f       r:repRate.set alwdrange:5-255
+        knob alloff ""  onoff "offcol=green color=black" r:all.mask
+
+        SYG_LINE(, "Run!",     mks, 5, run)
+        SYG_LINE(, "HV start", mks, 5, chargeStart)
+        SYG_LINE(, "HV stop",  mks, 5, chargeStop)
+        SYG_LINE(, "ADC200",   mks, 5, ADC)
+        SYG_LINE(, "PreK +",   ns,  2, preKickP)
+        SYG_LINE(, "PreK -",   ns,  2, preKickN)
+        SYG_LINE(, "Kick +",   ns,  2, kickP)
+        SYG_LINE(, "Kick -",   ns,  2, kickN)
+    }
+    container injextr_p_accords "" grid "nodecor" \
+            base:ic.pKickers ncols:3 content:3 {
+        knob accord3 "A3" text "withlabel,withunits,noincdec" "V" \
+                %5.3f alwdrange:0-4.3 r:preKickU.set
+        knob accord4 "A4" text "withlabel,withunits,noincdec" "V" \
+                %5.3f alwdrange:0-4.3 r:KickU.set
+        container ":" "~~" subwin "resizable,compact,noclsbtn" \
+                        tip:"Accords 3 & 4 ADC200" \
+                subwintitle:"Accords 3 & 4 ADC200" \
+                content:1 {
+            pzframe adc "" adc200 "" .ie_adc200_12
+        }
+    } layinfo:offset=0
+
+
+}
+
+sysname   v5rfsyn
+defserver canhw:19
+wintitle  main "VEPP5 RFSyn, Injection/Extraction"
+winname   main v5rfsyn
+winclass  main V5RFSyn
+winopts   main "with_tbar_loggia"

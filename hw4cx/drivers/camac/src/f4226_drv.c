@@ -191,6 +191,7 @@ static int  StartMeasurements(pzframe_drv_t *pdr)
   f4226_privrec_t *me = PDR2ME(pdr);
 
   int              w;
+  int              junk;
 
     /* "Actualize" requested parameters */
     memcpy(me->cur_args, me->nxt_args, sizeof(me->cur_args));
@@ -200,7 +201,11 @@ static int  StartMeasurements(pzframe_drv_t *pdr)
         Return1Param(me, F4226_CHAN_PTSOFS,   F4226_MAX_NUMPTS - me->cur_args[F4226_CHAN_NUMPTS]);
 
     /* Program the device */
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 24, &junk);  // Mask LAM
     /*!!!*/
+
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 25, &junk);  // Set to "Conversion" mode
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 26, &junk);  // Unmask LAM
 
     return PZFRAME_R_DOING;
 }
@@ -229,6 +234,8 @@ static rflags_t ReadMeasurements(pzframe_drv_t *pdr)
 {
   f4226_privrec_t *me = PDR2ME(pdr);
 
+  int              junk;
+
   int              w;
   int              base0;
   int              quant;
@@ -240,6 +247,9 @@ static rflags_t ReadMeasurements(pzframe_drv_t *pdr)
   int              rdata[COUNT_MAX];
   int              v;
   int32            min_v, max_v, sum_v;
+
+    /* Stop the device */
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 24, &junk);  // Mask LAM
 
     /*!!!*/
 

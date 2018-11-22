@@ -340,7 +340,7 @@ static int dev_parser(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db)
   char               drvname_buf [50];
   char               lyrname_buf [50];
   char               options_buf [1000];
-  char               auxinfo_buf [1000];
+  char               auxinfo_buf [4000];
   char               tokbuf[30];
   char              *endptr;
   const char        *loc;
@@ -646,9 +646,11 @@ static int ParseChanList(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db,
         else
         {
             /* Note: no reason to check range_min, since it is >=0 and range_max>=range_min */
-            if (range_max >= chan_n_limit)
-                return BARK("range <%d-%d> is out of device range [0-%d)",
-                            range_min, range_max, chan_n_limit);
+            if (refval + range_max-range_min >= chan_n_limit)
+                return BARK("range <%d-%d> -> [%d,%d] is out of device range [0-%d]",
+                            range_min, range_max,
+                            refval, refval + range_max-range_min,
+                            chan_n_limit-1);
             for (range_i = range_min;  range_i <= range_max;  range_i++)
             {
                 r = snprintf(namebuf, sizeof(namebuf), "%s%d%s",

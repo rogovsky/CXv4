@@ -1,0 +1,6 @@
+devtype slio24_reg w8i,r2i {
+	word24	0
+
+	hw_ver	8
+	sw_ver	9
+}

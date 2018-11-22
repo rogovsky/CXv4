@@ -7,5 +7,7 @@ v4gid25s	pzframeclient
 k500gid25s	pzframeclient
 linipp		pzframeclient
 rfsyn_eng	pzframeclient
-rfsyn		pzframeclient
+v5rfsyn		pzframeclient
+v5ie		pzframeclient
+v5kls		pzframeclient
 liu		liuclient

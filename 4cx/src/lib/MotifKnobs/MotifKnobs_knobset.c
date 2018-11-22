@@ -19,6 +19,7 @@
 #include "MotifKnobs_tabber_cont.h"
 #include "MotifKnobs_canvas_cont.h"
 #include "MotifKnobs_loggia_cont.h"
+#include "MotifKnobs_invisible_cont.h"
 #include "MotifKnobs_lrtb_grpg.h"
 
 
@@ -62,6 +63,7 @@ static knobs_knobset_t Motif_knobset =
         (dataknob_unif_vmt_t *)&motifknobs_tabber_vmt,
 #endif
         (dataknob_unif_vmt_t *)&motifknobs_loggia_vmt,
+        (dataknob_unif_vmt_t *)&motifknobs_invisible_vmt,
 
         (dataknob_unif_vmt_t *)&motifknobs_rectangle_vmt,
         (dataknob_unif_vmt_t *)&motifknobs_frectangle_vmt,

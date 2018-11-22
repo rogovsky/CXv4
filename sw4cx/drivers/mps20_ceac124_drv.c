@@ -90,18 +90,20 @@ enum
     MPS_STATE_DETERMINE,         // 1
     MPS_STATE_INTERLOCK,         // 2
 
-    MPS_STATE_IS_OFF,            // 3
+    MPS_STATE_CUT_OFF,           // 3
 
-    MPS_STATE_SW_ON_ENABLE,      // 4
-    MPS_STATE_SW_ON_SET_ON,      // 5
-    MPS_STATE_SW_ON_DRP_ON,      // 6
-    MPS_STATE_SW_ON_UP,          // 7
+    MPS_STATE_IS_OFF,            // 4
 
-    MPS_STATE_IS_ON,             // 8
+    MPS_STATE_SW_ON_ENABLE,      // 5
+    MPS_STATE_SW_ON_SET_ON,      // 6
+    MPS_STATE_SW_ON_DRP_ON,      // 7
+    MPS_STATE_SW_ON_UP,          // 8
 
-    MPS_STATE_SW_OFF_DOWN,       // 9
-    MPS_STATE_SW_OFF_CHK_I,      // 10
-    MPS_STATE_SW_OFF_CHK_E,      // 11
+    MPS_STATE_IS_ON,             // 9
+
+    MPS_STATE_SW_OFF_DOWN,       // 10
+    MPS_STATE_SW_OFF_CHK_I,      // 11
+    MPS_STATE_SW_OFF_CHK_E,      // 12
 
     MPS_STATE_count
 };
@@ -149,12 +151,22 @@ static void SwchToINTERLOCK(void *devptr, int prev_state __attribute__((unused))
     SndCVal(me, C124C_SW_OFF,    1);
 }
 
+static void SwchToCUT_OFF(void *devptr, int prev_state __attribute__((unused)))
+{
+  privrec_t *me = devptr;
+
+    SndCVal(me, C124C_OUT,       0);
+    SndCVal(me, C124C_SW_ON,     0);
+    SndCVal(me, C124C_SW_OFF,    1);
+}
+
 static int  IsAlwdSW_ON_ENABLE(void *devptr, int prev_state)
 {
   privrec_t *me = devptr;
 
     return
-        (prev_state == MPS_STATE_IS_OFF  ||
+        (prev_state == MPS_STATE_IS_OFF   ||
+         prev_state == MPS_STATE_CUT_OFF  ||
          prev_state == MPS_STATE_INTERLOCK)  &&
         me->cur[C124C_OUT_CUR].v.i32 == 0    &&
         me->cur[C124C_ILK    ].v.i32 == 0;
@@ -267,6 +279,8 @@ static vdev_state_dsc_t state_descr[] =
     [MPS_STATE_DETERMINE]    = {0,       -1,                     NULL,               SwchToDETERMINE,    NULL},
     [MPS_STATE_INTERLOCK]    = {0,       -1,                     NULL,               SwchToINTERLOCK,    NULL},
 
+    [MPS_STATE_CUT_OFF]      = {0,       -1,                     NULL,               SwchToCUT_OFF,      NULL},
+
     [MPS_STATE_IS_OFF]       = {0,       -1,                     NULL,               NULL,               NULL},
 
     [MPS_STATE_SW_ON_ENABLE] = { 500000, MPS_STATE_SW_ON_SET_ON, IsAlwdSW_ON_ENABLE, SwchToON_ENABLE,    NULL},
@@ -321,6 +335,7 @@ static vdev_sr_chan_dsc_t state_related_channels[] =
     {MPS20_CEAC124_CHAN_SWITCH_ON,  MPS_STATE_SW_ON_ENABLE, 0, CX_VALUE_DISABLED_MASK},
     {MPS20_CEAC124_CHAN_SWITCH_OFF, MPS_STATE_SW_OFF_DOWN,  0, CX_VALUE_DISABLED_MASK},
     {MPS20_CEAC124_CHAN_IS_ON,      -1,                     0, 0},
+    {MPS20_CEAC124_CHAN_VDEV_CONDITION, -1,                 0, 0},
     {-1,                            -1,                     0, 0},
 };
 
@@ -335,7 +350,7 @@ static int mps20_ceac124_init_d(int devid, void *devptr,
     if (p == NULL  ||  *p == '\0')
     {
         DoDriverLog(devid, 0,
-                    "%s(): base-CDAC20-device name is required in auxinfo",
+                    "%s(): base-CEAC124-device name is required in auxinfo",
                     __FUNCTION__);
         return -CXRF_CFG_PROBL;
     }
@@ -346,7 +361,7 @@ static int mps20_ceac124_init_d(int devid, void *devptr,
         if (*p == '\0')
         {
             DoDriverLog(devid, 0,
-                        "%s(): base-CDAC20-device name is required in auxinfo after '/'",
+                        "%s(): base-CEAC124-device name is required in auxinfo after '/'",
                         __FUNCTION__);
             return -CXRF_CFG_PROBL;
         }
@@ -361,7 +376,7 @@ static int mps20_ceac124_init_d(int devid, void *devptr,
     me->ctx.sodc_cb        = mps20_ceac124_sodc_cb;
 
     me->ctx.our_numchans             = MPS20_CEAC124_NUMCHANS;
-    me->ctx.chan_state_n             = MPS20_CEAC124_CHAN_MPS20_STATE;
+    me->ctx.chan_state_n             = MPS20_CEAC124_CHAN_VDEV_STATE;
     me->ctx.state_unknown_val        = MPS_STATE_UNKNOWN;
     me->ctx.state_determine_val      = MPS_STATE_DETERMINE;
     me->ctx.state_count              = countof(state_descr);
@@ -378,6 +393,9 @@ static int mps20_ceac124_init_d(int devid, void *devptr,
     SetChanReturnType(devid, MPS20_CEAC124_CHAN_C_ILK,     1, IS_AUTOUPDATED_TRUSTED);
     SetChanReturnType(devid, MPS20_CEAC124_CHAN_OPR_S1,    1, IS_AUTOUPDATED_YES);
     SetChanReturnType(devid, MPS20_CEAC124_CHAN_OPR_S2,    1, IS_AUTOUPDATED_YES);
+    SetChanReturnType(devid, MPS20_CEAC124_CHAN_VDEV_CONDITION,1,IS_AUTOUPDATED_TRUSTED);
+    ReturnInt32Datum (devid, MPS20_CEAC124_CHAN_VDEV_CONDITION,
+                             VDEV_PS_CONDITION_OFFLINE, 0);
 
     return vdev_init(&(me->ctx), devid, devptr, WORK_HEARTBEAT_PERIOD, p);
 }
@@ -427,7 +445,7 @@ static void mps20_ceac124_sodc_cb(int devid, void *devptr,
              me->ctx.cur_state == MPS_STATE_SW_ON_UP      ||
              me->ctx.cur_state == MPS_STATE_IS_ON))
         {
-            vdev_set_state(&(me->ctx), MPS_STATE_SW_OFF_DOWN);
+            vdev_set_state(&(me->ctx), MPS_STATE_CUT_OFF);
         }
     }
 }
@@ -534,7 +552,22 @@ static void mps20_ceac124_rw_p(int devid, void *devptr,
                    me->ctx.cur_state <= MPS_STATE_IS_ON);
             ReturnInt32Datum(devid, chn, val, 0);
         }
-        else if (chn == MPS20_CEAC124_CHAN_MPS20_STATE)
+        else if (chn == MPS20_CEAC124_CHAN_VDEV_CONDITION)
+        {
+            if      (me->ctx.cur_state == me->ctx.state_unknown_val  ||
+                     me->ctx.cur_state == me->ctx.state_determine_val)
+                val = VDEV_PS_CONDITION_OFFLINE;
+            else if (me->ctx.cur_state == MPS_STATE_INTERLOCK)
+                val = VDEV_PS_CONDITION_INTERLOCK;
+            else if (me->ctx.cur_state == MPS_STATE_CUT_OFF)
+                val = VDEV_PS_CONDITION_CUT_OFF;
+            else if (me->ctx.cur_state == MPS_STATE_IS_OFF)
+                val = VDEV_PS_CONDITION_IS_OFF;
+            else
+                val = VDEV_PS_CONDITION_IS_ON;
+            ReturnInt32Datum(devid, chn, val, 0);
+        }
+        else if (chn == MPS20_CEAC124_CHAN_VDEV_STATE)
         {
             ReturnInt32Datum(devid, chn, me->ctx.cur_state, 0);
         }

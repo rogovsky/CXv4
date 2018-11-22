@@ -152,9 +152,9 @@ static void HandleSlowmoHbt(privrec_t *me)
                 else
                 if (DO_DBG) fprintf(stderr, " 0 %+10d %+10d %8d %7d +%-7d %d\n", me->out[l].dsr,  me->out[l].cur, -abs(me->out[l].trg - val), me->out[l].crs, me->out[l].acs, me->out[l].crs);
 
+                me->out[l].nxt = 0; // Drop the "next may be sent..." flag
                 SendWrRq(me, l, val);
                 SendRdRq(me, l);
-                me->out[l].nxt = 0; // Drop the "next may be sent..." flag
             }
             else
             {
@@ -185,16 +185,16 @@ static void HandleSlowmoHbt(privrec_t *me)
                     }
                 }
 
+                me->out[l].nxt = 0; // Drop the "next may be sent..." flag
                 SendWrRq(me, l, val);
                 SendRdRq(me, l);
-                me->out[l].nxt = 0; // Drop the "next may be sent..." flag
             }
 
             me->out[l].dsr = val;
         }
 }
 
-static void HandleSlowmoREADDAC_in(privrec_t *me, int l, int32 val)
+static void HandleSlowmoREADDAC_in(privrec_t *me, int l, int32 val, rflags_t rflags)
 {
     me->out[l].cur = val;
     me->out[l].rcv = 1;
@@ -212,33 +212,35 @@ static void HandleSlowmoREADDAC_in(privrec_t *me, int l, int32 val)
     /* Return data: */
     // - Current
     ReturnInt32Datum(me->devid, DEVSPEC_CHAN_OUT_CUR_n_base + l,
-                     me->out[l].cur, 0);
+                     me->out[l].cur, rflags);
     // - Immediate-channel, if present
     if (DEVSPEC_CHAN_OUT_IMM_n_base > 0)
         ReturnInt32Datum(me->devid, DEVSPEC_CHAN_OUT_IMM_n_base + l,
-                         me->out[l].cur, 0);
+                         me->out[l].cur, rflags);
     // Setting, if slowmo is not in action
     if (!me->out[l].isc  ||  !SHOW_SET_IMMED)
         ReturnInt32Datum(me->devid, DEVSPEC_CHAN_OUT_n_base + l,
-                         me->out[l].cur, 0);
+                         me->out[l].cur, rflags);
     // Setting, if first answer at begin of slowmo
     else if (me->out[l].fst)
     {
         me->out[l].fst = 0;
         ReturnInt32Datum(me->devid, DEVSPEC_CHAN_OUT_n_base + l,
-                         val_to_daccode_to_val(me->out[l].trg), 0);
+                         val_to_daccode_to_val(me->out[l].trg), rflags);
     }
 }
 
 static void HandleSlowmoOUT_rw     (privrec_t *me, int chn,
                                     int action, int32 val)
 {
-  int          l;     // Line #
+  int              l;     // Line #
+  advdac_out_ch_t *ci;
 
     //if (action == DRVA_WRITE) fprintf(stderr, "\t[%d]:=%d\n", chn, val);
-    l = chn - DEVSPEC_CHAN_OUT_n_base;
+    l  = chn - DEVSPEC_CHAN_OUT_n_base;
+    ci = me->out + l;
     /* May we touch this channel now? */
-    if (me->out[l].lkd) return;
+    if (ci->lkd) return;
     
     if (action == DRVA_WRITE)
     {
@@ -246,40 +248,48 @@ static void HandleSlowmoOUT_rw     (privrec_t *me, int chn,
         if (val < MIN_ALWD_VAL) val = MIN_ALWD_VAL;
         if (val > MAX_ALWD_VAL) val = MAX_ALWD_VAL;
 
-        if (me->out[l].min < me->out[l].max)
+        if (ci->min < ci->max)
         {
-            if (val < me->out[l].min) val = me->out[l].min;
-            if (val > me->out[l].max) val = me->out[l].max;
+            if (val < ci->min) val = ci->min;
+            if (val > ci->max) val = ci->max;
         }
 
         /* ...and how should we perform the change: */
-        if (!me->out[l].isc  &&  // No mangling with now-changing channels...
+        if (// No mangling with now-changing channels...
+            (!ci->isc  ||  ci->spd == 0  ||  ci->tac <= 0) // ...at least with kinetic ones
+            &&
             (
              /* No speed limit? */
-             me->out[l].spd == 0
+             ci->spd == 0
              ||
              /* Or is it an absolute-value-decrement? */
              (
-              me->out[l].spd > 0  &&
-              abs(val) < abs(me->out[l].cur)  &&
+              ci->spd > 0  &&
+              abs(val) < abs(ci->cur)  &&
               (
                val == 0  ||
                (
-                (val > 0  &&  me->out[l].cur > 0)  ||
-                (val < 0  &&  me->out[l].cur < 0)
+                (val > 0  &&  ci->cur > 0)  ||
+                (val < 0  &&  ci->cur < 0)
                )
               )
              )
              ||
              /* Or is this step less than speed? */
              (
-              abs(val - me->out[l].cur) < abs(me->out[l].spd) / HEARTBEAT_FREQ
+              abs(val - ci->cur) < abs(ci->spd) / HEARTBEAT_FREQ
              )
             )
            )
         /* Just do write?... */
         {
             SendWrRq(me, l, val);
+            /* Stop slowmo */
+            if (ci->isc)
+            {
+                me->num_isc--;
+                ci->isc = 0;
+            }
         }
         else
         /* ...or initiate slow change? */
@@ -287,21 +297,29 @@ static void HandleSlowmoOUT_rw     (privrec_t *me, int chn,
           advdac_out_ch_t ccr;
 
             if (DoCalcMovement(val, me->out + l, &ccr) == DO_CALC_R_SET_IMMED)
+            {
                 SendWrRq(me, l, val); /*!!! G-r-r-r!!! Duplicate!!!  */
+                /* Stop slowmo */
+                if (ci->isc)
+                {
+                    me->num_isc--;
+                    ci->isc = 0;
+                }
+            }
             else
             {
-                me->out[l].mxs = ccr.mxs;
-                me->out[l].crs = ccr.crs;
-                me->out[l].mns = ccr.mns;
-                me->out[l].acs = ccr.acs;
-                me->out[l].dcd = ccr.dcd;
+                ci->mxs = ccr.mxs;
+                ci->crs = ccr.crs;
+                ci->mns = ccr.mns;
+                ci->acs = ccr.acs;
+                ci->dcd = ccr.dcd;
 
-                if (me->out[l].isc == 0) me->num_isc++;
-                me->out[l].dsr = me->out[l].cur;
-                me->out[l].trg = val;
-                me->out[l].isc = 1;
-                me->out[l].fst = 1;
-                me->out[l].fin = 0;
+                if (ci->isc == 0) me->num_isc++;
+                ci->dsr = ci->cur;
+                ci->trg = val;
+                ci->isc = 1;
+                ci->fst = 1;
+                ci->fin = 0;
             }
         }
     }

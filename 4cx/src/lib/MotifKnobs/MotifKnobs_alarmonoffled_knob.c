@@ -143,8 +143,6 @@ static int CreateAlarmonoffled(DataKnob k, CxWidget parent,
   XmFontList               lfl;
 
   Dimension                t;
-  
-  int                      n;
 
     k->behaviour |= DATAKNOB_B_IS_LIGHT | DATAKNOB_B_STEP_FXD;
   
@@ -206,17 +204,9 @@ static int CreateAlarmonoffled(DataKnob k, CxWidget parent,
     }
 
     /* Resolve the victim reference, if any */
-    if (me->victim_name != NULL  &&  me->victim_name[0] != '\0'  &&
-        k->uplink  != NULL)
+    if (me->victim_name != NULL  &&  me->victim_name[0] != '\0')
     {
-        for (n = 0,                        me->victim_k =  NULL;
-             n < k->uplink->u.c.count  &&  me->victim_k == NULL;
-             n++)
-            if (k->uplink->u.c.content[n].ident != NULL  &&
-                strcasecmp(me->victim_name,
-                           k->uplink->u.c.content[n].ident) == 0)
-                me->victim_k = k->uplink->u.c.content + n;
-
+        me->victim_k = datatree_find_node(k, me->victim_name, -1);
         if (me->victim_k == NULL)
             fprintf(stderr, "%s(%s/\"%s\"): victim=\"%s\" not found\n",
                     __FUNCTION__, k->ident, k->label, me->victim_name);

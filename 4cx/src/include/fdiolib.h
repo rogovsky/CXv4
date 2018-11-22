@@ -29,6 +29,8 @@ typedef enum
     FDIO_DGRAM,       // Datagram socket
     FDIO_STRING,      // String socket (connected) -- data is '\n'/'\r'/'\0'-terminated
     FDIO_STRING_CONN, // String socket waiting for connect() to complete
+    FDIO_STREAM_PLUG,
+    FDIO_STREAM_PLUG_CONN,
 } fdio_fdtype_t;
 
 /*
@@ -46,7 +48,9 @@ enum
     FDIO_R_IOERR,
     FDIO_R_PROTOERR,
     FDIO_R_INPKT2BIG,
-    FDIO_R_ENOMEM
+    FDIO_R_ENOMEM,
+    FDIO_R_HEADER_PART,
+    FDIO_R_BIN_DATA_IN_STRING,
 };
 
 enum
@@ -81,6 +85,11 @@ int  fdio_set_maxsbuf         (fdio_handle_t handle, size_t maxoutbufsize);
 int  fdio_set_maxpktsize      (fdio_handle_t handle, size_t maxpktsize);
 int  fdio_set_len_endian      (fdio_handle_t handle, char   len_endian);
 int  fdio_set_maxreadrepcount (fdio_handle_t handle, int    maxrepcount);
+
+int  fdio_advice_hdr_size_add (fdio_handle_t handle, size_t hdr_size_add);
+int  fdio_advice_pktlen       (fdio_handle_t handle, size_t pktlen);
+
+int  fdio_string_req_binary   (fdio_handle_t handle, size_t datasize);
 
 int  fdio_fd_of               (fdio_handle_t handle);
 int  fdio_accept              (fdio_handle_t handle,

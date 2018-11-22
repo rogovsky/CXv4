@@ -18,7 +18,8 @@ devtype	v3h_a40d16 w7i,r13i {
 	ilk		14
 	is_on		15
 	c_ilk		16
-	rsrvd_rd10	17
+	vdev_condition	17
 	rsrvd_rd11	18
-	v3h_state	19
+	vdev_state	19
+	v3h_state	vdev_state
 }

@@ -431,7 +431,10 @@ static void HandleDESC_GET_DAC_STAT(privrec_t *me,
 static void OnSendTabCtlCmdCB(int         devid __attribute__((unused)),
                               void       *devptr,
                               sq_try_n_t  try_n __attribute__((unused)),
-                              void       *privptr)
+                              void       *privptr,
+                              int         desc  __attribute__((unused)),
+                              size_t      dlc   __attribute__((unused)),
+                              uint8      *data  __attribute__((unused)))
 {
   privrec_t  *me   = (privrec_t *)devptr;
   int         mode = ptr2lint(privptr);

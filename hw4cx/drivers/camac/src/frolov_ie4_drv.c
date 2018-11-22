@@ -1,3 +1,5 @@
+#include <math.h>
+
 #include "cxsd_driver.h"
 
 #include "drv_i/frolov_ie4_drv_i.h"
@@ -26,11 +28,51 @@ typedef struct
     int      devid;
     int      N;
     float64  F_IN_NS;
+
+    int      init_val_of_kclk_n;
+    int      init_val_of_fclk_sel;
+    int      init_val_of_start_sel;
+    int      init_val_of_mode;
 } frolov_ie4_privrec_t;
 
+static psp_lkp_t frolov_ie4_kclk_n_lkp   [] =
+{
+    {"1", FROLOV_IE4_V_KCLK_1},
+    {"2", FROLOV_IE4_V_KCLK_2},
+    {"4", FROLOV_IE4_V_KCLK_4},
+    {"8", FROLOV_IE4_V_KCLK_8},
+    {NULL, 0},
+};
+static psp_lkp_t frolov_ie4_fclk_sel_lkp [] =
+{
+    {"fin",    FROLOV_IE4_V_FCLK_FIN},
+    {"quartz", FROLOV_IE4_V_FCLK_QUARTZ_A},
+    {NULL, 0},
+};
+static psp_lkp_t frolov_ie4_start_sel_lkp[] =
+{
+    {"start", FROLOV_IE4_V_START_START},
+    {"y1",    FROLOV_IE4_V_START_Y1},
+    {"camac", FROLOV_IE4_V_START_Y1},
+    {"50hz",  FROLOV_IE4_V_START_50HZ},
+    {NULL, 0},
+};
+static psp_lkp_t frolov_ie4_mode_lkp     [] =
+{
+    {"continuous", FROLOV_IE4_V_MODE_CONTINUOUS},
+    {"cont",       FROLOV_IE4_V_MODE_CONTINUOUS},
+    {"one",        FROLOV_IE4_V_MODE_BUM},
+    {NULL, 0},
+};
 static psp_paramdescr_t frolov_ie4_params[] =
 {
-    PSP_P_REAL("f_in", frolov_ie4_privrec_t, F_IN_NS, 0.0, 0.0, 0.0),
+    PSP_P_REAL  ("f_in",      frolov_ie4_privrec_t, F_IN_NS, 0.0, 0.0, 0.0),
+
+    PSP_P_LOOKUP("kclk",      frolov_ie4_privrec_t, init_val_of_kclk_n,    -1, frolov_ie4_kclk_n_lkp),
+    PSP_P_LOOKUP("fclk_sel",  frolov_ie4_privrec_t, init_val_of_fclk_sel,  -1, frolov_ie4_fclk_sel_lkp),
+    PSP_P_LOOKUP("start_sel", frolov_ie4_privrec_t, init_val_of_start_sel, -1, frolov_ie4_start_sel_lkp),
+    PSP_P_LOOKUP("mode",      frolov_ie4_privrec_t, init_val_of_mode,      -1, frolov_ie4_mode_lkp),
+
     PSP_P_END()
 };
 
@@ -39,6 +81,18 @@ static void frolov_ie4_rw_p(int devid, void *devptr,
                             int action,
                             int count, int *addrs,
                             cxdtype_t *dtypes, int *nelems, void **values);
+
+static void WriteOne (frolov_ie4_privrec_t *me, int nc, int32 value)
+{
+  cxdtype_t  dt_int32 = CXDTYPE_INT32;
+  int        nels_1   = 1;
+  void      *vp       = &value;
+
+    frolov_ie4_rw_p(me->devid, me,
+                    DRVA_WRITE,
+                    1, &nc,
+                    &dt_int32, &nels_1, &vp);
+}
 
 static void ReturnOne(frolov_ie4_privrec_t *me, int nc)
 {
@@ -111,6 +165,15 @@ static int frolov_ie4_init_d(int devid, void *devptr,
     c = (c &~ (1 << 5));
     DO_NAF(CAMAC_REF, me->N, A_RS, 17, &c);
 
+    if (me->init_val_of_kclk_n    >= 0)
+        WriteOne(me, FROLOV_IE4_CHAN_KCLK_N,    me->init_val_of_kclk_n);
+    if (me->init_val_of_fclk_sel  >= 0)
+        WriteOne(me, FROLOV_IE4_CHAN_FCLK_SEL,  me->init_val_of_fclk_sel);
+    if (me->init_val_of_start_sel >= 0) 
+        WriteOne(me, FROLOV_IE4_CHAN_START_SEL, me->init_val_of_start_sel);
+    if (me->init_val_of_mode      >= 0)
+        WriteOne(me, FROLOV_IE4_CHAN_MODE,      me->init_val_of_mode);
+ 
     return DEVSTATE_OPERATING;
 }
 
@@ -217,7 +280,7 @@ static void frolov_ie4_rw_p(int devid, void *devptr,
                 {
                     if (dval < 0) dval = 0;
 
-                    c_Ai = dval / quant;         if (c_Ai > 4095) c_Ai = 4095;
+                    c_Ai = round(dval / quant);  if (c_Ai > 4095) c_Ai = 4095;
                     rflags |= x2rflags(DO_NAF(CAMAC_REF, me->N, A_A+l, 16, &c_Ai));
 
                     ReturnOne(me, FROLOV_IE4_CHAN_A_n_base + l);

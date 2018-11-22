@@ -1,0 +1,52 @@
+# From m4-1.4.1-7.src.rpm::m4-1.4.1.tar.gz#utar/m4-1.4.1/examples/foreach.m4
+# foreach(x, (item_1, item_2, ..., item_n), stmt)
+define(`foreach', `pushdef(`$1', `')_foreach(`$1', `$2', `$3')popdef(`$1')')
+define(`_arg1', `$1')
+define(`_foreach',
+        `ifelse(`$2', `()', ,
+                `define(`$1', _arg1$2)$3`'_foreach(`$1', (shift$2), `$3')')')
+
+#---------------------------------------------------------------------
+
+define(`RING_ELEMENTS', `dRM,qD1,qF1n2,qF4,qD2,qD3,qF3')
+
+sysname   steer_ring
+defserver canhw:12
+
+wintitle  main "Ring Steerer"
+winname   main steer_ring
+winclass  main Steer_Ring
+
+grouping main steer_ring_grouping "Ring Steerer" lrtb content:2 {
+
+    container ctl - grid nodecor ncols:2 content:2 {
+        knob steer "Energy" text "withlabel" MeV %5.1f alwdrange:0-400 \
+                r:%energy_set \
+                w:"_all_code;
+                   qryval; cmp_if_lt 1; ret;
+                   qryval; getchan %energy_set; div; putchan %ratio;
+                   getchan %ratio; print_dbl 'ratio: %8.3f';
+                   foreach(`x', `(RING_ELEMENTS)',
+                           `getchan x.Iset; getchan %ratio; mul; putchan x.Iset;')
+                   qryval; putchan %energy_set;
+                   push 1; putchan %is_setting;
+                   sleep 1;
+                   push 0; putchan %is_setting;
+                   ret;" \
+                c:%is_setting normrange:0-0.5
+        container - "" subwin content:1 {
+            knob setto "Set to" text "withlabel" MeV   %5.1f alwdrange:0-400 \
+                    r:%energy_set
+        }
+    } at_init:"_all_code;
+               push 100; putchan %energy_set;
+               push 0;   putchan %is_setting;
+               ret;"
+
+    container dpy - grid noshadow,notitle,nocoltitles \
+            content:7 {
+        foreach(`x', `(RING_ELEMENTS)', `disp x x text - A %6.1f x.Iset
+                ')
+    } layinfo:newline
+
+}

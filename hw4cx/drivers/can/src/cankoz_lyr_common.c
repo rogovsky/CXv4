@@ -269,7 +269,8 @@ static void cankoz_send_callback(void        *q_privptr,
   kozdevinfo_t *dp = q_privptr;
   canqelem_t   *qe = (canqelem_t *)e;
 
-    qe->on_send(dp->devid, dp->devptr, try_n, qe->privptr);
+    qe->on_send(dp->devid, dp->devptr, try_n, qe->privptr,
+                qe->dlc > 0? qe->data[0] : -1, qe->dlc, qe->data);
 }
 
 

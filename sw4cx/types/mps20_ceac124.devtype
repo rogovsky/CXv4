@@ -24,5 +24,8 @@ devtype mps20_ceac124 w50i,r50i {
 
 	c_ilk		72
 
-	mps20_state	99
+	vdev_condition	97
+	rsrvd_rd_98	98
+	vdev_state	99
+	mps20_state	vdev_state
 }

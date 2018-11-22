@@ -36,7 +36,8 @@ typedef void (*CanKozOnIdProc)   (int devid, void *devptr, int is_a_reset);
 typedef void (*CanKozPktinProc)  (int devid, void *devptr,
                                   int desc,  size_t dlc, uint8 *data);
 typedef void (*CanKozOnSendProc) (int devid, void *devptr,
-                                  sq_try_n_t try_n, void *privptr);
+                                  sq_try_n_t try_n, void *privptr,
+                                  int desc,  size_t dlc, uint8 *data);
 typedef int  (*CanKozCheckerProc)(size_t dlc, uint8 *data, void *privptr);
 
 

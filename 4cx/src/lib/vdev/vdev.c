@@ -191,15 +191,10 @@ static void stat_evproc(int            devid,
 ////        ctx->chan_state_n >= 0  &&  ctx->chan_state_n < our_numchans)
 ////        ReturnInt32Datum(ctx->devid, ctx->chan_state_n, our_state, 0);
 
-    if      (subord_state == DEVSTATE_OFFLINE)
+    if      (subord_state == DEVSTATE_OFFLINE  ||
+             subord_state == DEVSTATE_NOTREADY)
     {
         vdev_set_state(ctx, ctx->state_unknown_val);
-    }
-    else if (subord_state == DEVSTATE_NOTREADY)
-    {
-        if (ctx->cur_state != ctx->state_unknown_val  &&
-            ctx->state_determine_val >= 0)
-            vdev_set_state(ctx, ctx->state_determine_val);
     }
 }
 
@@ -246,6 +241,7 @@ int  vdev_init(vdev_context_t *ctx,
 
   const char *base_to_use;
   const char *name_to_use;
+  int         should_use__OPT_NO_RD_CONV;
 
     ctx->devid           = devid;
     ctx->devptr          = devptr;
@@ -321,9 +317,14 @@ int  vdev_init(vdev_context_t *ctx,
             base_to_use = NULL;
             name_to_use = base;
         }
+        if ((ctx->map[sodc].mode & VDEV_DO_RD_CONV) == 0)
+            should_use__OPT_NO_RD_CONV = CDA_DATAREF_OPT_NO_RD_CONV;
+        else
+            should_use__OPT_NO_RD_CONV = 0;
+        ctx->cur[sodc].ts = (cx_time_t){CX_TIME_SEC_NEVER_READ,0};
         if ((ctx->cur[sodc].ref = cda_add_chan(ctx->cid, base_to_use,
                                                name_to_use,
-                                               CDA_DATAREF_OPT_NO_RD_CONV |
+                                               should_use__OPT_NO_RD_CONV |
                                                    CDA_DATAREF_OPT_ON_UPDATE,
                                                dtype, max_nelems,
                                                  CDA_REF_EVMASK_UPDATE     |
@@ -337,7 +338,6 @@ int  vdev_init(vdev_context_t *ctx,
             safe_free      (ctx->buf);    ctx->buf = NULL;
             return -CXRF_DRV_PROBL;
         }
-        ctx->cur[sodc].ts = (cx_time_t){CX_TIME_SEC_NEVER_READ,0};
     }
     for (tdev = 0;  tdev < ctx->devstate_count;  tdev++)
     {
@@ -464,8 +464,8 @@ int  vdev_get_int(vdev_context_t *ctx, int sodc)
         case CXDTYPE_INT64:  return ctx->cur[sodc].v.i64;
         case CXDTYPE_UINT64: return ctx->cur[sodc].v.u64;
 #endif /* MAY_USE_INT64 */
-        case CXDTYPE_SINGLE: return ctx->cur[sodc].v.f64;
-        case CXDTYPE_DOUBLE: return ctx->cur[sodc].v.f32;
+        case CXDTYPE_SINGLE: return ctx->cur[sodc].v.f32;
+        case CXDTYPE_DOUBLE: return ctx->cur[sodc].v.f64;
         default:
             errno = ERANGE;
             return 0;

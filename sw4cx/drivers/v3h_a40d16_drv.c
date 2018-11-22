@@ -206,18 +206,20 @@ enum
     zV3H_STATE_RST_ILK_DRP,      // 4
     zV3H_STATE_RST_ILK_CHK,      // 5
 
-    V3H_STATE_IS_OFF,            // 6
+    V3H_STATE_CUT_OFF,           // 6
 
-    V3H_STATE_SW_ON_ENABLE,      // 7
-    V3H_STATE_SW_ON_SET_ON,      // 8
-    V3H_STATE_SW_ON_DRP_ON,      // 9
-    V3H_STATE_SW_ON_UP,          // 10
+    V3H_STATE_IS_OFF,            // 7
 
-    V3H_STATE_IS_ON,             // 11
+    V3H_STATE_SW_ON_ENABLE,      // 8
+    V3H_STATE_SW_ON_SET_ON,      // 9
+    V3H_STATE_SW_ON_DRP_ON,      // 10
+    V3H_STATE_SW_ON_UP,          // 11
 
-    V3H_STATE_SW_OFF_DOWN,       // 12
-    V3H_STATE_SW_OFF_CHK_I,      // 13
-    V3H_STATE_SW_OFF_CHK_E,      // 14
+    V3H_STATE_IS_ON,             // 12
+
+    V3H_STATE_SW_OFF_DOWN,       // 13
+    V3H_STATE_SW_OFF_CHK_I,      // 14
+    V3H_STATE_SW_OFF_CHK_E,      // 15
 
     V3H_STATE_count
 };
@@ -263,6 +265,15 @@ static void SwchToINTERLOCK(void *devptr, int prev_state __attribute__((unused))
     SndCVal(me, A40_SW_OFF, 0); // Set "off"
 }
 
+static void SwchToCUT_OFF(void *devptr, int prev_state __attribute__((unused)))
+{
+  privrec_t *me = devptr;
+
+    SndCVal(me, D16_OUT,    0); // Drop setting
+    SndCVal(me, D16_SW_ON,  0); // Drop "on" bit
+    SndCVal(me, A40_SW_OFF, 0); // Set "off"
+}
+
 static int  IsAlwdSW_ON_ENABLE(void *devptr, int prev_state)
 {
   privrec_t *me = devptr;
@@ -271,7 +282,8 @@ static int  IsAlwdSW_ON_ENABLE(void *devptr, int prev_state)
     ilk = me->cur[A40_ILK].v.i32;
 
     return
-        (prev_state == V3H_STATE_IS_OFF  ||
+        (prev_state == V3H_STATE_IS_OFF   ||
+         prev_state == V3H_STATE_CUT_OFF  ||
          prev_state == V3H_STATE_INTERLOCK)    &&
         me->cur[D16_OUT_CUR].v.i32 == 0  &&
         ilk == 0;
@@ -375,6 +387,8 @@ static vdev_state_dsc_t state_descr[] =
     [V3H_STATE_DETERMINE]    = {0,       -1,                     NULL,               SwchToDETERMINE,    NULL},
     [V3H_STATE_INTERLOCK]    = {0,       -1,                     NULL,               SwchToINTERLOCK,    NULL},
 
+    [V3H_STATE_CUT_OFF]      = {0,       -1,                     NULL,               SwchToCUT_OFF,      NULL},
+
     [V3H_STATE_IS_OFF]       = {0,       -1,                     NULL,               NULL,               NULL},
 
     [V3H_STATE_SW_ON_ENABLE] = { 500000, V3H_STATE_SW_ON_SET_ON, IsAlwdSW_ON_ENABLE, SwchToON_ENABLE,    NULL},
@@ -429,6 +443,7 @@ static vdev_sr_chan_dsc_t state_related_channels[] =
     {V3H_A40D16_CHAN_SWITCH_ON,  V3H_STATE_SW_ON_ENABLE, 0,                 CX_VALUE_DISABLED_MASK},
     {V3H_A40D16_CHAN_SWITCH_OFF, V3H_STATE_SW_OFF_DOWN,  0,                 CX_VALUE_DISABLED_MASK},
     {V3H_A40D16_CHAN_IS_ON,      -1,                     0,                 0},
+    {V3H_A40D16_CHAN_VDEV_CONDITION, -1,                 0,                 0},
     {-1,                         -1,                     0,                 0},
 };
 
@@ -439,11 +454,12 @@ static int v3h_a40d16_init_d(int devid, void *devptr,
   privrec_t      *me = (privrec_t *)devptr;
   const char     *p  = auxinfo;
   const char     *endp;
-  char            hiername[100];
-  size_t          len;
+  char            base[100];
+  size_t          base_len;
 
     me->devid = devid;
 
+    // Check auxinfo presence
     if (p == NULL  ||  *p == '\0')
     {
         DoDriverLog(devid, 0,
@@ -451,7 +467,8 @@ static int v3h_a40d16_init_d(int devid, void *devptr,
                     __FUNCTION__);
         return -CXRF_CFG_PROBL;
     }
-    /*!!!NNN */
+
+    // Extract base name
     endp = strchr(p, '/');
     if (endp == NULL)
     {
@@ -460,11 +477,12 @@ static int v3h_a40d16_init_d(int devid, void *devptr,
                     __FUNCTION__);
         return -CXRF_CFG_PROBL;
     }
-    len = endp - p;
-    if (len > sizeof(hiername) - 1)
-        len = sizeof(hiername) - 1;
-    memcpy(hiername, p, len); hiername[len] = '\0';
+    base_len = endp - p;
+    if (base_len > sizeof(base) - 1)
+        base_len = sizeof(base) - 1;
+    memcpy(base, p, base_len); base[base_len] = '\0';
 
+    // Obtain the /N sub-address (N=0...7)
     p = endp + 1;
     if (*p < '0'  ||  *p >= '0' + EIGHTDEVS)
     {
@@ -485,7 +503,7 @@ static int v3h_a40d16_init_d(int devid, void *devptr,
     me->ctx.sodc_cb        = v3h_a40d16_sodc_cb;
 
     me->ctx.our_numchans             = V3H_A40D16_NUMCHANS;
-    me->ctx.chan_state_n             = V3H_A40D16_CHAN_V3H_STATE;
+    me->ctx.chan_state_n             = V3H_A40D16_CHAN_VDEV_STATE;
     me->ctx.state_unknown_val        = V3H_STATE_UNKNOWN;
     me->ctx.state_determine_val      = V3H_STATE_DETERMINE;
     me->ctx.state_count              = countof(state_descr);
@@ -500,8 +518,12 @@ static int v3h_a40d16_init_d(int devid, void *devptr,
     SetChanReturnType(devid, V3H_A40D16_CHAN_ISET_CUR,  1, IS_AUTOUPDATED_TRUSTED);
     SetChanReturnType(devid, V3H_A40D16_CHAN_ILK,       1, IS_AUTOUPDATED_YES);
     SetChanReturnType(devid, V3H_A40D16_CHAN_C_ILK,     1, IS_AUTOUPDATED_TRUSTED);
+    SetChanReturnType(devid, V3H_A40D16_CHAN_VDEV_CONDITION,
+                              1,                           IS_AUTOUPDATED_TRUSTED);
+    ReturnInt32Datum (devid, V3H_A40D16_CHAN_VDEV_CONDITION,
+                             VDEV_PS_CONDITION_OFFLINE, 0);
 
-    return vdev_init(&(me->ctx), devid, devptr, WORK_HEARTBEAT_PERIOD, hiername);
+    return vdev_init(&(me->ctx), devid, devptr, WORK_HEARTBEAT_PERIOD, base);
 }
 
 static void v3h_a40d16_term_d(int devid __attribute__((unused)), void *devptr)
@@ -535,7 +557,7 @@ static void v3h_a40d16_sodc_cb(int devid, void *devptr,
          me->ctx.cur_state == V3H_STATE_SW_ON_UP      ||
          me->ctx.cur_state == V3H_STATE_IS_ON))
     {
-        vdev_set_state(&(me->ctx), V3H_STATE_SW_OFF_DOWN);
+        vdev_set_state(&(me->ctx), V3H_STATE_CUT_OFF);
     }
 }
 
@@ -643,7 +665,23 @@ static void v3h_a40d16_rw_p(int devid, void *devptr,
                    me->ctx.cur_state <= V3H_STATE_IS_ON);
             ReturnInt32Datum(devid, chn, val, 0);
         }
-        else if (chn == V3H_A40D16_CHAN_V3H_STATE)
+        else if (chn == V3H_A40D16_CHAN_VDEV_CONDITION)
+        {
+            if      (me->ctx.cur_state == me->ctx.state_unknown_val  ||
+                     me->ctx.cur_state == me->ctx.state_determine_val)
+                val = VDEV_PS_CONDITION_OFFLINE;
+            else if (me->ctx.cur_state >= V3H_STATE_INTERLOCK  &&
+                     me->ctx.cur_state <= zV3H_STATE_RST_ILK_CHK)
+                val = VDEV_PS_CONDITION_INTERLOCK;
+            else if (me->ctx.cur_state == V3H_STATE_CUT_OFF)
+                val = VDEV_PS_CONDITION_CUT_OFF;
+            else if (me->ctx.cur_state == V3H_STATE_IS_OFF)
+                val = VDEV_PS_CONDITION_IS_OFF;
+            else
+                val = VDEV_PS_CONDITION_IS_ON;
+            ReturnInt32Datum(devid, chn, val, 0);
+        }
+        else if (chn == V3H_A40D16_CHAN_VDEV_STATE)
         {
             ReturnInt32Datum(devid, chn, me->ctx.cur_state, 0);
         }

@@ -26,6 +26,7 @@ libMotifKnobs.a_COMPONENTS=	MotifKnobs_internals.o \
 				MotifKnobs_scroll_cont.o \
 				MotifKnobs_tabber_cont.o \
 				MotifKnobs_loggia_cont.o \
+				MotifKnobs_invisible_cont.o \
 				MotifKnobs_canvas_cont.o \
 				MotifKnobs_lrtb_grpg.o
 libMotifKnobs_cda.a_COMPONENTS= MotifKnobs_cda_knobset.o \

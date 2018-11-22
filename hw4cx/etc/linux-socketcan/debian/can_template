@@ -1,5 +1,7 @@
+# https://developer.ridgerun.com/wiki/index.php/How_to_configure_and_use_CAN_bus#Setup_the_networking_rules
 iface canbus inet manual
         pre-up /sbin/ip link set $IFACE type can bitrate 125000
         pre-up /sbin/ip link set $IFACE type can restart-ms 200
+	pre-up /sbin/ip link set $IFACE txqueuelen 100
         up     /sbin/ip link set $IFACE up
         down   /sbin/ip link set $IFACE down
