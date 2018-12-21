@@ -23,6 +23,8 @@
 #include "pixmaps/btn_mini_save.xpm"
 #include "pixmaps/btn_mini_start.xpm"
 #include "pixmaps/btn_mini_once.xpm"
+#include "pixmaps/btn_mini_setgood.xpm"
+#include "pixmaps/btn_mini_rstgood.xpm"
 
 
 psp_paramdescr_t  pzframe_gui_text2look[] =
@@ -322,10 +324,31 @@ static void OnceBtnCB(Widget     w,
     ShowRunMode(gui);
 }
 
+static void SetGoodBtnCB(Widget     w,
+                         XtPointer  closure,
+                         XtPointer  call_data __attribute__((unused)))
+{
+  pzframe_gui_t     *gui   = closure;
+
+    if (gui->d->vmt.svd_ctl != NULL)
+        gui->d->vmt.svd_ctl(gui, 1);
+}
+
+static void RstGoodBtnCB(Widget     w,
+                         XtPointer  closure,
+                         XtPointer  call_data __attribute__((unused)))
+{
+  pzframe_gui_t     *gui   = closure;
+
+    if (gui->d->vmt.svd_ctl != NULL)
+        gui->d->vmt.svd_ctl(gui, 0);
+}
+
 void  PzframeGuiMkCommons  (pzframe_gui_t *gui, Widget parent)
 {
   Widget     w;
   XmString   s;
+  Widget     b;
 
     if (gui->commons != NULL) return;
 
@@ -396,7 +419,7 @@ void  PzframeGuiMkCommons  (pzframe_gui_t *gui, Widget parent)
         attachleft    (gui->save_button, w, 0);
         w = gui->save_button;
     }
-    if (gui->look.noleds == 0) /*!!! "noleds"? Not "nocontrols"? */
+    if (gui->look.noleds == 0) /*!!! A bit misleading "noleds" name; it is used by pzframe_knobplugin.c and pzframe_gui.c to signify "create local toolbar" */
     {
         gui->loop_button =
             XtVaCreateManagedWidget("miniToolButton", xmPushButtonWidgetClass, gui->commons,
@@ -410,17 +433,47 @@ void  PzframeGuiMkCommons  (pzframe_gui_t *gui, Widget parent)
         attachleft    (gui->loop_button, w, 0);
         w = gui->loop_button;
 
-        gui->once_button =
+        if ((gui->pfr->ftd->behaviour & (PZFRAME_B_NO_SVD)) != 0)
+        {
+            gui->once_button =
+                XtVaCreateManagedWidget("miniToolButton", xmPushButtonWidgetClass, gui->commons,
+                                        XmNlabelString, s = XmStringCreateLtoR("|>", xh_charset),
+                                        XmNtraversalOn, False,
+                                        NULL);
+            XmStringFree(s);
+            XhAssignPixmap(gui->once_button, btn_mini_once_xpm);
+            XhSetBalloon  (gui->once_button, "One measurement");
+            XtAddCallback (gui->once_button, XmNactivateCallback, OnceBtnCB, gui);
+            attachleft    (gui->once_button, w, 0);
+            w = gui->once_button;
+        }
+
+    }
+    if ((gui->pfr->ftd->behaviour & (PZFRAME_B_NO_SVD)) == 0)
+    {
+        b =
             XtVaCreateManagedWidget("miniToolButton", xmPushButtonWidgetClass, gui->commons,
-                                    XmNlabelString, s = XmStringCreateLtoR("|>", xh_charset),
+                                    XmNlabelString, s = XmStringCreateLtoR("G", xh_charset),
                                     XmNtraversalOn, False,
                                     NULL);
         XmStringFree(s);
-        XhAssignPixmap(gui->once_button, btn_mini_once_xpm);
-        XhSetBalloon  (gui->once_button, "One measurement");
-        XtAddCallback (gui->once_button, XmNactivateCallback, OnceBtnCB, gui);
-        attachleft    (gui->once_button, w, 0);
-        w = gui->once_button;
+        XhAssignPixmap(b, btn_mini_setgood_xpm);
+        XhSetBalloon  (b, "Save current data as good");
+        XtAddCallback (b, XmNactivateCallback, SetGoodBtnCB, gui);
+        attachleft    (b, w, 0);
+        w = b;
+
+        b =
+            XtVaCreateManagedWidget("miniToolButton", xmPushButtonWidgetClass, gui->commons,
+                                    XmNlabelString, s = XmStringCreateLtoR("X", xh_charset),
+                                    XmNtraversalOn, False,
+                                    NULL);
+        XmStringFree(s);
+        XhAssignPixmap(b, btn_mini_rstgood_xpm);
+        XhSetBalloon  (b, "Forget saved data");
+        XtAddCallback (b, XmNactivateCallback, RstGoodBtnCB, gui);
+        attachleft    (b, w, 0);
+        w = b;
     }
 
     /*!!! should save XtAppAddTimeOut() for "destroy()" to be possible */

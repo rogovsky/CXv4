@@ -892,9 +892,54 @@ int  FastadcDataRealize    (fastadc_data_t *adc,
   int                  nl;
   char                *p;
 
+  int                  stage;
+  size_t               r_svd; // "r" stands for "room"
+  size_t               valsize;
+  size_t               pddsize; // PaDdeD valsize
+  cxdtype_t            dtype;
+  int                  max_nelems;
+
     /* 0. Call parent */
     r = PzframeDataRealize(&(adc->pfr), present_cid, base);
     if (r != 0) return r;
+
+    /* 0.1. Allocate buffer for saved data */
+    if ((atd->ftd.behaviour & (PZFRAME_B_NO_SVD | PZFRAME_B_NO_ALLOC)) == 0)
+    {
+        for (stage = 0;  stage <= 1;  stage++)
+        {
+            for (r_svd = 0, nl = 0;  nl < atd->num_lines;  nl++)
+            {
+                /* Note: size calculation logic is unified with PzframeDataRealize() */
+                dtype      = atd->ftd.chan_dscrs[atd->line_dscrs[nl].data_cn].dtype;
+                max_nelems = atd->ftd.chan_dscrs[atd->line_dscrs[nl].data_cn].max_nelems;
+                if (dtype      == 0) dtype      = CXDTYPE_INT32;
+                if (max_nelems == 0) max_nelems = 1;
+                valsize = sizeof_cxdtype(dtype) * max_nelems;
+                pddsize = (valsize + 15) &~15UL;
+
+                /* Remember pointers at stage 1 */
+                if (stage == 1)
+                    adc->svd.plots[nl].x_buf = (uint8*)(adc->svd_buf) + r_svd;
+
+                /*  */
+                r_svd += pddsize;
+            }
+
+            /* Allocate buffer at end of stage 0 */
+            if (stage == 0)
+            {
+                adc->svd_buf = malloc(r_svd);
+                if (adc->svd_buf == NULL)
+                {
+                    fprintf(stderr, "%s %s(): unable to allocate %zd data for svd_buf\n",
+                            strcurtime(), __FUNCTION__,
+                            r_svd);
+                    return -1;
+                }
+            }
+        }
+    }
 
     /* 1. Prepare descriptions */
     for (nl = 0;  nl < adc->atd->num_lines;  nl++)
@@ -1101,6 +1146,55 @@ psp_paramdescr_t *FastadcDataCreateText2DcnvTable(fastadc_type_dscr_t *atd,
     safe_free(pcp_names_buf);
     safe_free(ret);
     return NULL;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+int  FastadcDataCopy2Svd(fastadc_data_t *adc)
+{
+  int         nl;
+  plotdata_t *src;
+  plotdata_t *dst;
+  size_t      nbytes;
+
+    if (adc->svd_buf == 0) return -1;
+
+    for (nl = 0;  nl < adc->atd->num_lines;  nl++)
+    {
+        src = adc->mes.plots + nl;
+        dst = adc->svd.plots + nl;
+
+        dst->on           = src->on;
+        dst->numpts       = src->numpts;
+        dst->all_range    = src->all_range;
+        dst->cur_range    = src->cur_range;
+        dst->cur_int_zero = src->cur_int_zero;
+        if (dst->on)
+        {
+            nbytes = src->numpts * sizeof_cxdtype(src->x_buf_dtype);
+            /*!!! Note: a potential buffer overflow.
+                  We suppose nbytes would never exceed dst->x_buf's capacity,
+                  because it was allocated using the same rules which
+                  limit src->numpts.
+                  But that is a dubious hope. */
+            if (nbytes != 0)
+                memcpy(dst->x_buf, src->x_buf, nbytes);
+            dst->x_buf_dtype = src->x_buf_dtype;
+        }
+        else
+        {
+            dst->x_buf       = NULL;
+            dst->x_buf_dtype = CXDTYPE_INT32;
+            dst->numpts      = 0;
+        }
+    }
+
+    return 0;
+}
+
+void FastadcDataResetSvd(fastadc_data_t *adc)
+{
+    adc->use_svd = 0;
 }
 
 //////////////////////////////////////////////////////////////////////

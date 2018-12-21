@@ -184,6 +184,7 @@ static pzframe_gui_vmt_t vcamimg_gui_std_pzframe_vmt =
     .evproc   = NULL,
     .newstate = UpdateBG,
     .do_renew = DoRenew,
+    .svd_ctl  = NULL,
 };
 void  VcamimgGuiFillStdDscr(vcamimg_gui_dscr_t *gkd, vcamimg_type_dscr_t *vtd)
 {

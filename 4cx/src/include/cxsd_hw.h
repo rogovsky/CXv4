@@ -25,6 +25,10 @@ int  CxsdHwGetCurCycle(void);
 int  CxsdHwTimeChgBack(void);
 int  CxsdHwSetCleanup (cxsd_hw_cleanup_proc proc);
 
+char * ParseDrvlogCategories(const char *str, const char **endptr,
+                             int *set_mask_p, int *clr_mask_p);
+const char *GetDrvlogCatName(int category);
+
 
 //////////////////////////////////////////////////////////////////////
 

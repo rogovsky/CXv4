@@ -44,6 +44,8 @@ typedef void   (*pzframe_gui_evproc_t)   (struct _pzframe_gui_t_struct *gui,
 typedef void   (*pzframe_gui_newstate_t) (struct _pzframe_gui_t_struct *gui);
 typedef void   (*pzframe_gui_do_renew_t) (struct _pzframe_gui_t_struct *gui,
                                           int   info_changed);
+typedef void   (*pzframe_gui_svd_ctl_t)  (struct _pzframe_gui_t_struct *gui,
+                                          int   on_off);
 
 typedef struct
 {
@@ -51,6 +53,7 @@ typedef struct
     pzframe_gui_evproc_t    evproc;
     pzframe_gui_newstate_t  newstate;
     pzframe_gui_do_renew_t  do_renew;
+    pzframe_gui_svd_ctl_t   svd_ctl;
 } pzframe_gui_vmt_t;
 
 /********************************************************************/

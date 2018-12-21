@@ -650,6 +650,7 @@ XhPlot    XhCreatePlot(Widget parent, int type, int maxplots,
     plot->axisGC               = AllocXhGC  (parent, cofs + XH_COLOR_GRAPH_AXIS,   XH_TINY_FIXED_FONT);   plot->axis_finfo      = last_finfo;
     plot->gridGC               = AllocDashGC(parent, cofs + XH_COLOR_GRAPH_GRID,   GRID_DASHLENGTH);
     plot->reprGC               = AllocXhGC  (parent, cofs + XH_COLOR_GRAPH_REPERS, XH_PROPORTIONAL_FONT); plot->repr_finfo      = last_finfo;
+//    plot->reprGC               = AllocXhGC  (parent, cofs + XH_COLOR_GRAPH_AXIS,   XH_PROPORTIONAL_FONT); plot->repr_finfo      = last_finfo;
 
     return plot;
 }

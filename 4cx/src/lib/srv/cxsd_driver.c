@@ -21,38 +21,6 @@ void        DoDriverLog      (int devid, int level,
     va_end(ap);
 }
 
-/*!!!This block doesn't belong here!!!*/
-//////////////////////////////////////////////////////////////////////
-typedef struct
-{
-    const char *name;
-    int         c;
-} catdesc_t;
-
-/* Note: this list should be kept in sync/order with
-   DRIVERLOG_CN_ enums in cxsd_driver.h */
-static catdesc_t  catlist[] =
-{
-    {"DEFAULT",           DRIVERLOG_C_DEFAULT},
-    {"ENTRYPOINT",        DRIVERLOG_C_ENTRYPOINT},
-    {"PKTDUMP",           DRIVERLOG_C_PKTDUMP},
-    {"PKTINFO",           DRIVERLOG_C_PKTINFO},
-    {"DATACONV",          DRIVERLOG_C_DATACONV},
-    {"REMDRV_PKTDUMP",    DRIVERLOG_C_REMDRV_PKTDUMP},
-    {"REMDRV_PKTINFO",    DRIVERLOG_C_REMDRV_PKTINFO},
-    {NULL,         0}
-};
-
-/*!!! a temporary measure, since god knows into which .h to place declaration */
-static const char *GetDrvlogCatName(int category)
-{
-    category = (category & DRIVERLOG_C_mask) >> DRIVERLOG_C_shift;
-    if (category > DRIVERLOG_CN_default  ||  category < countof(catlist) - 1)
-        return catlist[category].name;
-    else
-        return "???";
-}
-//////////////////////////////////////////////////////////////////////
 void        vDoDriverLog     (int devid, int level,
                               const char *format, va_list ap)
 {

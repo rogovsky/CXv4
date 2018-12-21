@@ -20,14 +20,51 @@ LOCAL_GNTDFILES=$(QT4_MAKEFILE) $(QT5_MAKEFILE) \
 		$(QT4_PRO_FILE) $(QT5_PRO_FILE) \
 		$(QT4_HDR_FILE) $(QT5_HDR_FILE)
 
-ifeq  "$(wildcard /usr/bin/qmake-qt4)" ""
-  DUMMY:=	$(warning WARNING: /usr/bin/qmake-qt4 is absent, so skipping build of libQt4cxscheduler)
+QTCHOOSER=	/usr/bin/qtchooser
+
+ifneq "$(NOQT)" ""
+  DUMMY:=$(warning WARNING: skipping build of Qcxscheduler because of NOQT switch)
 else
+  DUMMY:=$(warning WARNING: --------------------------------------------------------)
+  DUMMY:=$(warning WARNING: This is an EXPERIMENTAL version of lib/Qcxscheduler/Makefile)
+  DUMMY:=$(warning WARNING: which employs $(QTCHOOSER).)
+  DUMMY:=$(warning WARNING: In case of problems or if Qcxscheduler is NOT needed,)
+  DUMMY:=$(warning WARNING: just specify "NOQT=Y" in command line.)
+  DUMMY:=$(warning WARNING: --------------------------------------------------------)
+
+  ifneq "$(wildcard $(QTCHOOSER))" ""
+    DUMMY := $(warning INFO: $(QTCHOOSER) found)
+    QTS   := $(shell /usr/bin/qtchooser -l)
+    DUMMY := $(warning INFO: Qt versions: $(QTS))
+    ifneq "$(findstring qt5,$(QTS))" ""
+      DUMMY := $(warning Qt5 found))
+      QMAKE_QT5 = qtchooser -qt=qt5 -run-tool=qmake
+    endif
+    ifneq "$(findstring qt4,$(QTS))" ""
+      DUMMY := $(warning Qt4 found))
+      QMAKE_QT4 = qtchooser -qt=qt4 -run-tool=qmake
+    endif
+  else
+    DUMMY:= $(warning WARNING: $(QTCHOOSER) is absent, trying to use qmakes)
+    ifeq  "$(wildcard /usr/bin/qmake-qt4)" ""
+      DUMMY:= $(warning WARNING: /usr/bin/qmake-qt4 is absent, so skipping build of libQt4cxscheduler)
+    else
+      QMAKE_QT4 = "qmake-qt4"
+    endif
+    ifeq  "$(wildcard /usr/bin/qmake-qt5)" ""
+      DUMMY:= $(warning WARNING: /usr/bin/qmake-qt5 is absent, so skipping build of libQt5cxscheduler)
+    else
+      QMAKE_QT5 = "qmake-qt5"
+    endif
+  endif
+endif
+
+ifneq "$(QMAKE_QT4)" ""
   UNCFILES+=		$(QT4LIB)
   MAKEFILE_PARTS+=	$(QT4_PRO_FILE)
 
   $(QT4_MAKEFILE):	$(QT4_PRO_FILE) $(QT4_CPP_FILE) $(QT4_HDR_FILE)
-		qmake-qt4 -o $@ $< TOP_INCLUDES=$(TOPDIR)/include
+		$(QMAKE_QT4) -o $@ $< TOP_INCLUDES=$(TOPDIR)/include
 
   libQt4cxscheduler.a:	$(QT4_MAKEFILE) $(QT4_CPP_FILE) $(QT4_HDR_FILE)
 		$(CALL_QT4_MAKE)
@@ -38,14 +75,12 @@ else
 		$(CALL_QT4_MAKE) distclean
 endif
 
-ifeq  "$(wildcard /usr/bin/qmake-qt5)" ""
-  DUMMY:=	$(warning WARNING: /usr/bin/qmake-qt5 is absent, so skipping build of libQt5cxscheduler)
-else
+ifneq "$(QMAKE_QT5)" ""
   UNCFILES+=		$(QT5LIB)
   MAKEFILE_PARTS+=	$(QT5_PRO_FILE)
 
   $(QT5_MAKEFILE):	$(QT5_PRO_FILE) $(QT5_CPP_FILE) $(QT5_HDR_FILE)
-		qmake-qt5 -o $@ $< TOP_INCLUDES=$(TOPDIR)/include
+		$(QMAKE_QT5) -o $@ $< TOP_INCLUDES=$(TOPDIR)/include
 
   libQt5cxscheduler.a:	$(QT5_MAKEFILE) $(QT5_CPP_FILE) $(QT5_HDR_FILE)
 		$(CALL_QT5_MAKE)

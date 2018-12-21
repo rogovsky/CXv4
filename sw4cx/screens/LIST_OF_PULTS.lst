@@ -10,4 +10,5 @@ rfsyn_eng	pzframeclient
 v5rfsyn		pzframeclient
 v5ie		pzframeclient
 v5kls		pzframeclient
+v5cnv		pzframeclient
 liu		liuclient

@@ -2,7 +2,7 @@ include(`subsys_magx_macros.m4')
 
 sysname linmagx
 defserver canhw:11
-wintitle main "Управление Магнитной Системой Линака"
+wintitle main "Linac Magnetic System Control"
 winname  main linmag
 winclass main LinMag
 

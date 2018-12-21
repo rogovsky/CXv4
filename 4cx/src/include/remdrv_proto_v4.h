@@ -115,7 +115,7 @@ typedef struct
 
 typedef struct
 {
-    int32   is_autoupdated;
+    int32   return_type;
     int32   reserved;
 } remdrv_data_set_return_type_t;
 

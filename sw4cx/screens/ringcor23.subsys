@@ -2,11 +2,11 @@ include(`subsys_magx_macros.m4')
 
 sysname ringcor23
 defserver canhw:12
-wintitle main "Магнитная коррекция накопителя - RST2/3"
+wintitle main "Damping Ring Magnetic Correction - RST2/3"
 winname  main ringcor23
 winclass main RingCor23
 
-grouping main RINGCOR45_grouping "Магнитная коррекция накопителя - RST2/3" lrtb \
+grouping main RINGCOR45_grouping "Damping Ring Magnetic Correction - RST2/3" lrtb \
         content:2 {
 
     container rst2 "RST2" grid \

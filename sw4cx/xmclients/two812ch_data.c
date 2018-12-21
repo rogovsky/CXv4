@@ -86,7 +86,7 @@ pzframe_type_dscr_t *two812ch_get_type_dscr(void)
     if (!dscr_inited)
     {
         FastadcDataFillStdDscr(&dscr, "two812ch",
-                               0,
+                               PZFRAME_B_ARTIFICIAL | PZFRAME_B_NO_SVD | PZFRAME_B_NO_ALLOC,
                                two812ch_chan_dscrs, countof(two812ch_chan_dscrs),
                                /* ADC characteristics */
                                TWO812CH_MAX_NUMPTS, TWO812CH_NUM_LINES,

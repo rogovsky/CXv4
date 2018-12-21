@@ -56,7 +56,7 @@ WirebpmDataFillStdDscr(wirebpm_type_dscr_t *wtd, const char *type_name,
 {
     bzero(wtd, sizeof(*wtd));
     PzframeDataFillDscr(&(wtd->ftd), type_name,
-                        behaviour,
+                        behaviour | PZFRAME_B_NO_SVD,
                         chan_dscrs, chan_count);
     wtd->ftd.vmt = wirebpm_data_std_pzframe_vmt;
 

@@ -30,7 +30,11 @@ void ParseCommandLine(int argc, char *argv[])
   unsigned long  instance;
   char          *endptr;
 
-    while ((c = getopt(argc, argv, "b:c:dDe:f:hnsv:w:")) != EOF)
+  int            log_set_mask;
+  int            log_clr_mask;
+  char          *log_parse_r;
+
+    while ((c = getopt(argc, argv, "b:c:dDe:f:hl:nsv:w:")) != EOF)
     {
         switch (c)
         {
@@ -78,7 +82,17 @@ void ParseCommandLine(int argc, char *argv[])
                 goto PRINT_HELP;
                 
             case 'l':
-                option_defdrvlog_mask = 0; /*!!!  */
+                log_parse_r = ParseDrvlogCategories(optarg, NULL,
+                                                    &log_set_mask, &log_clr_mask);
+                if (log_parse_r != NULL)
+                {
+                    fprintf(stderr,
+                            "%s: error parsing -l switch: %s\n",
+                            argv[0], log_parse_r);
+                    err++;
+                }
+                option_defdrvlog_mask =
+                    (option_defdrvlog_mask &~ log_clr_mask) | log_set_mask;
                 break;
                 
             case 'n':
@@ -164,6 +178,7 @@ void ParseCommandLine(int argc, char *argv[])
            "  -f DBREF  obtain HW config from DBREF instead of " DEF_FILE_DEVLIST "\n"
            "  -h        display this help and exit\n"
            "  -n        don't actually run, just parse the config file\n"
+           "  -l LIST   default drvlog categories\n"
            "  -s        simulate hardware; for debugging only\n"
            "  -v N      verbosity level: 0 - lowest, 9 - highest (def=%d)\n"
            "  -w Y/N    cache reads from write channels (def=%s)\n"

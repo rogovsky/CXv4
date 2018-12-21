@@ -74,7 +74,11 @@ static void ParseCommandLine(int argc, char *argv[])
   int            err       = 0;  /* ++'ed on errors */
   char          *endptr;
 
-    while ((c = getopt(argc, argv, "b:f:hM:sv:w:")) != EOF)
+  int            log_set_mask;
+  int            log_clr_mask;
+  char          *log_parse_r;
+
+    while ((c = getopt(argc, argv, "b:E:f:F:hl:L:M:sv:w:")) != EOF)
     {
         switch (c)
         {
@@ -97,7 +101,17 @@ static void ParseCommandLine(int argc, char *argv[])
                 goto PRINT_HELP;
                 
             case 'l':
-                option_defdrvlog_mask = 0; /*!!!  */
+                log_parse_r = ParseDrvlogCategories(optarg, NULL,
+                                                    &log_set_mask, &log_clr_mask);
+                if (log_parse_r != NULL)
+                {
+                    fprintf(stderr,
+                            "%s: error parsing -l switch: %s\n",
+                            argv[0], log_parse_r);
+                    err++;
+                }
+                option_defdrvlog_mask =
+                    (option_defdrvlog_mask &~ log_clr_mask) | log_set_mask;
                 break;
 
             case 'M':

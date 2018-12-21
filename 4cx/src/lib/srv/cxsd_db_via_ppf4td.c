@@ -371,6 +371,15 @@ static int dev_parser(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db)
 
     /* TYPE */
     ppf4td_skip_white(ctx);
+    /* Optional '-' prefix (per-device simulation mode) */
+    r = ppf4td_peekc(ctx, &ch);
+    if (r < 0) return -1;
+    if (r > 0  &&  ch == '-')
+    {
+        ppf4td_nextc(ctx, &ch);
+        dline.is_simulated = 1;
+    }
+    /* The type itself */
     if (ParseAName(argv0, ctx, "device-type",
                    typename_buf, sizeof(typename_buf)) < 0) return -1;
     dline.type_nsp_id = CxsdDbFindNsp(db, typename_buf);

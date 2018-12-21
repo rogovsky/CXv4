@@ -44,6 +44,7 @@ typedef struct
 {
     int                  state;         // One of DEVSTATE_NNN
     int                  logmask;       // Mask for logging of various classes of events
+    int                  is_simulated;  // Per-device simulation flag
     struct timeval       stattime;      // Time of last state change
     rflags_t             statrflags;    // Flags of current state/error
 
@@ -90,7 +91,7 @@ typedef struct
 
     int8            is_autoupdated;
     int8            is_internal;
-    int8            res2;
+    int8            do_ignore_upd_cycle;
     int8            res3;
 
     int             devid;             // "Backreference" -- device this channel belongs to

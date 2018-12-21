@@ -87,7 +87,7 @@ static psp_paramdescr_t frolov_d16_params[] =
     PSP_P_FLAG  ("d16p",      frolov_d16_privrec_t, lam_mode, LAM_MODE_D16P,  0),
 
     PSP_P_FLAG  ("ab",        frolov_d16_privrec_t, ab_mode,  AB_MODE_AB,     1),
-    PSP_P_FLAG  ("a_only",    frolov_d16_privrec_t, ab_mode,  AB_MODE_A_ONLY, 1),
+    PSP_P_FLAG  ("a_only",    frolov_d16_privrec_t, ab_mode,  AB_MODE_A_ONLY, 0),
 
     PSP_P_REAL  ("f_in",      frolov_d16_privrec_t, F_IN_NS, 0.0, 0.0, 0.0),
 
@@ -337,7 +337,7 @@ static void frolov_d16_rw_p(int devid, void *devptr,
 
                     if (me->ab_mode == AB_MODE_AB)
                     {
-#if 9
+#if 0
                         // NO!!!  May NOT round(), because remainder from division
                         //        is still used for B
                         c_Ai = round(dval / quant);  if (c_Ai > 65535) c_Ai = 65535;

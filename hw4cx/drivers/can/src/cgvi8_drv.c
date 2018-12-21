@@ -45,7 +45,7 @@ static inline uint16 quants2code(int32  quants, int prescaler)
 
 //////////////////////////////////////////////////////////////////////
 
-#define DEBUG_CGVI8M_MASK 1
+#define DEBUG_CGVI8M_MASK 0
 typedef struct
 {
     cankoz_vmt_t    *lvmt;
@@ -95,6 +95,7 @@ static void send_wrmode_cmd(privrec_t *me)
 //    me->mode.wrt_prescaler = 0; /* With this uncommented, prescaler stops changing upon mode loads */
 }
 
+#if DEBUG_CGVI8M_MASK
 static void OnSendRdModeCmdCB(int         devid   __attribute__((unused)),
                               void       *devptr,
                               sq_try_n_t  try_n   __attribute__((unused)),
@@ -107,6 +108,7 @@ static void OnSendRdModeCmdCB(int         devid   __attribute__((unused)),
 
     me->mode.rd_req_sent = 1;
 }
+#endif
 static void send_rdmode_cmd(privrec_t *me, sq_enqcond_t how)
 {
     me->lvmt->q_enqueue_v(me->handle, how,

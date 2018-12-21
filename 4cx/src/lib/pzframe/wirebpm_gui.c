@@ -311,6 +311,7 @@ static pzframe_gui_vmt_t wirebpm_gui_std_pzframe_vmt =
     .evproc   = NULL,
     .newstate = UpdateBG,
     .do_renew = DoRenew,
+    .svd_ctl  = NULL,
 };
 void  WirebpmGuiFillStdDscr(wirebpm_gui_dscr_t *gkd, wirebpm_type_dscr_t *wtd)
 {

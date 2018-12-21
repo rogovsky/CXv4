@@ -35,7 +35,11 @@ enum
 {
     MAX_BUSINFOCOUNT = 20,            /* ==cxsd_dbP.h::CXSD_DB_MAX_BUSINFOCOUNT */
     RECONNECT_DELAY  =  10*1000*1000, /* 10 seconds */
+#if 1
+    HEARTBEAT_PERIOD =  60*1000*1000, /* 60 seconds = 1 minute (26.11.2018) */
+#else
     HEARTBEAT_PERIOD = 300*1000*1000, /* 300 seconds = 5 minutes */
+#endif
 };
 
 enum
@@ -1172,7 +1176,7 @@ static void ProcessInData     (int devid, privrec_t *me,
             SetChanReturnType(devid,
                               me->r2l_i32(pkt->var.group.first),
                               me->r2l_i32(pkt->var.group.count),
-                              me->r2l_i32(rtt_p->is_autoupdated));
+                              me->r2l_i32(rtt_p->return_type));
             break;
 
         default:;

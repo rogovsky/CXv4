@@ -849,9 +849,13 @@ fprintf(stderr, "%s businfo[0]=%08x jumpers=0x%x irq=%d vector=%d\n", strcurtime
     }
 
     for (n = 0;  n < countof(chinfo);  n++)
-        if (chinfo[n].chtype == PZFRAME_CHTYPE_AUTOUPDATED  ||
-            chinfo[n].chtype == PZFRAME_CHTYPE_STATUS)
+    {
+        if      (chinfo[n].chtype == PZFRAME_CHTYPE_AUTOUPDATED  ||
+                 chinfo[n].chtype == PZFRAME_CHTYPE_STATUS)
             SetChanReturnType(me->devid, n, 1, IS_AUTOUPDATED_TRUSTED);
+        else if (chinfo[n].chtype == PZFRAME_CHTYPE_BIGC)
+            SetChanReturnType(me->devid, n, 1, DO_IGNORE_UPD_CYCLE);
+    }
 
     pzframe_drv_init(&(me->pz), devid,
                      PARAM_SHOT, PARAM_ISTART, PARAM_WAITTIME, PARAM_STOP, PARAM_ELAPSED,

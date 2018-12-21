@@ -1,5 +1,5 @@
 
-grouping main V5CNV_grouping "VEPP5 Conversion System" lrtb content:2 {
+grouping main V5CNV_grouping "VEPP5 Conversion System" canvas "nodecor" content:3 {
 
     container concentrator "Impulse magnet power" grid nocoltitles \
             ncols:3 content:3 {
@@ -8,15 +8,17 @@ grouping main V5CNV_grouping "VEPP5 Conversion System" lrtb content:2 {
         disp ready  "Is on"  led "offcol=red color=green"  r:ic.linCNV.ready
         selector onoff   ""             choicebs \
                 items:"#TOff\b\blit=red\tOn\b\blit=green"  r:ic.linCNV.swc
-    }
+    } layinfo:"left=0,top=0"
 
     container interlocks "Interlocks" grid nocoltitles,norowtitles \
-            content:3 {
+            ncols:3 content:3 {
         disp water  "Water"  led "offcol=red"              r:ic.linCNV.ilk_water
         disp door   "Door"   led "offcol=red"              r:ic.linCNV.ilk_door
         disp vacuum "Vacuum" led "offcol=red"              r:ic.linCNV.ilk_vacuum
-    } layinfo:newline
+    } layinfo:"left=@concentrator,top=0"
 
+    pzframe adc "" adc333 "width=250,height=200,nocontrols,black" cnv_osc \
+            layinfo:"top=@concentrator,left=0,right=0,bottom=0"
 }
 
 sysname   v5cnv
@@ -24,4 +26,4 @@ defserver canhw:19
 wintitle  main "VEPP5 Conversion System"
 winname   main v5cnv
 winclass  main V5Cnv
-winopts   main ""
+winopts   main "resizable"

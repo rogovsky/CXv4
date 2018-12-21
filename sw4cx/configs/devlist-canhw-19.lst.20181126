@@ -11,7 +11,6 @@ include(`frolov_k4x1.devtype')
 include(`frolov_k4x1_2x2x1.devtype')
 include(`adc200.devtype')
 include(`f4226.devtype')
-include(`adc333.devtype')
 include(`kurrez_cac208.devtype')
 
 include(`canhw_CAN_LINES_LIST.m4')
@@ -19,10 +18,9 @@ include(`canhw_CAN_LINES_LIST.m4')
 #### I. Hardware #####################################################  
 
 # 00. Conversion system
-dev cnv_dac c0642/remdrv  ~ 2 b:v5-l-cnv
-dev cnv_ctl v06xx/remdrv  ~ 4 b:v5-l-cnv
-dev cnv_osc adc333/remdrv ~ 6 b:v5-l-cnv range0=off range1=off range2=off range3=4096 timing=500 # ~100us viewable
-#dev cnv_osc f4226/remdrv ~ 9 b:v5-l-cnv
+dev cnv_dac c0642/remdrv ~ 2  b:v5-l-cnv
+dev cnv_ctl v06xx/remdrv ~ 4  b:v5-l-cnv
+dev cnv_osc f4226/remdrv ~ 9  b:v5-l-cnv
 #           f4226          11 b:v5-l-cnv
 dev cnv_sds r0601/remdrv ~ 13 b:v5-l-cnv
 
@@ -46,34 +44,34 @@ dev rez208 cac208@sktcankoz ~ L_RST1,23  spd0=1000000
 
 # 2. RFsyn; f_in=21.8748098e6 <=> f_in=-45.7146831
 #					  1
-dev lrf_d16_2	frolov_d16/remdrv	~ 2  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lrf_d16_2	frolov_d16/remdrv	~ 2  b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  3	10.9MHz x2
-dev syn_ie4	frolov_ie4/remdrv	~ 4  b:v5-syn   f_in=0.31249728e6 kclk=1          fclk_sel=Fin start_sel=Y1       mode=Cont
-dev xfr_d16_5	frolov_d16/remdrv	~ 5  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
-dev lbm_d16_6	frolov_d16/remdrv	~ 6  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev syn_ie4	frolov_ie4/remdrv	~ 4  b:v5-syn   f_in=0.312497373e6  kclk=1          fclk_sel=Fin start_sel=Y1       mode=Cont
+dev xfr_d16_5	frolov_d16/remdrv	~ 5  b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lbm_d16_6	frolov_d16/remdrv	~ 6  b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #				  	  7
-dev lbm_d16_8	frolov_d16/remdrv	~ 8  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lbm_d16_8	frolov_d16/remdrv	~ 8  b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #				  	  9
-dev lbm_d16_10	frolov_d16/remdrv	~ 10 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
-dev lrf_d16_11	frolov_d16/remdrv	~ 11 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
-dev lrf_d16_12	frolov_d16/remdrv	~ 12 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lbm_d16_10	frolov_d16/remdrv	~ 10 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lrf_d16_11	frolov_d16/remdrv	~ 11 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lrf_d16_12	frolov_d16/remdrv	~ 12 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  13
-dev lrf_d16_14	frolov_d16/remdrv	~ 14 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lrf_d16_14	frolov_d16/remdrv	~ 14 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  15
-dev lbm_d16_16	frolov_d16/remdrv	~ 16 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lbm_d16_16	frolov_d16/remdrv	~ 16 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  17	F20
-dev lbm_d16_18	frolov_d16/remdrv	~ 18 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lbm_d16_18	frolov_d16/remdrv	~ 18 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 dev xfr_k4_19	frolov_k4x1/remdrv	~ 19 b:v5-syn
-dev xfr_d16_20	frolov_d16/remdrv	~ 20 b:v5-syn   f_in=0.03810941e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=1 d16p a_only
-dev xfr_d16_21	frolov_d16/remdrv	~ 21 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev xfr_d16_20	frolov_d16/remdrv	~ 20 b:v5-syn   f_in=0.0381094357e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=1 d16p a_only
+dev xfr_d16_21	frolov_d16/remdrv	~ 21 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  22	F20
 #					  23	F20
 
 # ---- Injection/extraction
 #					  1
-dev ie_d16_2	frolov_d16/remdrv	~ 2  b:v5-sr-ie f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev ie_d16_2	frolov_d16/remdrv	~ 2  b:v5-sr-ie f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  3
-dev ie_d16_4	frolov_d16/remdrv	~ 4  b:v5-sr-ie f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev ie_d16_4	frolov_d16/remdrv	~ 4  b:v5-sr-ie f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  5
 #					  6	F20
 dev ie_k4_7	frolov_k4x1_2x2x1/remdrv ~ 7  b:v5-sr-ie
@@ -85,9 +83,9 @@ dev ie_adc200_12 adc200/remdrv		~ 12 b:v5-sr-ie
 #					  13	TTL
 #					  14
 dev ie_k4_15	frolov_k4x1_2x2x1/remdrv ~ 15 b:v5-sr-ie
-dev ie_d16_16	frolov_d16/remdrv	~ 16 b:v5-sr-ie f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev ie_d16_16	frolov_d16/remdrv	~ 16 b:v5-sr-ie f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  17
-dev ie_d16_18	frolov_d16/remdrv	~ 18 b:v5-sr-ie f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev ie_d16_18	frolov_d16/remdrv	~ 18 b:v5-sr-ie f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  19
 #					  20	F20
 #					  21	i0634
