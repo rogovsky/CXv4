@@ -1474,6 +1474,58 @@ int           cda_set_icval(cda_dataref_t  ref, int     val)
                             &v32);
 }
 
+int           cda_add_schan(cda_context_t  cid,
+                            const char    *name,
+                            size_t         maxlen)
+{
+    return cda_add_chan(cid, NULL,
+                        name, CDA_OPT_NONE, CXDTYPE_TEXT, maxlen,
+                        0, NULL, NULL);
+}
+
+int           cda_get_scval(cda_dataref_t  ref,
+                            char          *buf, size_t bufsize,
+                            size_t        *len_p)
+{
+  refinfo_t     *ri = AccessRefSlot(ref);
+
+  size_t         len;
+  void          *vp;
+
+    if (CheckRef(ref) != 0) return CDA_PROCESS_ERR;
+    if (ri->in_use        != REF_TYPE_CHN  ||
+        ri->current_dtype != CXDTYPE_TEXT)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if (bufsize == 0) /* Can't do anything */;
+    else
+    {
+        len = ri->current_nelems;
+        if (len > bufsize - 1)
+            len = bufsize - 1;
+        if (len != 0)
+        {
+            vp = ri->current_val;
+            if (vp == NULL) vp = &(ri->valbuf);
+            memcpy(buf, vp, len);
+        }
+        buf[len] = '\0';
+    }
+
+    if (len_p != NULL) *len_p = ri->current_nelems;
+
+    return 0;
+}
+
+int           cda_set_scval(cda_dataref_t  ref,
+                            char          *str, size_t len)
+{
+    return cda_snd_ref_data(ref, CXDTYPE_TEXT, len, str);
+}
+
 
 //////////////////////////////////////////////////////////////////////
 cda_dataref_t  cda_add_formula(cda_context_t         cid,

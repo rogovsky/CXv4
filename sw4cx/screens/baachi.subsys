@@ -19,10 +19,10 @@ defserver ep1-berezin2:49
 wintitle main Baachi: beam welding control center at Chemy
 winname  main baachi
 winclass main Baachi
-winopts  main "maxitoolbar,with_save_btn,with_load_btn"
+winopts  main "maxitoolbar,with_save_btn,with_load_btn,hist_period=0.1"
 
 grouping main BAACHI_grouping "Baachi: beam welding control center at Chemy" \
-        lrtb content:4 {
+        lrtb content:5 {
 
     container vip "Высоковольтный источник питания" \
             grid "nocoltitles,norowtitles" 4 base:vip content:4 {
@@ -93,17 +93,22 @@ define(`WELD02_CTL', `
 ')
 
     container gunctl "Контроллер пушки" \
-            grid "nocoltitles,norowtitles" base:gun content:eval(3) {
+            grid "nocoltitles,norowtitles" base:gun content:eval(4) {
 
         container ctl "Управление" grid \
-                "nohline,nofold,noshadow,nocoltitles" 2 content:8 {
+                "nohline,nofold,noshadow,nocoltitles" 2 content:eval(2*5) {
             WELD02_CTL(uh, "U упр.эл. отп.", "V", %6.0f, %6.0f, 6000, 6000)
             WELD02_CTL(ul, "U упр.эл. зап.", "V", %6.0f, %6.0f, 6000, 6000)
-            WELD02_CTL(un, "I накала",       "A", %6.0f, %6.0f, 85,   100)
-            noop
+            WELD02_CTL(un, "I накала",       "A", %6.1f, %6.1f, 85,   100)
+            noop - "\nI упр.эл. изм."
             disp I "I упр.эл. изм." text - mkA %3.0f \
                     r:"_all_code; getchan mes_up; mul 1000; lapprox 2:1:weld_mes_up_mv2mka; ret;" \
                     disprange:0-300
+            knob Pindr_set "P косв.нак." text - W %6.1f set_p_indr alwdrange:0-50
+            disp Pindr_mes -             text - - %6.1f \
+                     r:"_all_code;
+                        getchan mes_u_high; getchan mes_i_indr; mul;
+                        div 1000; ret;"
 #            knob - EMU text r:"_all_code; getchan localhost:5.icd.0; pop; getchan %abc; ret;" w:"_all_code; putchan %abc; ret;"
 #            knob - EMU text r:localhost:9.one.0
 #            disp I "I упр.эл. изм." text - mkA %3.0f \
@@ -111,23 +116,23 @@ define(`WELD02_CTL', `
 #                    disprange:0-300
         }
         container stab "Режим стабилизации тока, mA" \
-                grid "nohline,nofold,noshadow,nocoltitles" 2 content:8 {
+                grid "nohline,nofold,noshadow,nocoltitles" 2 content:eval(2*2) {
             WELD02_CTL(ih, "I катода верх.",  -, %6.1f, %6.2f, 100, 100)
             WELD02_CTL(il, "I катода нижн.",  -, %6.1f, %6.2f, 100, 100)
-            knob gain "Усиление"     selector "nolabel" r:set_gain \
+        }
+        container stab1 "" grid nodecor 2 content:2 {
+            knob gain "Усил." selector "" r:set_gain \
                     items:"#TНЕТ\tx10"
-            noop
-            knob stab "Стабилизация" selector "nolabel" r:set_stab \
+            knob stab "Стаб." selector "" r:set_stab \
                     items:"#TНЕТ\t1kHz\t300Hz\t30Hz"
-            noop
         }
         container mes "Измерения контроллера пушки" \
                 grid "nohline,nofold,noshadow,nocoltitles" 2 content:6 {
-            disp Uheat_mes "U накала"    text - V %8.3f mes_u_heat
+            disp Uheat_mes "U накала"    text - V %8.1f mes_u_heat disprange:0-2
             noop
-            disp Uindr_mes "U косв.нак." text - V %8.3f mes_u_indr
-            disp Iindr_mes "I="  text withlabel A %8.3f mes_i_indr
-            disp Upowr_mes "U питания"   text - V %8.3f mes_u_powr
+            disp Uindr_mes "U косв.нак." text - V %8.1f mes_u_indr
+            disp Iindr_mes "I="  text withlabel A %8.1f mes_i_indr
+            disp Upowr_mes "U питания"   text - V %8.1f mes_u_powr
             noop
         }
 
@@ -149,7 +154,12 @@ define(`MAGSYS_LINE', `
         MAGSYS_LINE(r, "+", -1.0, +1.0)
     }
 
+    container absent - invisible content:2 {
+        disp vacuum
+        disp linear
+    }
+
     noop -plot "" histplot "width=700,height=290 \
-            foreach(`x', `(vacuum,linear,vip.mes.vip_uout,gunctl.ctl.un_mes,gunctl.stab.ih_mes,gunctl.stab.il_mes,gunctl.ctl.I,gunctl.mes.Uheat_mes)', ` add=.x')" \
+            foreach(`x', `(absent.vacuum,absent.linear,vip.mes.vip_uout,gunctl.ctl.un_mes,gunctl.stab.ih_mes,gunctl.stab.il_mes,gunctl.ctl.I,gunctl.mes.Uheat_mes)', ` add=.x')" \
             layinfo:newline
 }

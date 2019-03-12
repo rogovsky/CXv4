@@ -26,7 +26,7 @@ dev cnv_osc adc333/remdrv ~ 6 b:v5-l-cnv range0=off range1=off range2=off range3
 #           f4226          11 b:v5-l-cnv
 dev cnv_sds r0601/remdrv ~ 13 b:v5-l-cnv
 
-cpoint ic.linCNV.U.set      cnv_dac.out0
+cpoint ic.linCNV.Uset       cnv_dac.out0
 cpoint ic.linCNV.swc        cnv_ctl.bit0
 cpoint ic.linCNV.is_on      cnv_sds.inprb0
 cpoint ic.linCNV.ilk_water  cnv_sds.inprb1
@@ -39,7 +39,7 @@ cpoint ic.linCNV.ready      ic.linCNV.is_on
 dev slio   slio24_reg/remdrv ~ 0,7 b:v5-sr-rfr
 # Code=(val-eoff)/eslo, eoff=2831316.8384, eslo=0.0122886464
 # Code=(val+D)*R => D=-2831316.8384, R=1/0.0122886464=81.37592762047413
-cpoint ic.linRF.frq.set slio.word24 81.37592762047413 -2831316.8384
+cpoint ic.linRF.MasterGen.frq slio.word24 81.37592762047413 -2831316.8384
 
 # 1. Rezonator
 dev rez208 cac208@sktcankoz ~ L_RST1,23  spd0=1000000
@@ -153,29 +153,42 @@ dev rezonator kurrez_cac208 ~ - rez208
 
 # RFsyn
 
-# 1:dev 2:[0-3] 3:name_base 4/opt:R
+# 1:dev 2:[0-3] 3:name_base1 4:name_base2 5/opt:R
 define(`ONE_D16_CLINE', `
-    cpoint $3.dly.set  $1.v$2 $4
-    cpoint $3.A        $1.a$2
-    cpoint $3.B        $1.b$2
-    cpoint $3.mask     $1.off$2
+    cpoint $3$4.dly        $1.v$2 $5
+    cpoint $3$4.A          $1.a$2
+    cpoint $3$4.B          $1.b$2
+    cpoint $3$4.mask       $1.off$2
+    #-
+    cpoint $3`'p0.$4.A     $1.p0.a$2
+    cpoint $3`'p0.$4.B     $1.p0.b$2
+    cpoint $3`'p0.$4.mask  $1.p0.off$2
+    cpoint $3`'p1.$4.A     $1.p1.a$2
+    cpoint $3`'p1.$4.B     $1.p1.b$2
+    cpoint $3`'p1.$4.mask  $1.p1.off$2
+    cpoint $3`'p2.$4.A     $1.p2.a$2
+    cpoint $3`'p2.$4.B     $1.p2.b$2
+    cpoint $3`'p2.$4.mask  $1.p2.off$2
+    cpoint $3`'p3.$4.A     $1.p3.a$2
+    cpoint $3`'p3.$4.B     $1.p3.b$2
+    cpoint $3`'p3.$4.mask  $1.p3.off$2
 ')
 
 # 1:dev 2:name_pfx 3:name1 4:r1 5:name2 6:r2 7:name3 8:r3 9:name4 10:r4
 # Note: 2:name_pfx, if present, should end with '.'
 define(`ONE_D16_LINES', `
-    ONE_D16_CLINE($1, 0, $2$3, $4)
-    ONE_D16_CLINE($1, 1, $2$5, $6)
-    ONE_D16_CLINE($1, 2, $2$7, $8)
-    ONE_D16_CLINE($1, 3, $2$9, $10)
+    ONE_D16_CLINE($1, 0, $2, $3, $4)
+    ONE_D16_CLINE($1, 1, $2, $5, $6)
+    ONE_D16_CLINE($1, 2, $2, $7, $8)
+    ONE_D16_CLINE($1, 3, $2, $9, $10)
 ')
 
 # 1:[0-3] 1:name_base
 define(`ONE_IE4_CLINE', `
-    cpoint $2.dly.set  syn_ie4.v$1 1e6
+    cpoint $2.dly      syn_ie4.v$1 1e6
     cpoint $2.A        syn_ie4.a$1
     ifelse($1, `0', `', `
-    cpoint $2.repRate.set syn_ie4.k$1
+    cpoint $2.repRate  syn_ie4.k$1
     ')
     cpoint $2.mask     syn_ie4.off$1
 ')
@@ -207,19 +220,64 @@ ONE_D16_LINES(ie_d16_18, ic.pKickers., preKickP,    , preKickN,       , kickP,  
 
 cpoint ic.eKickers {
     all.mask     ie_d16_2.alloff
-    repRate.set  ie_d16_2.Kstart
-    StartSrc.set ie_d16_2.start_sel
+    StartGen.repRate      ie_d16_2.Kstart
+    StartGen.StartSrc     ie_d16_2.start_sel
+    p0.all.mask  ie_d16_2.p0.alloff
+    p1.all.mask  ie_d16_2.p1.alloff
+    p2.all.mask  ie_d16_2.p2.alloff
+    p3.all.mask  ie_d16_2.p3.alloff
 }
 cpoint ic.pKickers {
     all.mask     ie_d16_16.alloff
-    repRate.set  ie_d16_16.Kstart
-    StartSrc.set ie_d16_16.start_sel
+    StartGen.repRate      ie_d16_16.Kstart
+    StartGen.StartSrc     ie_d16_16.start_sel
+    p0.all.mask  ie_d16_16.p0.alloff
+    p1.all.mask  ie_d16_16.p1.alloff
+    p2.all.mask  ie_d16_16.p2.alloff
+    p3.all.mask  ie_d16_16.p3.alloff
 }
 
-cpoint ic.eKickers.preKickU.set	ie_cac208.out0
-cpoint ic.eKickers.kickU.set	ie_cac208.out1
-cpoint ic.pKickers.preKickU.set	ie_cac208.out2
-cpoint ic.pKickers.kickU.set	ie_cac208.out3
-
 cpoint ic.extractor.clockSrc xfr_mode.0
-cpoint ic.kickers.mode.set   kick_mode.0
+cpoint ic.kickers.swc.mode   kick_mode.0
+
+cpoint ic.eKickers.preKick.Uset	ie_cac208.out0
+cpoint ic.eKickers.kick.Uset	ie_cac208.out1
+cpoint ic.pKickers.preKick.Uset	ie_cac208.out2
+cpoint ic.pKickers.kick.Uset	ie_cac208.out3
+
+dev kick_presets preset_selector w10i,w16i - 4 \
+	ic.eKickers.preKick.Uset \
+	ic.eKickers.kick.Uset    \
+	ic.pKickers.preKick.Uset \
+	ic.pKickers.kick.Uset
+cpoint ic.eKickers.p0.preKick.Uset  kick_presets.10
+cpoint ic.eKickers.p0.kick.Uset     kick_presets.11
+cpoint ic.pKickers.p0.preKick.Uset  kick_presets.12
+cpoint ic.pKickers.p0.kick.Uset     kick_presets.13
+cpoint ic.eKickers.p1.preKick.Uset  kick_presets.14
+cpoint ic.eKickers.p1.kick.Uset     kick_presets.15
+cpoint ic.pKickers.p1.preKick.Uset  kick_presets.16
+cpoint ic.pKickers.p1.kick.Uset     kick_presets.17
+cpoint ic.eKickers.p2.preKick.Uset  kick_presets.18
+cpoint ic.eKickers.p2.kick.Uset     kick_presets.19
+cpoint ic.pKickers.p2.preKick.Uset  kick_presets.20
+cpoint ic.pKickers.p2.kick.Uset     kick_presets.21
+cpoint ic.eKickers.p3.preKick.Uset  kick_presets.22
+cpoint ic.eKickers.p3.kick.Uset     kick_presets.23
+cpoint ic.pKickers.p3.preKick.Uset  kick_presets.24
+cpoint ic.pKickers.p3.kick.Uset     kick_presets.25
+
+dev comm_presets preset_selector w10i,w4i - 4 ic.kickers.swc.mode
+cpoint ic.kickers.p0.swc.mode       comm_presets.10
+cpoint ic.kickers.p1.swc.mode       comm_presets.11
+cpoint ic.kickers.p2.swc.mode       comm_presets.12
+cpoint ic.kickers.p3.swc.mode       comm_presets.13
+
+dev presets_sel_muxer mux_write w1i - \
+	kick_presets.0 \
+	comm_presets.0 \
+	ie_d16_2.activate_preset_n \
+	ie_d16_4.activate_preset_n \
+	ie_d16_16.activate_preset_n \
+	ie_d16_18.activate_preset_n
+cpoint ic.ie.activate_preset_n presets_sel_muxer.0

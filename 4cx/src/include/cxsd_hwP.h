@@ -28,16 +28,6 @@ extern "C"
 #endif /* __CXSD_HW_C */
 
 
-/* Limits */
-
-enum
-{
-    CXSD_HW_MAX_LYRS          = 99,
-    CXSD_HW_MAX_DEVS          = 999,
-    CXSD_HW_MAX_CHANS         = 99999,
-};
-
-
 /* Types */
 
 typedef struct
@@ -140,29 +130,19 @@ typedef struct
 
 D CxsdDb          cxsd_hw_cur_db;
 
-// Buffers
-D uint8          *cxsd_hw_current_val_buf V(NULL);
-D uint8          *cxsd_hw_next_wr_val_buf V(NULL);
-
-
-// Actual counts
+// Counts
 D int             cxsd_hw_numlyrs  V(0);
 D int             cxsd_hw_numdevs  V(0);
 D int             cxsd_hw_numchans V(0);
 
-//
-#define CXSD_HW_ALLOC_ALL 0
-#if CXSD_HW_ALLOC_ALL
+// Buffers
 D uint8          *cxsd_hw_buffers  V(NULL);
 D size_t          cxsd_hw_buf_size V(0);
-D cxsd_hw_lyr_t  *cxsd_hw_layers;
-D cxsd_hw_dev_t  *cxsd_hw_devices;
-D cxsd_hw_chan_t *cxsd_hw_channels;
-#else
-D cxsd_hw_lyr_t   cxsd_hw_layers  [CXSD_HW_MAX_LYRS];
-D cxsd_hw_dev_t   cxsd_hw_devices [CXSD_HW_MAX_DEVS];
-D cxsd_hw_chan_t  cxsd_hw_channels[CXSD_HW_MAX_CHANS];
-#endif
+D cxsd_hw_lyr_t  *cxsd_hw_layers   V(0);
+D cxsd_hw_dev_t  *cxsd_hw_devices  V(0);
+D cxsd_hw_chan_t *cxsd_hw_channels V(0);
+D uint8          *cxsd_hw_current_val_buf V(NULL);
+D uint8          *cxsd_hw_next_wr_val_buf V(NULL);
 
 D int             cxsd_hw_defdrvlog_mask V(0);
 
@@ -232,6 +212,13 @@ int            CxsdHwGetCpnProps(cxsd_cpntid_t  cpid,
                                  char         **rsrvd6_p,
                                  char         **units_p,
                                  char         **dpyfmt_p);
+int            CxsdHwGetChanType(cxsd_gchnid_t  gcid,
+                                 int           *is_rw_p,
+                                 cxdtype_t     *dtype_p,
+                                 int           *max_nelems_p);
+int            CxsdHwGetDevPlace(int            devid,
+                                 int           *first_p,
+                                 int           *count_p);
 
 /* Note: CxsdHwDoIO MAY modify contents of dtypes[], nelems[] and values[] */
 int  CxsdHwDoIO         (int  requester,
@@ -273,7 +260,7 @@ D int32 active_devid V(DEVID_NOT_IN_DRIVER);
     {                                                                        \
         if (devid >= cxsd_hw_numdevs)                                        \
         {                                                                    \
-            logline(LOGF_MODULES, DRIVERLOG_WARNING, "%s(devid=%d/active=%d): devid out of [1...numdevs=%d]", \
+            logline(LOGF_MODULES, DRIVERLOG_WARNING, "%s(devid=%d/active=%d): devid out of [1...numdevs=%d)", \
                     func_name, devid, active_devid, cxsd_hw_numdevs);        \
             return errret;                                                   \
         }                                                                    \
@@ -305,7 +292,7 @@ D int32 active_devid V(DEVID_NOT_IN_DRIVER);
     {                                                                        \
         if (devid >= cxsd_hw_numdevs)                                        \
         {                                                                    \
-            logline(LOGF_MODULES, DRIVERLOG_WARNING, "%s(devid=%d/active=%d): devid out of [1...numdevs=%d]", \
+            logline(LOGF_MODULES, DRIVERLOG_WARNING, "%s(devid=%d/active=%d): devid out of [1...numdevs=%d)", \
                     func_name, devid, active_devid, cxsd_hw_numdevs);        \
             return errret;                                                   \
         }                                                                    \

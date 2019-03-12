@@ -24,7 +24,7 @@
 
 typedef struct
 {
-    uint8       rw;
+    int         rw;
     cxdtype_t   dtype;
     int         max_nelems;
     const char *mqtt_name;
@@ -71,7 +71,7 @@ static int mqtt_mapping_init_d(int devid, void *devptr,
 
   size_t          databuf_size;
 
-  cxsd_hw_chan_t *dev_base;
+  int             dev_first;
 
     if ((type_name = GetDevTypename(devid)) == NULL)
     {
@@ -95,10 +95,8 @@ static int mqtt_mapping_init_d(int devid, void *devptr,
     }
     inst_name_len = strlen(inst_name);
 
-    me->devid    = devid;
-    me->numchans = cxsd_hw_devices[devid].count;
-
-    dev_base     = cxsd_hw_channels + cxsd_hw_devices[devid].first;
+    me->devid = devid;
+    CxsdHwGetDevPlace(devid, &dev_first, &(me->numchans));
 
     for (stage = 0;  stage <= 1;  stage++)
     {
@@ -127,9 +125,10 @@ static int mqtt_mapping_init_d(int devid, void *devptr,
             {
                 cp = me->namesbuf + namesbuf_size;
 
-                me->map[devchan_n].rw         = dev_base[devchan_n].rw;
-                me->map[devchan_n].dtype      = dev_base[devchan_n].dtype;
-                me->map[devchan_n].max_nelems = dev_base[devchan_n].max_nelems;
+                CxsdHwGetChanType(dev_first + devchan_n,
+                                  &(me->map[devchan_n].rw),
+                                  &(me->map[devchan_n].dtype),
+                                  &(me->map[devchan_n].max_nelems));
                 me->map[devchan_n].mqtt_name  = cp;
 
                 strcpy(cp, inst_name); cp += inst_name_len; *cp++ = '/';

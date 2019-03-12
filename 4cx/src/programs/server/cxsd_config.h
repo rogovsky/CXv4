@@ -2,6 +2,9 @@
 #define __CXSD_CONFIG_H
 
 
+#include "cxsd_core_commons.h"
+
+
 #if defined(D) || defined(V)
   #error Sorry, unable to compile when D or V defined
   #error (see warning(s) below for details).
@@ -36,7 +39,7 @@ D const char *option_configfile       V(DEF_FILE_CXSD_CONF);    /* Config file n
 D int         option_dontdaemonize    V(0);                     /* Don't daemonize */
 D int         option_donttrapsignals  V(0);                     /* Don't trap signals */
 D int         option_norun            V(0);                     /* Parse config only */
-D int         option_simulate         V(0);                     /* Simulate hardware */
+D int         option_simulate         V(CXSD_SIMULATE_OFF);     /* Simulate hardware */
 D int         option_verbosity        V(DEF_OPT_VERBOSITY);     /* Verbosity level */
 D int         option_instance         V(0);                     /* Server # */
 D const char *option_dbref            V(DEF_FILE_DEVLIST);      /* Hardware list file */

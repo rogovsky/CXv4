@@ -301,8 +301,7 @@ static void DrawGraph(MotifKnobs_histplot_t *hp, int do_clear)
     for (i = 2;  i <= v_tick_segs - 2;  i += 2)
     {
         y = grf_h-1 - RESCALE_VALUE(i, 0, v_tick_segs, 0, grf_h-1);
-        y = RESCALE_VALUE(i, 0, v_tick_segs, grf_h-1, 0);
-        
+
         XDrawLine(dpy, win, hp->gridGC,
                   grf_w-1+dash_ofs, y, 0, y);
     }
@@ -365,15 +364,15 @@ static void DrawGraph(MotifKnobs_histplot_t *hp, int do_clear)
                 if (v <= 1e-100) v = log(1e-100);
                 else             v = log(v);
 
-                y = RESCALE_VALUE(v,
-                                  mindisp, maxdisp,
-                                  grf_h - 1, 0);
+                y = grf_h-1 - (int)(RESCALE_VALUE(v,
+                                                  mindisp, maxdisp,
+                                                  0,       grf_h - 1));
             }
             else
             {
-                y = RESCALE_VALUE(v,
-                                  mindisp, maxdisp,
-                                  grf_h - 1, 0);
+                y = grf_h-1 - (int)(RESCALE_VALUE(v,
+                                                  mindisp, maxdisp,
+                                                  0,       grf_h - 1));
             }
             ////if (t == 0  &&  isnan(v)) fprintf(stderr, "%s v=nan y=%d\n", k->ident, y);
             if      (y < -32767) y = -32767;

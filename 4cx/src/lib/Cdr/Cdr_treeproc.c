@@ -1087,6 +1087,7 @@ int   CdrRealizeKnobs    (DataSubsys  subsys,
                     k->curstate = KNOBSTATE_NOTFOUND;
                 break;
         }
+////if (k->curstate == KNOBSTATE_NOTFOUND) fprintf(stderr, "NOTFOUND: %s:<%s>\n", k->ident, k->label);
     }
 
     return 0;
@@ -1458,6 +1459,7 @@ void  CdrProcessKnobs    (DataSubsys subsys, int cause_conn_n, int options,
         k->currflags  = rflags;
         
  ACCUMULATE_RFLAGS:
+////if (rflags & CXCF_FLAG_NOTFOUND) fprintf(stderr, "Process: CXCF_FLAG_NOTFOUND in #%d %d:%s:<%s>\n", n, k->type, k->ident, k->label);
         cml_rflags   |= rflags;
     }
 

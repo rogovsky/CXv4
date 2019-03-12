@@ -225,11 +225,11 @@ void StdSimulated_rw_p(int devid, void *devptr __attribute__((unused)),
 
 const char * GetDevTypename(int devid)
 {
-  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+  cxsd_hw_dev_t  *dev_p = cxsd_hw_devices + devid;
 
     CHECK_SANITY_OF_DEVID(NULL);
 
-    return CxsdDbGetStr(cxsd_hw_cur_db, dev->db_ref->typename_ofs);
+    return CxsdDbGetStr(cxsd_hw_cur_db, dev_p->db_ref->typename_ofs);
 }
 
 void         GetDevLogPrms (int devid, int *curlevel_p, int *curmask_p)
@@ -242,11 +242,11 @@ void         GetDevLogPrms (int devid, int *curlevel_p, int *curmask_p)
 
 void       * GetLayerVMT   (int devid)
 {
-  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+  cxsd_hw_dev_t  *dev_p = cxsd_hw_devices + devid;
 
     CHECK_SANITY_OF_DEVID(NULL);
 
-    if (dev->lyrid == 0)
+    if (dev_p->lyrid == 0)
     {
         logline(LOGF_MODULES, LOGL_ERR,
                 "%s(devid=%d/active=%d): request for layer-VMT from non-layered device",
@@ -254,7 +254,7 @@ void       * GetLayerVMT   (int devid)
         return NULL;
     }
 
-    return cxsd_hw_layers[-dev->lyrid].metric->vmtlink;
+    return cxsd_hw_layers[-dev_p->lyrid].metric->vmtlink;
 }
 
 const char * GetLayerInfo  (const char *lyrname, int bus_n)

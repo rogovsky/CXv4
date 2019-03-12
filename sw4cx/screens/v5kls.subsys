@@ -15,19 +15,26 @@ define(`ONE_KLS', `
     container kls$1 "Klystron $1" grid "nocoltitles,norowtitles" \
             base:kls$1 nattl:3 content:5 {
 
-        ifelse(eval($2 >= 1), `0', `noop', `
+#        ifelse(eval($2 >= 1), `0', `noop', `
+#        container ":" "~~" subwin "resizable,compact,noclsbtn" \
+#                tip:"F4226" subwintitle:"Klystron $1 F4226" content:1 {
+#            container ":" "" canvas "nodecor" content:$2 {
+#                pzframe adc1 "" f4226 "" .k$1_f_1 \
+#                        layinfo:"left=0,right=0,top=0"ifelse(eval($2 == 1), `1', `",bottom=0"')
+#                ifelse(eval($2 > 1), `0', `', `
+#                pzframe adc2 "" f4226 "" .k$1_f_2 \
+#                        layinfo:"left=0,right=0,top=0@adc1,bottom=0"
+#                ')
+#            }
+#        }
+#        ')
         container ":" "~~" subwin "resizable,compact,noclsbtn" \
-                tip:"F4226" subwintitle:"Klystron $1 F4226" content:1 {
-            container ":" "" canvas "nodecor" content:$2 {
-                pzframe adc1 "" f4226 "" .k$1_f_1 \
-                        layinfo:"left=0,right=0,top=0"ifelse(eval($2 == 1), `1', `",bottom=0"')
-                ifelse(eval($2 > 1), `0', `', `
-                pzframe adc2 "" f4226 "" .k$1_f_2 \
-                        layinfo:"left=0,right=0,top=0@adc1,bottom=0"
-                ')
+                tip:"ADC200" subwintitle:"Klystron $1 ADC200" content:1 {
+            container ":" "" canvas "nodecor" content:1 {
+                pzframe adc0 "" adc200 "" .k$1_osc \
+                        layinfo:"left=0,right=0,top=0,bottom=0"
             }
         }
-        ')
 
         RGSWCH(onoff, "", 0, 1, is_on, switch_off, switch_on)
 

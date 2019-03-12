@@ -14,6 +14,7 @@
 #include "cxsd_driver.h"
 #include "cxsd_frontend.h"
 #include "cxsd_extension.h"
+#include "cxsd_core_commons.h"
 #include "cxsd_db.h"
 #include "cxsd_hw.h"
 #include "cxsd_hwP.h"

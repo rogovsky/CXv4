@@ -82,7 +82,7 @@ grouping main LINMAGX_grouping "Управление Магнитной Системой Линака" lrtb \
             }
         }
 
-        MAGX_IST_CDAC20_LINE(Rings,     "Rings", "\nВ1000: В1000-1", 1500, 1, icd_rings, 1, 0, 1)
+        MAGX_IST_CDAC20_LINE(Rings,     "Rings", "\nк.6-11: ВЧ-1000\nот ШУИ-2 QF-1", 1500, 1, icd_rings, 1, 0, 1)
        #OLD_V1000_LINE(Rings)
         MAGX_IST_CDAC20_LINE(esol,      "eSol",  "\nИП2: ИСТ-3",     1800, 1, icd_esol,  1, 0)
         MAGSYS_LINE(QL1,     "\nИП2: ВЧ300-1")
@@ -101,8 +101,8 @@ grouping main LINMAGX_grouping "Управление Магнитной Системой Линака" lrtb \
                  `"_all_code; getchan Spectr1.is_on; getchan Spectr2.is_on; mul; ret;"', 
                 Spectr.switch_off, Spectr.switch_on)
         noop - " " hlabel
-        MAGX_IST_CDAC20_LINE(Spectr1,   "Spectr1",  "\nВ1000: ВЧ1300-1", 1000, 1, icd_spectr1, 1, 0, 1, 1)
-        MAGX_IST_CDAC20_LINE(Spectr2,   "Spectr2",  "\nВ1000: ВЧ1300-2", 1000, 1, icd_spectr2, 1, 0, 1, 1)
+        MAGX_IST_CDAC20_LINE(Spectr1,   "Spectr1",  "\nк.6-11: ВЧ-1300-1\nот ШУИ-2 QF-2", 1000, 1, icd_spectr1, 1, 0, 1, 1)
+        MAGX_IST_CDAC20_LINE(Spectr2,   "Spectr2",  "\nк.6-11: ВЧ-1300-2\nот ШУИ-2 QF-3", 1000, 1, icd_spectr2, 1, 0, 1, 1)
        #OLD_V1000_LINE(Spectr)
 
         MAGSYS_LINE(   QL5,    "\nИП2: УМ-15-2")
@@ -120,11 +120,11 @@ grouping main LINMAGX_grouping "Управление Магнитной Системой Линака" lrtb \
 ##        OLD_V1000_LINE(QLTr1,  `"\nВ1000: В300-1, Триплет"')
 ##        OLD_V1000_LINE(QLTr2,  `"\nВ1000: В300-2, Триплет"')
 ##        OLD_V1000_LINE(QLTr3,  `"\nВ1000: В300-3, Триплет"')
-        MAGX_IST_CDAC20_LINE(qltr1,     "QLTr1", "\nВ1000: В500-1",  500,  1, icd_qltr1, 1, 0, 1)
-        MAGX_IST_CDAC20_LINE(qltr2,     "QLTr2", "\nВ1000: В500-2",  500,  1, icd_qltr2, 1, 0, 1)
-        MAGX_IST_CDAC20_LINE(qltr3,     "QLTr3", "\nВ1000: В500-3",  500,  1, icd_qltr3, 1, 0, 1)
-        MAGX_IST_CDAC20_LINE(coil1,     "Coil1", "\nВ1000: В1000-1", 1500, 1, icd_coil1, 1, 0, 1)
-        MAGX_IST_CDAC20_LINE(coil2,     "Coil2", "\nВ1000: В1000-2", 1500, 1, icd_coil2, 1, 0, 1)
+        MAGX_IST_CDAC20_LINE(qltr1,     "QLTr1", "\nк.7-11а: ВЧ500-1",  500,  1, icd_qltr1, 1, 0, 1)
+        MAGX_IST_CDAC20_LINE(qltr2,     "QLTr2", "\nк.7-11а: ВЧ500-2",  500,  1, icd_qltr2, 1, 0, 1)
+        MAGX_IST_CDAC20_LINE(qltr3,     "QLTr3", "\nк.7-11а: ВЧ500-3",  500,  1, icd_qltr3, 1, 0, 1)
+        MAGX_IST_CDAC20_LINE(coil1,     "Coil1", "\nк.7-11а: ВЧ1000-1", 1500, 1, icd_coil1, 1, 0, 1)
+        MAGX_IST_CDAC20_LINE(coil2,     "Coil2", "\nк.7-11а: ВЧ1000-2", 1500, 1, icd_coil2, 1, 0, 1)
        #OLD_V1000_LINE(Coil2)
         MAGX_IST_CDAC20_LINE(psol,      "pSol",  "\nИСТР: ИСТ-2",    1800, 1, icd_psol,  1, 0)
        #OLD_V1000_LINE(QL15, `"\nВ1000: В300-4"')

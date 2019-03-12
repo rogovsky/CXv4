@@ -1,6 +1,7 @@
 #include <errno.h>
 
 #include "misc_macros.h"
+#include "misclib.h"
 
 #include "datatreeP.h"
 #include "CdrP.h"
@@ -185,8 +186,10 @@ static int SubsysRealizer(subsys_t *sr, void *privptr)
                                                     : 0),
                                 NULL, NULL) < 0)
         {
-            sr->ds = NULL;
+            fprintf(stderr, "%s CdrRealizeSubsystem(%s) ERROR: %s\n",
+                    strcurtime(), sr->cfg.name, CdrLastErr());
             CdrDestroySubsystem(sr->ds);
+            sr->ds = NULL;
         }
         else if (info_p->evproc != NULL)
             cda_add_context_evproc(sr->ds->cid, 

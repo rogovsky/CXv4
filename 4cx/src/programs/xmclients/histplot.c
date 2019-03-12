@@ -343,6 +343,7 @@ static int  AddGroupingChan(const char *argv0, const char *spec)
     }
     else
     {
+        bzero(k->u.k.params, sizeof(CxKnobParam_t) * num_params);
         k->u.k.num_params = num_params;
         k->u.k.params[DATAKNOB_PARAM_DISP_MIN].value = opts.disprange[0];
         k->u.k.params[DATAKNOB_PARAM_DISP_MAX].value = opts.disprange[1];

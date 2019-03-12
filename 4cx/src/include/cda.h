@@ -208,6 +208,15 @@ cda_dataref_t cda_add_ichan(cda_context_t  cid,
 int           cda_get_icval(cda_dataref_t  ref, int    *v_p);
 int           cda_set_icval(cda_dataref_t  ref, int     val);
 
+int           cda_add_schan(cda_context_t  cid,
+                            const char    *name,
+                            size_t         maxlen);
+int           cda_get_scval(cda_dataref_t  ref,
+                            char          *buf, size_t bufsize,
+                            size_t        *len_p);
+int           cda_set_scval(cda_dataref_t  ref,
+                            char          *str, size_t len);
+
 
 /* Formulae management */
 

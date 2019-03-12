@@ -20,6 +20,7 @@
 #include "cdaP.h"
 
 #include "cxsd_logger.h"
+#include "cxsd_core_commons.h"
 #include "cxsd_db.h"
 #include "cxsd_dbP.h"
 #include "cxsd_hw.h"
@@ -54,7 +55,7 @@ enum
     DEF_OPT_BASECYCLESIZE = 1000000,
 };
 
-static int         option_simulate                 = 0;
+static int         option_simulate                 = CXSD_SIMULATE_OFF;
 static int         option_defdrvlog_mask           = 0;
 static int         option_verbosity                = DEF_OPT_VERBOSITY;
 static const char *option_dbref                    = DEF_FILE_DEVLIST;
@@ -78,7 +79,7 @@ static void ParseCommandLine(int argc, char *argv[])
   int            log_clr_mask;
   char          *log_parse_r;
 
-    while ((c = getopt(argc, argv, "b:E:f:F:hl:L:M:sv:w:")) != EOF)
+    while ((c = getopt(argc, argv, "b:E:f:F:hl:L:M:sSv:w:")) != EOF)
     {
         switch (c)
         {
@@ -92,14 +93,14 @@ static void ParseCommandLine(int argc, char *argv[])
                     err++;
                 }
                 break;
-                
+
             case 'f':
                 option_dbref = optarg;
                 break;
-                
+
             case 'h':
                 goto PRINT_HELP;
-                
+
             case 'l':
                 log_parse_r = ParseDrvlogCategories(optarg, NULL,
                                                     &log_set_mask, &log_clr_mask);
@@ -117,23 +118,27 @@ static void ParseCommandLine(int argc, char *argv[])
             case 'M':
                 strzcpy(config_drivers_path,   optarg, sizeof(config_drivers_path));
                 break;
-                
+
             case 'F':
                 strzcpy(config_frontends_path, optarg, sizeof(config_frontends_path));
                 break;
-                
+
             case 'E':
                 strzcpy(config_exts_path,      optarg, sizeof(config_exts_path));
                 break;
-                
+
             case 'L':
                 strzcpy(config_libs_path,      optarg, sizeof(config_libs_path));
                 break;
-                
+
             case 's':
-                option_simulate = 1;
+                option_simulate = CXSD_SIMULATE_YES;
                 break;
-                
+
+            case 'S':
+                option_simulate = CXSD_SIMULATE_SUP;
+                break;
+
             case 'v':
                 if (*optarg >= '0'  &&  *optarg <= '9'  &&
                     optarg[1] == '\0')
@@ -146,14 +151,14 @@ static void ParseCommandLine(int argc, char *argv[])
                     err++;
                 }
                 break;
-                
+
             case 'w':
                 option_cacherfw = 1;
                 if (tolower(*optarg) == 'n'  ||  tolower(*optarg) == 'f'  ||
                     *optarg == '0')
                     option_cacherfw = 0;
                 break;
-                
+
             case '?':
             default:
                 err++;
@@ -175,9 +180,16 @@ static void ParseCommandLine(int argc, char *argv[])
            "  -b TIME   server base cycle size, in µs (def=%d)\n"
            "  -f DBREF  obtain HW config from DBREF instead of " DEF_FILE_DEVLIST "\n"
            "  -h        display this help and exit\n"
+           "  -l LIST   default drvlog categories\n"
            "  -s        simulate hardware; for debugging only\n"
+           "  -S        super-simulate (as -s, plus ro-channels become rw)\n"
            "  -v N      verbosity level: 0 - lowest, 9 - highest (def=%d)\n"
            "  -w Y/N    cache reads from write channels (def=%s)\n"
+           "pult-specific options (cxsd's cxsd.conf replacements):\n"
+           "  -M PATH   set drivers-path (M - Modules)\n"
+           "  -F PATH   set frontends-path\n"
+           "  -E PATH   set exts-path\n"
+           "  -L PATH   set libs-path\n"
            , argv[0],
            DEF_OPT_BASECYCLESIZE,
            DEF_OPT_VERBOSITY,

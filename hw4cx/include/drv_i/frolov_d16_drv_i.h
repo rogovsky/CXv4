@@ -2,7 +2,7 @@
 #define __FROLOV_D16_DRV_I_H
 
 
-// w40i,w10d,r50i
+// w40i,w10d,r50i,w100
 enum
 {
     FROLOV_D16_NUMOUTPUTS      = 4,
@@ -26,6 +26,8 @@ enum
     FROLOV_D16_CHAN_AUTO_SHOT  = 26,
     FROLOV_D16_CHAN_AUTO_SECS  = 27,
 
+    FROLOV_D16_CHAN_ACTIVATE_PRESET_N = 39,
+
     FROLOV_D16_DOUBLE_CHAN_base = 40, FROLOV_D16_DOUBLE_CHAN_count = 10,
 
     FROLOV_D16_CHAN_V_n_base   = 40,  // double
@@ -35,7 +37,15 @@ enum
     FROLOV_D16_CHAN_WAS_START  = 61,
     FROLOV_D16_CHAN_LAM_SIG    = 62,
 
-    FROLOV_D16_NUMCHANS        = 100
+    FROLOV_D16_CHAN_PRESETS_base = 100,
+      FROLOV_D16_CHAN_PRESETS_per_one = 20,
+      FROLOV_D16_CHAN_PRESETS_num     = 4,
+    FROLOV_D16_CHAN_PRESETS_ofs_A_n_base   = 0,
+    FROLOV_D16_CHAN_PRESETS_ofs_B_n_base   = 4,
+    FROLOV_D16_CHAN_PRESETS_ofs_OFF_n_base = 8,
+    FROLOV_D16_CHAN_PRESETS_ofs_ALLOFF     = 12,
+
+    FROLOV_D16_NUMCHANS        = 200
 };
 
 enum

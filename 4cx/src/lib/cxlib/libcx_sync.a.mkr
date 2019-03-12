@@ -1,0 +1,1 @@
+libcx_sync.a: libcx_sync.a(cxlib_client.o cxlib_utils.o cxlib_sync.o)

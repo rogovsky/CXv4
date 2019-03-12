@@ -46,6 +46,8 @@ typedef struct
     int      init_val_of_fclk_sel;
     int      init_val_of_start_sel;
     int      init_val_of_mode;
+
+    int32    presets_buf[FROLOV_D16_CHAN_PRESETS_per_one * FROLOV_D16_CHAN_PRESETS_num];
 } frolov_d16_privrec_t;
 
 static psp_lkp_t frolov_d16_kclk_n_lkp   [] =
@@ -258,6 +260,10 @@ static void frolov_d16_rw_p(int devid, void *devptr,
   void                 *vp;
   static cxdtype_t      dtype_f64 = CXDTYPE_DOUBLE;
   static int            n_1       = 1;
+
+  int                   p_i;  // Preset Index -- index in presets_buf[]
+  int                   p_n;  // Preset N     -- =p_i/FROLOV_D16_CHAN_PRESETS_per_one
+  int                   p_c;  // Preset Chan  -- =p_i%FROLOV_D16_CHAN_PRESETS_per_one (channel index inside preset)
 
     for (n = 0;  n < count;  n++)
     {
@@ -565,7 +571,54 @@ static void frolov_d16_rw_p(int devid, void *devptr,
             case FROLOV_D16_CHAN_LAM_SIG:
                 /* Just ignore this request: it is returned from LAM_CB() */
                 goto NEXT_CHANNEL;
-                
+
+            case FROLOV_D16_CHAN_PRESETS_base ...
+                 FROLOV_D16_CHAN_PRESETS_base + FROLOV_D16_CHAN_PRESETS_per_one * FROLOV_D16_CHAN_PRESETS_num - 1:
+                p_i = chn - FROLOV_D16_CHAN_PRESETS_base;
+                p_n = p_i / FROLOV_D16_CHAN_PRESETS_per_one;
+                p_c = p_i % FROLOV_D16_CHAN_PRESETS_per_one;
+                if (action == DRVA_WRITE)
+                {
+                    /* Validate value depending on cell type */
+                    if      (p_c >= FROLOV_D16_CHAN_PRESETS_ofs_A_n_base  &&
+                             p_c <  FROLOV_D16_CHAN_PRESETS_ofs_A_n_base + FROLOV_D16_NUMOUTPUTS)
+                    {
+                        if (value < 0)      value = 0;
+                        if (value > 0xFFFF) value = 0xFFFF;
+                    }
+                    else if (p_c >= FROLOV_D16_CHAN_PRESETS_ofs_B_n_base  &&
+                             p_c <  FROLOV_D16_CHAN_PRESETS_ofs_B_n_base + FROLOV_D16_NUMOUTPUTS)
+                    {
+                        if (value < 0)    value = 0;
+                        if (value > 0xFF) value = 0xFF;
+                    }
+                    else /*         FROLOV_D16_CHAN_PRESETS_ofs_OFF_n_base || FROLOV_D16_CHAN_PRESETS_ofs_ALLOFF */
+                    {
+                        value = (value != 0);
+                    }
+                    /* Store */
+                    me->presets_buf[p_i] = value;
+                }
+                value  = me->presets_buf[p_i];
+                rflags = 0;
+                break;
+
+            case FROLOV_D16_CHAN_ACTIVATE_PRESET_N:
+                if (action == DRVA_WRITE  &&
+                    value >= 0  &&  value < FROLOV_D16_CHAN_PRESETS_num)
+                {
+                    for (l = 0;  l < FROLOV_D16_NUMOUTPUTS;  l++)
+                    {
+                        WriteOne(me, FROLOV_D16_CHAN_A_n_base   + l, me->presets_buf[FROLOV_D16_CHAN_PRESETS_per_one * value + FROLOV_D16_CHAN_PRESETS_ofs_A_n_base   + l]);
+                        WriteOne(me, FROLOV_D16_CHAN_B_n_base   + l, me->presets_buf[FROLOV_D16_CHAN_PRESETS_per_one * value + FROLOV_D16_CHAN_PRESETS_ofs_B_n_base   + l]);
+                        WriteOne(me, FROLOV_D16_CHAN_OFF_n_base + l, me->presets_buf[FROLOV_D16_CHAN_PRESETS_per_one * value + FROLOV_D16_CHAN_PRESETS_ofs_OFF_n_base + l]);
+                    }
+                    WriteOne    (me, FROLOV_D16_CHAN_ALLOFF,         me->presets_buf[FROLOV_D16_CHAN_PRESETS_per_one * value + FROLOV_D16_CHAN_PRESETS_ofs_ALLOFF]);
+                }
+                value  = 0;
+                rflags = 0;
+                break;
+
             default:
                 value  = 0;
                 rflags = CXRF_UNSUPPORTED;

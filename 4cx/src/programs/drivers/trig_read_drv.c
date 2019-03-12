@@ -129,7 +129,6 @@ static int  trig_read_init_d(int devid, void *devptr,
   char       *endptr;
 
   cxsd_cpntid_t   gcid;
-  cxsd_hw_chan_t *chn_p;
 
     me->cid = -1;
     me->trgr_r = me->data_r = -1;
@@ -245,21 +244,16 @@ static int  trig_read_init_d(int devid, void *devptr,
     else
     {
         /* No @tNNN specified -- try to find out via DB */
+        // a. Pre-program defaults
+        dtype   = CXDTYPE_UNKNOWN;
+        n_items = sizeof(CxAnyVal_t);
+        // b. Try to resolve...
         if (CxsdHwResolveChan(p, &gcid,
                               NULL, NULL, 0,
                               NULL, NULL, NULL, NULL, 
-                              NULL, NULL, NULL, NULL) < 0)
-        {
-            /* Doesn't resolve?  Either an error or a foreign one */
-            dtype   = CXDTYPE_UNKNOWN;
-            n_items = sizeof(CxAnyVal_t);
-        }
-        else
-        {
-            chn_p = cxsd_hw_channels + gcid;
-            dtype   = chn_p->dtype;
-            n_items = chn_p->max_nelems;
-        }
+                              NULL, NULL, NULL, NULL) >= 0)
+            CxsdHwGetChanType(gcid, NULL, &dtype, &n_items);
+        /* Doesn't resolve?  Either an error or a foreign one; pre-programmed values will remain. */
     }
 
     if ((me->cid = cda_new_context(devid, devptr,

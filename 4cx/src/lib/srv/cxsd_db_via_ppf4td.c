@@ -1,5 +1,6 @@
 #include <ctype.h>
 
+#include "cxsd_core_commons.h"
 #include "cxsd_db_via_ppf4td.h"
 /*!!! vvv a temporary for CXSD_HW_SUPPORTS_CXDTYPE_UNKNOWN */
 #include "cxsd_hwP.h"
@@ -371,13 +372,13 @@ static int dev_parser(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db)
 
     /* TYPE */
     ppf4td_skip_white(ctx);
-    /* Optional '-' prefix (per-device simulation mode) */
+    /* Optional '-'/'+' prefix (per-device simulation mode) */
     r = ppf4td_peekc(ctx, &ch);
     if (r < 0) return -1;
-    if (r > 0  &&  ch == '-')
+    if (r > 0  &&  (ch == '-'  ||  ch == '+'))
     {
         ppf4td_nextc(ctx, &ch);
-        dline.is_simulated = 1;
+        dline.is_simulated = (ch == '-')? CXSD_SIMULATE_YES : CXSD_SIMULATE_SUP;
     }
     /* The type itself */
     if (ParseAName(argv0, ctx, "device-type",

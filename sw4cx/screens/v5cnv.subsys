@@ -4,7 +4,7 @@ grouping main V5CNV_grouping "VEPP5 Conversion System" canvas "nodecor" content:
     container concentrator "Impulse magnet power" grid nocoltitles \
             ncols:3 content:3 {
         knob     voltage "Concentrator" text - "V" %4.2f   \
-                alwdrange:0-9 step:0.1                     r:ic.linCNV.U.set
+                alwdrange:0-9 step:0.1                     r:ic.linCNV.Uset
         disp ready  "Is on"  led "offcol=red color=green"  r:ic.linCNV.ready
         selector onoff   ""             choicebs \
                 items:"#TOff\b\blit=red\tOn\b\blit=green"  r:ic.linCNV.swc

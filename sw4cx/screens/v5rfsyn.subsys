@@ -1,13 +1,13 @@
 
 # 1:id 2:label 3:units 4:dpyfmt.precision 5:r_base
 define(`SYN_LINE', `
-    knob           $1_s $2 text - $3 %10.$4`'f              r:$5.dly.set
+    knob           $1_s $2 text - $3 %10.$4`'f              r:$5.dly
     knob           $1_d "" onoff "offcol=green color=black" r:$5.mask
 ')
 
 # 1:id 2:label 3:units 4:dpyfmt.precision 5:r_base
 define(`SYG_LINE', `
-    knob/groupable $1_s $2 text - $3 %10.$4`'f              r:$5.dly.set
+    knob/groupable $1_s $2 text - $3 %10.$4`'f              r:$5.dly
     knob           $1_d "" onoff "offcol=green color=black" r:$5.mask
 ')
 
@@ -17,7 +17,7 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
     container linac_rf "Linac: RF"    grid "nocoltitles" \
             base:ic.syn ncols:2 nattl:1 content:eval(1 + 2*17) {
 
-        selector - "" selector "align=right" r:linRF.repRate.set \
+        selector - "" selector "align=right" r:linRF.repRate \
                 items:"#TOff\t\n50Hz\t\n25Hz\t16.6Hz\t12.5Hz\t10Hz\t\n8.3Hz\t\n7.14Hz"
 #                items:"#T-0-\t50Hz\t25Hz\t12.5Hz\t10Hz\t5Hz\t2.5Hz\t2Hz"
 
@@ -45,10 +45,10 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
 #            knob alloff   "Disable Starts"  onoff "offcol=green color=black" r:all.mask
             selector alloff "Starts" choicebs "" items:"#TEnable\b\blit=green\tDisable\b\blit=red" r:all.mask
             noop - - vseparator layinfo:vert=fill
-            knob subbun_s "SubBunch" text withlabel "ms" %8.3f                r:subbun.dly.set
+            knob subbun_s "SubBunch" text withlabel "ms" %8.3f                r:subbun.dly
             knob subbun_d ""         onoff "offcol=green color=black" r:subbun.mask
             noop - - vseparator layinfo:vert=fill
-            knob freq "Master generator" text withlabel "kHz" %7.0f r:::ic.linRF.frq.set
+            knob freq "Master generator" text withlabel "kHz" %7.0f r:::ic.linRF.MasterGen.frq
         }
     }
 
@@ -56,7 +56,7 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
             base:ic.syn ncols:2 nattl:2 content:eval(2 + 2*17) {
 
         #T-0-\t50Hz\t25Hz\t12.5Hz\t10Hz\t5Hz\t1Hz
-        selector - "" selector "align=right" r:linBeam.repRate.set \
+        selector - "" selector "align=right" r:linBeam.repRate \
                 items:"#TOff\t/1\t/2\t\n/3\t\n/4\t/5\t\n/6\t\n/7"\
                       "\t\n/8\t\n/9\t/10\t\n/11\t\n/12\t\n/13\t\n/14\t\n/15"\
                       "\t\n/16\t\n/17\t\n/18\t\n/19\t/20\t\n/21\t\n/22\t\n/23"\
@@ -64,11 +64,11 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
 #                items:"#T-0-\t50Hz\t25Hz\t12.5Hz\t10Hz\t5Hz\t2Hz\t1Hz"
         disp hzs "=" text "withlabel" "Hz" %4.1f \
                 "_all_code;
-                 getchan linRF.repRate.set;   cmp_if_lt 0.5; ret 0;
-                 getchan linBeam.repRate.set; cmp_if_lt 0.5; ret 0;
+                 getchan linRF.repRate;   cmp_if_lt 0.5; ret 0;
+                 getchan linBeam.repRate; cmp_if_lt 0.5; ret 0;
                  push 50;
-                 getchan linRF.repRate.set;   div;
-                 getchan linBeam.repRate.set; div;
+                 getchan linRF.repRate;   div;
+                 getchan linBeam.repRate; div;
                  ret;"
 
         SYN_LINE(, "Linac",            ms,  3, linBeam)
@@ -113,7 +113,7 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
     container cameras  "CCD etc."     grid "nocoltitles" \
             base:ic.syn ncols:2 nattl:1 content:eval(1 + 2*5) {
 
-        selector - "" selector "align=right"                      r:BProbe.repRate.set \
+        selector - "" selector "align=right"                      r:BProbe.repRate \
                 items:"#TOff\t1\t2\t3\t4\t5\t6\t7"
 
         SYN_LINE(, "B.Probe",       ms,  3, BProbe)
@@ -127,17 +127,17 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
             base:ic.eKickers nattl:4 ncols:2 content:eval(4 + 2*8) {
 
         container - - invisible "with_content" content:1 {
-            disp - "" onoff victim=:kstart r:StartSrc.set
+            disp - "" onoff victim=:kstart r:StartGen.StartSrc
         }
 
-        knob starts ""  choicebs items:"#TExt\tLcl\b\blit=yellow" r:StartSrc.set \
+        knob starts ""  choicebs items:"#TExt\tLcl\b\blit=yellow" r:StartGen.StartSrc \
                 w:"_all_code;
-                   qryval; putchan StartSrc.set; 
-                   push 1; qryval; cmp_if_lt 0.5; putchan repRate.set; # Ext: set kstart:=1
-                   push 5; qryval; cmp_if_gt 0.5; putchan repRate.set; # Lcl: set kstart:=5
+                   qryval; putchan StartGen.StartSrc; 
+                   push 1; qryval; cmp_if_lt 0.5; putchan StartGen.repRate; # Ext: set kstart:=1
+                   push 5; qryval; cmp_if_gt 0.5; putchan StartGen.repRate; # Lcl: set kstart:=5
                    ret;"
         knob/fixedranges \
-             kstart "/" text  "withlabel" "" %3.0f       r:repRate.set alwdrange:5-255
+             kstart "/" text  "withlabel" "" %3.0f       r:StartGen.repRate alwdrange:5-255
         knob alloff ""  onoff "offcol=green color=black" r:all.mask
 
         SYG_LINE(, "Run!",     mks, 5, run)
@@ -152,9 +152,9 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
     container injextr_e_accords "" grid "nodecor" \
             base:ic.eKickers ncols:3 content:3 {
         knob accord1 "A1" text "withlabel,withunits,noincdec" "V" \
-                %5.3f alwdrange:0-4.3 r:preKickU.set
+                %5.3f alwdrange:0-4.3 r:preKick.Uset
         knob accord2 "A2" text "withlabel,withunits,noincdec" "V" \
-                %5.3f alwdrange:0-4.3 r:KickU.set
+                %5.3f alwdrange:0-4.3 r:Kick.Uset
         container ":" "~~" subwin "resizable,compact,noclsbtn" \
                         tip:"Accords 1 & 2 ADC200" \
                 subwintitle:"Accords 1 & 2 ADC200" \
@@ -162,7 +162,7 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
             pzframe adc "" adc200 "" .ie_adc200_10
         }
     } layinfo:offset=0
-    selector ie_mode "" selector r:ic.kickers.mode.set \
+    selector ie_mode "" selector r:ic.kickers.swc.mode \
             items:"#Te-\te+\t\n?" \
             layinfo:offset=0
 
@@ -170,17 +170,17 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
             base:ic.pKickers nattl:4 ncols:2 content:eval(4 + 2*8) {
 
         container - - invisible "with_content" content:1 {
-            disp - "" onoff victim=:kstart r:StartSrc.set
+            disp - "" onoff victim=:kstart r:StartGen.StartSrc
         }
 
-        knob starts ""  choicebs items:"#TExt\tLcl\b\blit=yellow" r:StartSrc.set \
+        knob starts ""  choicebs items:"#TExt\tLcl\b\blit=yellow" r:StartGen.StartSrc \
                 w:"_all_code;
-                   qryval; putchan StartSrc.set; 
-                   push 1; qryval; cmp_if_lt 0.5; putchan repRate.set; # Ext: set kstart:=1
-                   push 5; qryval; cmp_if_gt 0.5; putchan repRate.set; # Lcl: set kstart:=5
+                   qryval; putchan StartGen.StartSrc;
+                   push 1; qryval; cmp_if_lt 0.5; putchan StartGen.repRate; # Ext: set kstart:=1
+                   push 5; qryval; cmp_if_gt 0.5; putchan StartGen.repRate; # Lcl: set kstart:=5
                    ret;"
         knob/fixedranges \
-             kstart "/" text  "withlabel" "" %3.0f       r:repRate.set alwdrange:5-255
+             kstart "/" text  "withlabel" "" %3.0f       r:StartGen.repRate alwdrange:5-255
         knob alloff ""  onoff "offcol=green color=black" r:all.mask
 
         SYG_LINE(, "Run!",     mks, 5, run)
@@ -195,9 +195,9 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
     container injextr_p_accords "" grid "nodecor" \
             base:ic.pKickers ncols:3 content:3 {
         knob accord3 "A3" text "withlabel,withunits,noincdec" "V" \
-                %5.3f alwdrange:0-4.3 r:preKickU.set
+                %5.3f alwdrange:0-4.3 r:preKick.Uset
         knob accord4 "A4" text "withlabel,withunits,noincdec" "V" \
-                %5.3f alwdrange:0-4.3 r:KickU.set
+                %5.3f alwdrange:0-4.3 r:Kick.Uset
         container ":" "~~" subwin "resizable,compact,noclsbtn" \
                         tip:"Accords 3 & 4 ADC200" \
                 subwintitle:"Accords 3 & 4 ADC200" \

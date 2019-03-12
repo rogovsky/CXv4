@@ -650,7 +650,6 @@ XhPlot    XhCreatePlot(Widget parent, int type, int maxplots,
     plot->axisGC               = AllocXhGC  (parent, cofs + XH_COLOR_GRAPH_AXIS,   XH_TINY_FIXED_FONT);   plot->axis_finfo      = last_finfo;
     plot->gridGC               = AllocDashGC(parent, cofs + XH_COLOR_GRAPH_GRID,   GRID_DASHLENGTH);
     plot->reprGC               = AllocXhGC  (parent, cofs + XH_COLOR_GRAPH_REPERS, XH_PROPORTIONAL_FONT); plot->repr_finfo      = last_finfo;
-//    plot->reprGC               = AllocXhGC  (parent, cofs + XH_COLOR_GRAPH_AXIS,   XH_PROPORTIONAL_FONT); plot->repr_finfo      = last_finfo;
 
     return plot;
 }
@@ -903,18 +902,18 @@ void      XhPlotOneDraw (XhPlot plot, plotdata_t *data, int magn, GC gc)
                 else /* (dataunits == 1) */ iv = *p8++;
             }
 
-            y = RESCALE_VALUE((int64)(iv - data->cur_int_zero) * magn + data->cur_int_zero,
-                              cur_range.int_r[0], cur_range.int_r[1],
-                              grf_h - 1,          0);
+            y = grf_h-1 - (int)(RESCALE_VALUE((int64)(iv - data->cur_int_zero) * magn + data->cur_int_zero,
+                                              cur_range.int_r[0], cur_range.int_r[1],
+                                              0,                  grf_h - 1));
         }
         else
         {
             if      (dataunits == 8)    dv = *f64++;
             else                        dv = *f32++;
 
-            y = RESCALE_VALUE((dv) * magn,
-                              cur_range.dbl_r[0], cur_range.dbl_r[1],
-                              grf_h - 1,          0);
+            y = grf_h-1 - (int)(RESCALE_VALUE((dv) * magn,
+                                              cur_range.dbl_r[0], cur_range.dbl_r[1],
+                                              0,                  grf_h - 1));
         }
         if      (y < -32767) y = -32767;
         else if (y > +32767) y = +32767;

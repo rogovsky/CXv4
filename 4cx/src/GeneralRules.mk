@@ -251,7 +251,10 @@ endif
 # ???Dealing with components
 _MKR_LINE=	echo "$*: $($*_COMPONENTS) $($*_LIBDEPS)" >$@
 $(addsuffix .mkr, $(ARLIBS)):	_MKR_LINE=	echo "$*: $*($(strip $($*_COMPONENTS) $($*_GIVEN_COMPONENTS)))" >$@
-%.mkr:		Makefile $(MAKEFILE_PARTS)
+# Note: "$(firstword $(MAKEFILE_LIST))" is usually a "Makefile",
+#       but this arcane spec allows to use other names for "main" makefiles
+#       (e.g. "make -f SOMETHING.mk")
+%.mkr:		$(firstword $(MAKEFILE_LIST)) $(MAKEFILE_PARTS)
 		$(_MKR_LINE)
 
 # Archives

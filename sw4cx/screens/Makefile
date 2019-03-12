@@ -20,7 +20,7 @@ EXPORTSDIR3=	settings/common
 
 #---
 CLIENTS+=	liu
-V4HDIR=		$(HOME)/work/hw4cx
+V4HDIR=		$(PRJDIR)/../hw4cx
 LOCAL_BCKPFILES+= panov_ubs.m4 kshd485.m4 dl200me_f.m4
 AUX_SCREEN_FILES+=panov_ubs.m4 kshd485.m4 dl200me_f.m4
 #---

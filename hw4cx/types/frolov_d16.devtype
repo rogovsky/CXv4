@@ -1,4 +1,4 @@
-devtype frolov_d16 w40i,w10d,r50i {
+devtype frolov_d16 w40i,w10d,r50i,w100i {
 	a<0-3>		0
 	b<0-3>		4
 	# Ex: v<0-3>		8
@@ -14,6 +14,8 @@ devtype frolov_d16 w40i,w10d,r50i {
 
 	ones_stop	25
 
+	activate_preset_n	39
+
 	v<0-3>		40
 
 	f_in_hz		48
@@ -21,4 +23,45 @@ devtype frolov_d16 w40i,w10d,r50i {
 
 	was_start	61
 	lam_sig		62
+
+	p0_a<0-3>	100
+	p0_b<0-3>	104
+	p0_off<0-3>	108
+	p0_alloff	112
+
+	p1_a<0-3>	120
+	p1_b<0-3>	124
+	p1_off<0-3>	128
+	p1_alloff	132
+
+	p2_a<0-3>	140
+	p2_b<0-3>	144
+	p2_off<0-3>	148
+	p2_alloff	152
+
+	p3_a<0-3>	160
+	p3_b<0-3>	164
+	p3_off<0-3>	168
+	p3_alloff	172
+
+	# cxsd_db_via_ppf4td.c::ParseChanList(): "NO aliases for range specs" as of 21.12.2018
+	p0.a<0-3>	100
+	p0.b<0-3>	104
+	p0.off<0-3>	108
+	p0.alloff	p0_alloff
+
+	p1.a<0-3>	120
+	p1.b<0-3>	124
+	p1.off<0-3>	128
+	p1.alloff	p1_alloff
+
+	p2.a<0-3>	140
+	p2.b<0-3>	144
+	p2.off<0-3>	148
+	p2.alloff	p2_alloff
+
+	p3.a<0-3>	160
+	p3.b<0-3>	164
+	p3.off<0-3>	168
+	p3.alloff	p3_alloff
 }
