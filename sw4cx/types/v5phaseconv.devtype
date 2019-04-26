@@ -1,0 +1,3 @@
+devtype v5phaseconv w4d {
+	phase<1-4>	0
+}

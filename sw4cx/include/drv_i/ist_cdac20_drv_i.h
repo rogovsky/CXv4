@@ -2,6 +2,9 @@
 #define __IST_CDAC20_DRV_I_H
 
 
+#include "vdev_ps_conditions.h"
+
+
 // w50i,r50i
 enum
 {
@@ -61,8 +64,9 @@ enum
     IST_CDAC20_CHAN_C_ILK_PHASE    = IST_CDAC20_CHAN_C_ILK_base + 5,
     IST_CDAC20_CHAN_C_ILK_TEMP     = IST_CDAC20_CHAN_C_ILK_base + 6,
 
+    IST_CDAC20_CHAN_VDEV_CONDITION = 97,
     IST_CDAC20_CHAN_CUR_POLARITY   = 98,
-    IST_CDAC20_CHAN_IST_STATE      = 99,
+    IST_CDAC20_CHAN_VDEV_STATE     = 99,
 
     IST_CDAC20_NUMCHANS          =   100,
 };

@@ -127,6 +127,10 @@ typedef struct _fastadc_data_t_struct
     uint8                  lines_rds_rcvd[FASTADC_MAX_LINES];
 
     fastadc_mes_t          mes;
+
+    fastadc_mes_t          svd;
+    int                    use_svd;
+    void                  *svd_buf;
 } fastadc_data_t;
 
 static inline fastadc_data_t *pzframe2fastadc_data(pzframe_data_t *pzframe_data)
@@ -195,6 +199,11 @@ int  FastadcDataCalcDpyFmts(fastadc_data_t *adc);
 
 psp_paramdescr_t *FastadcDataCreateText2DcnvTable(fastadc_type_dscr_t *atd,
                                                   char **mallocd_buf_p);
+
+//--------------------------------------------------------------------
+
+int  FastadcDataCopy2Svd(fastadc_data_t *adc);
+void FastadcDataResetSvd(fastadc_data_t *adc);
 
 //--------------------------------------------------------------------
 

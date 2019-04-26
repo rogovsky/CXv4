@@ -21,38 +21,6 @@ void        DoDriverLog      (int devid, int level,
     va_end(ap);
 }
 
-/*!!!This block doesn't belong here!!!*/
-//////////////////////////////////////////////////////////////////////
-typedef struct
-{
-    const char *name;
-    int         c;
-} catdesc_t;
-
-/* Note: this list should be kept in sync/order with
-   DRIVERLOG_CN_ enums in cxsd_driver.h */
-static catdesc_t  catlist[] =
-{
-    {"DEFAULT",           DRIVERLOG_C_DEFAULT},
-    {"ENTRYPOINT",        DRIVERLOG_C_ENTRYPOINT},
-    {"PKTDUMP",           DRIVERLOG_C_PKTDUMP},
-    {"PKTINFO",           DRIVERLOG_C_PKTINFO},
-    {"DATACONV",          DRIVERLOG_C_DATACONV},
-    {"REMDRV_PKTDUMP",    DRIVERLOG_C_REMDRV_PKTDUMP},
-    {"REMDRV_PKTINFO",    DRIVERLOG_C_REMDRV_PKTINFO},
-    {NULL,         0}
-};
-
-/*!!! a temporary measure, since god knows into which .h to place declaration */
-static const char *GetDrvlogCatName(int category)
-{
-    category = (category & DRIVERLOG_C_mask) >> DRIVERLOG_C_shift;
-    if (category > DRIVERLOG_CN_default  ||  category < countof(catlist) - 1)
-        return catlist[category].name;
-    else
-        return "???";
-}
-//////////////////////////////////////////////////////////////////////
 void        vDoDriverLog     (int devid, int level,
                               const char *format, va_list ap)
 {
@@ -257,11 +225,11 @@ void StdSimulated_rw_p(int devid, void *devptr __attribute__((unused)),
 
 const char * GetDevTypename(int devid)
 {
-  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+  cxsd_hw_dev_t  *dev_p = cxsd_hw_devices + devid;
 
     CHECK_SANITY_OF_DEVID(NULL);
 
-    return CxsdDbGetStr(cxsd_hw_cur_db, dev->db_ref->typename_ofs);
+    return CxsdDbGetStr(cxsd_hw_cur_db, dev_p->db_ref->typename_ofs);
 }
 
 void         GetDevLogPrms (int devid, int *curlevel_p, int *curmask_p)
@@ -274,11 +242,11 @@ void         GetDevLogPrms (int devid, int *curlevel_p, int *curmask_p)
 
 void       * GetLayerVMT   (int devid)
 {
-  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+  cxsd_hw_dev_t  *dev_p = cxsd_hw_devices + devid;
 
     CHECK_SANITY_OF_DEVID(NULL);
 
-    if (dev->lyrid == 0)
+    if (dev_p->lyrid == 0)
     {
         logline(LOGF_MODULES, LOGL_ERR,
                 "%s(devid=%d/active=%d): request for layer-VMT from non-layered device",
@@ -286,7 +254,7 @@ void       * GetLayerVMT   (int devid)
         return NULL;
     }
 
-    return cxsd_hw_layers[-dev->lyrid].metric->vmtlink;
+    return cxsd_hw_layers[-dev_p->lyrid].metric->vmtlink;
 }
 
 const char * GetLayerInfo  (const char *lyrname, int bus_n)

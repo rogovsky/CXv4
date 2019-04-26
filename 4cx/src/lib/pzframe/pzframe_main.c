@@ -22,6 +22,8 @@
 #include "pixmaps/btn_save.xpm"
 #include "pixmaps/btn_start.xpm"
 #include "pixmaps/btn_once.xpm"
+#include "pixmaps/btn_setgood.xpm"
+#include "pixmaps/btn_rstgood.xpm"
 #include "pixmaps/btn_help.xpm"
 #include "pixmaps/btn_quit.xpm"
 
@@ -29,6 +31,8 @@
 #include "pixmaps/btn_mini_save.xpm"
 #include "pixmaps/btn_mini_start.xpm"
 #include "pixmaps/btn_mini_once.xpm"
+#include "pixmaps/btn_mini_setgood.xpm"
+#include "pixmaps/btn_mini_rstgood.xpm"
 #include "pixmaps/btn_mini_help.xpm"
 #include "pixmaps/btn_mini_quit.xpm"
 
@@ -156,8 +160,8 @@ static xh_actdescr_t toolslist[] =
     XhXXX_TOOLCHK   (PZFRAME_MAIN_CMD_LOOP,  "Periodic measurement",      btn_start_xpm, btn_mini_start_xpm),
     XhXXX_TOOLCMD   (PZFRAME_MAIN_CMD_ONCE,  "One measurement",           btn_once_xpm,  btn_mini_once_xpm),
     XhXXX_SEPARATOR (),
-    //XhXXX_TOOLCMD   (PZFRAME_MAIN_CMD_SET_GOOD,       "Save current data as good",  btn_setgood_xpm),
-    //XhXXX_TOOLCMD   (PZFRAME_MAIN_CMD_RST_GOOD,       "Forget saved data",          btn_rstgood_xpm),
+    XhXXX_TOOLCMD   (PZFRAME_MAIN_CMD_SET_GOOD, "Save current data as good", btn_setgood_xpm, btn_mini_setgood_xpm),
+    XhXXX_TOOLCMD   (PZFRAME_MAIN_CMD_RST_GOOD, "Forget saved data",         btn_rstgood_xpm, btn_mini_rstgood_xpm),
     XhXXX_TOOLLEDS  (),
     XhXXX_TOOLCMD   (CHL_STDCMD_SHOW_HELP,   "Short help",                 btn_help_xpm, btn_mini_help_xpm),
     XhXXX_TOOLFILLER(),
@@ -222,6 +226,16 @@ static int CommandProc(XhWindow win, const char *cmd, int info_int)
     {
         PzframeDataSetRunMode(global_gui->pfr, -1, 1);
         ShowRunMode();
+    }
+    else if (strcmp(cmd, PZFRAME_MAIN_CMD_SET_GOOD) == 0)
+    {
+        if (global_gui->d->vmt.svd_ctl != NULL)
+            global_gui->d->vmt.svd_ctl(global_gui, 1);
+    }
+    else if (strcmp(cmd, PZFRAME_MAIN_CMD_RST_GOOD) == 0)
+    {
+        if (global_gui->d->vmt.svd_ctl != NULL)
+            global_gui->d->vmt.svd_ctl(global_gui, 0);
     }
     else if (strcmp(cmd, CHL_STDCMD_SHOW_HELP)  == 0)
         ChlShowHelp(win, CHL_HELP_ALL &~ CHL_HELP_MOUSE);
@@ -296,7 +310,7 @@ int  PzframeMain(int argc, char *argv[],
     XhSetColorBinding("TS_DEFAULT",   "#fdf8e3");
     XhSetColorBinding("BS_DEFAULT",   "#bbb078");
     XhSetColorBinding("BG_ARMED",     "#fcf4d0");
-    XhSetColorBinding("GRAPH_REPERS", "#00FF00");
+//    XhSetColorBinding("GRAPH_REPERS", "#00FF00"); // Commented out 17.12.2018, after switching repers to magenta (#ff00ff)
   
     /* Initialize and parse command line */
     XhInitApplication(&argc, argv, def_app_name, def_app_class, fallbacks);
@@ -376,6 +390,22 @@ int  PzframeMain(int argc, char *argv[],
             toolslist[n].label = global_gui->pfr->ftd->type_name;
             break;
         }
+    for (n = 0;  toolslist[n].type != XhACT_END;  n++)
+        if (
+            (toolslist[n].type == XhACT_COMMAND                       &&
+             (strcasecmp(toolslist[n].cmd, PZFRAME_MAIN_CMD_SET_GOOD) == 0
+              ||
+              strcasecmp(toolslist[n].cmd, PZFRAME_MAIN_CMD_RST_GOOD) == 0)
+             &&
+             (global_gui->pfr->ftd->behaviour & PZFRAME_B_NO_SVD) != 0)
+/*
+            ||
+            (toolslist[n].type == XhACT_COMMAND                       &&
+             strcasecmp(toolslist[n].cmd, CHL_STDCMD_LOAD_MODE) == 0  &&
+             0)
+*/
+           )
+            toolslist[n].type = XhACT_NOP;
     if (opts.title[0] == '\0')
     {
         check_snprintf(opts.title, sizeof(opts.title),

@@ -1,0 +1,1 @@
+libKnobsCore.a: libKnobsCore.a(KnobsCore_knobset.o KnobsCore_simple.o KnobsCore_misc.o KnobsCore_err.o)

@@ -101,6 +101,11 @@ typedef struct
     int            is_defunct;     // !=0 => can only be closed and queried
     int            being_processed;
     int            being_destroyed;
+
+    // For "advice" quasi-plugins API
+    int            is_asking_plugin;
+    size_t         hdr_size_add;
+    size_t         plugin_pktlen;
 } fdinfo_t;
 
 enum {FDIO_MAX_SUPPORTED_FD = FD_SETSIZE - 1};
@@ -233,7 +238,7 @@ static int StreamReadyForRead (fdinfo_t *fr)
     if (fr->reqreadstate == 0)
     {
         /* Try to read the whole header */
-        count = fr->hdr_size - fr->reqreadsize;
+        count = fr->hdr_size + fr->hdr_size_add - fr->reqreadsize;
         r = uintr_read(fr->fd, fr->reqbuf + fr->reqreadsize, count);
         errs = IsReadError(fr, r);
         ////if (errs != 0) fprintf(stderr, "0{%d} errs=%d/%d repcount=%d\n", handle, errs, errno, repcount);
@@ -245,7 +250,37 @@ static int StreamReadyForRead (fdinfo_t *fr)
 
         /* Obtain the packet length */
         pktlen = 0; // To make gcc happy
-        if (fr->len_size == 0)
+        if      (fr->fdtype == FDIO_STREAM_PLUG)
+        {
+            fr->being_processed  = 1;
+            fr->is_asking_plugin = 1;
+            fr->plugin_pktlen = 0;
+            fr->notifier(fr->uniq, fr->privptr1,
+                         handle, FDIO_R_HEADER_PART, fr->reqbuf, fr->reqreadsize, fr->privptr2);
+            fr = watched + handle;
+            fr->is_asking_plugin = 0;
+            fr->being_processed  = 0;
+            if (fr->being_destroyed)
+            {
+                fr->fd = -1;
+                return 0;
+            }
+
+            // Should read more data to obtain packet length?
+            if (fr->reqreadsize < fr->hdr_size + fr->hdr_size_add)
+                goto NEXT_REPEAT;
+
+            // Is an error?
+            if (fr->plugin_pktlen < fr->reqreadsize)
+            {
+                close_because(fr, FDIO_R_PROTOERR);
+                return -1;
+            }
+
+            // Everything is OK -- length is obtained, just proceed
+            pktlen = fr->plugin_pktlen;
+        }
+        else if (fr->len_size == 0)
         {
             pktlen = fr->hdr_size;
         }
@@ -373,6 +408,7 @@ static int StreamReadyForRead (fdinfo_t *fr)
         /* Reset the read state */
         fr->reqreadstate = 0;
         fr->reqreadsize  = 0;
+        fr->hdr_size_add = 0;
 
         /* And notify the host program */
         fr->being_processed = 1;
@@ -385,6 +421,8 @@ static int StreamReadyForRead (fdinfo_t *fr)
             fr->fd = -1;
             return 0;
         }
+
+ NEXT_REPEAT:;
         repcount++;
         if (repcount < fr->maxrepcount) goto REPEAT;
     }
@@ -676,47 +714,76 @@ static int StringReadyForRead (fdinfo_t *fr)
   int     handle = fr2handle(fr);
 
   int     r;
+  int     count;
   int     errs;
 
   int     repcount = 0;
 
-    while (1)
+  int     reason;
+
+    // Are we in string mode?
+    if (fr->reqreadstate == 0)
     {
-        r = uintr_read(fr->fd, fr->reqbuf + fr->reqreadsize, 1);
-        /* Handle EOF with non-empty line as EOL first */
-        if (r == 0  &&  fr->reqreadsize > 0) goto END_OF_LINE;
-        /* Check for errors... */
-        errs = IsReadError(fr, r);
-        ////if (errs != 0) fprintf(stderr, "0{%d} errs=%d/%d repcount=%d\n", handle, errs, errno, repcount);
-        if (errs < 0) return -1;                    // Unrecoverable errors -- return -1
-        if (errs > 0) return repcount == 0? -1 : 0; // Recoverable errors -- return -1 only if 1st iteration, since on subsequent attempts empty input is ok
-
-        /* Okay, what character is this? */
-        if (fr->reqbuf[fr->reqreadsize] == '\n'  ||
-            fr->reqbuf[fr->reqreadsize] == '\r'  ||
-            fr->reqbuf[fr->reqreadsize] == '\0') goto END_OF_LINE;
-
-        fr->reqreadsize++;
-        /* Buffer overflow? */
-        if (fr->reqreadsize >= fr->maxinppktsize)
+        while (1)
         {
-            close_because(fr, FDIO_R_INPKT2BIG);
-            return -1;
-        }
+            r = uintr_read(fr->fd, fr->reqbuf + fr->reqreadsize, 1);
+            /* Handle EOF with non-empty line as EOL first */
+            if (r == 0  &&  fr->reqreadsize > 0) goto END_OF_LINE;
+            /* Check for errors... */
+            errs = IsReadError(fr, r);
+            ////if (errs != 0) fprintf(stderr, "0{%d} errs=%d/%d repcount=%d\n", handle, errs, errno, repcount);
+            if (errs < 0) return -1;                    // Unrecoverable errors -- return -1
+            if (errs > 0) return repcount == 0? -1 : 0; // Recoverable errors -- return -1 only if 1st iteration, since on subsequent attempts empty input is ok
 
-        repcount++;
-    }
+            /* Okay, what character is this? */
+            if (fr->reqbuf[fr->reqreadsize] == '\n'  ||
+                fr->reqbuf[fr->reqreadsize] == '\r'  ||
+                fr->reqbuf[fr->reqreadsize] == '\0') goto END_OF_LINE;
+
+            fr->reqreadsize++;
+            /* Buffer overflow? */
+            if (fr->reqreadsize >= fr->maxinppktsize)
+            {
+                close_because(fr, FDIO_R_INPKT2BIG);
+                return -1;
+            }
+
+            repcount++;
+        }
  END_OF_LINE:
-    fr->reqbuf[fr->reqreadsize] = '\0';
-    fr->thisreqpktsize = fr->reqreadsize;
+        fr->reqbuf[fr->reqreadsize] = '\0';
+        fr->thisreqpktsize = fr->reqreadsize;
+
+        reason = FDIO_R_DATA;
+    }
+    else
+    // Binary mode: code is copy from StreamReadyForRead()::!(reqreadstate==0)
+    {
+        /* Try to read the whole remainder of the packet */
+        count = fr->thisreqpktsize - fr->reqreadsize;
+        
+        r = uintr_read(fr->fd, fr->reqbuf + fr->reqreadsize, count);
+        errs = IsReadError(fr, r);
+        ////if (errs != 0) fprintf(stderr, "1{%d} errs=%d/%d repcount=%d count=%d thisreqpktsize=%zd pktlen=%zd\n", handle, errs, errno, repcount, count, fr->thisreqpktsize, pktlen);
+        if (errs < 0) return -1; // Unrecoverable errors -- return -1
+        if (errs > 0) return  0; // Recoverable errors -- should return 0 even on 1st iteration, since we can be here because of fallthrough
+
+        fr->reqreadsize += r;
+        if (r < count) return 0;
+
+        /* Okay, the whole packet has arrived */
+
+        reason = FDIO_R_BIN_DATA_IN_STRING;
+    }
 
     /* Reset the read state */
+    fr->reqreadstate = 0;
     fr->reqreadsize  = 0;
     
     /* And notify the host program */
     fr->being_processed = 1;
     fr->notifier(fr->uniq, fr->privptr1,
-                 handle, FDIO_R_DATA, fr->reqbuf, fr->thisreqpktsize, fr->privptr2);
+                 handle, reason, fr->reqbuf, fr->thisreqpktsize, fr->privptr2);
     fr = watched + handle;
     fr->being_processed = 0;
     if (fr->being_destroyed)
@@ -767,6 +834,7 @@ static void fdio_io_cb(int uniq, void *privptr1,
     {
         case FDIO_CONNECTING:
         case FDIO_STRING_CONN:
+        case FDIO_STREAM_PLUG_CONN:
             /* Okay, what's there? */
             sock_err = errno = 0;
             errlen = sizeof(sock_err);
@@ -778,8 +846,10 @@ static void fdio_io_cb(int uniq, void *privptr1,
 
             if (errno == 0)
             {
-                /* Convert from CONNECTING/STRING_CONN to STREAM/STRING */
-                fr->fdtype = (fr->fdtype == FDIO_CONNECTING) ? FDIO_STREAM : FDIO_STRING;
+                /* Convert from CONN to respective regular type */
+                if      (fr->fdtype == FDIO_CONNECTING)       fr->fdtype = FDIO_STREAM;
+                else if (fr->fdtype == FDIO_STRING_CONN)      fr->fdtype = FDIO_STRING;
+                else if (fr->fdtype == FDIO_STREAM_PLUG_CONN) fr->fdtype = FDIO_STREAM_PLUG;
                 sl_set_fd_mask(fr->fdhandle, SL_RD);
                 fr->notifier(fr->uniq, fr->privptr1,
                              handle, FDIO_R_CONNECTED, NULL, 0, fr->privptr2);
@@ -791,6 +861,7 @@ static void fdio_io_cb(int uniq, void *privptr1,
             break;
 
         case FDIO_STREAM:
+        case FDIO_STREAM_PLUG:
             /* Handle "ready-for-write" first... */
             if (mask & SL_WR) if (StreamReadyForWrite(fr) < 0) return;
 
@@ -878,6 +949,7 @@ fdio_handle_t fdio_register_fd(int uniq, void *privptr1,
     {
         case FDIO_CONNECTING:
         case FDIO_STRING_CONN:
+        case FDIO_STREAM_PLUG_CONN:
             iomask = SL_WR | SL_CE;
             break;
             
@@ -885,6 +957,7 @@ fdio_handle_t fdio_register_fd(int uniq, void *privptr1,
         case FDIO_LISTEN:
         case FDIO_DGRAM:
         case FDIO_STRING:
+        case FDIO_STREAM_PLUG:
             iomask = SL_RD;
             break;
             
@@ -1114,6 +1187,78 @@ int  fdio_set_maxreadrepcount (fdio_handle_t handle, int    maxrepcount)
 
     fr->maxrepcount = maxrepcount;
     
+    return 0;
+}
+
+int  fdio_advice_hdr_size_add (fdio_handle_t handle, size_t hdr_size_add)
+{
+  fdinfo_t  *fr;
+  
+    DECODE_AND_CHECK(-1);
+
+    if (fr->is_asking_plugin == 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+    if (hdr_size_add < fr->hdr_size_add)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    fr->hdr_size_add  = hdr_size_add;
+    
+    return 0;
+}
+
+int  fdio_advice_pktlen       (fdio_handle_t handle, size_t pktlen)
+{
+  fdinfo_t  *fr;
+  
+    DECODE_AND_CHECK(-1);
+
+    if (fr->is_asking_plugin == 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    fr->plugin_pktlen = pktlen;
+    
+    return 0;
+}
+
+int  fdio_string_req_binary   (fdio_handle_t handle, size_t datasize)
+{
+  fdinfo_t  *fr;
+  
+    DECODE_AND_CHECK(-1);
+
+    if (fr->fdtype != FDIO_STRING)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    // No change while in a process of reading
+    if (fr->reqreadsize != 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if      (datasize > fr->maxinppktsize)
+    {
+        errno = EOVERFLOW;
+        return -1;
+    }
+    else
+    {
+        fr->thisreqpktsize = datasize;
+        fr->reqreadstate   = (datasize == 0)? 0 : 1;  // datasize==0 means "drop previous binary request"
+    }
+
     return 0;
 }
 

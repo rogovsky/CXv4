@@ -23,6 +23,7 @@ EXPORTSFILES=	misc_types.h misclib.h misc_sepchars.h misc_macros.h fps_counter.h
 		cx_sysdeps.h endianconv.h \
 		\
 		cxsd_driver.h \
+		cxsd_core_commons.h \
 		cxsd_db.h cxsd_dbP.h cxsd_hw.h cxsd_hwP.h \
 		cxsd_extension.h cxsd_frontend.h \
 		cxsd_logger.h cxsd_modmgr.h \

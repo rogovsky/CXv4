@@ -1,0 +1,323 @@
+# :19 -- linac/ring RF system
+#### 0. Includes #####################################################
+include(`slio24_reg.devtype')
+include(`c0642.devtype')
+include(`v06xx.devtype')
+include(`r0601.devtype')
+include(`cac208.devtype')
+include(`frolov_d16.devtype')
+include(`frolov_ie4.devtype')
+include(`frolov_k4x1.devtype')
+include(`frolov_k4x1_2x2x1.devtype')
+include(`adc200.devtype')
+include(`f4226.devtype')
+include(`kurrez_cac208.devtype')
+
+include(`canhw_CAN_LINES_LIST.m4')
+
+#---------------------------------------------------------------------
+# From m4-1.4.1-7.src.rpm::m4-1.4.1.tar.gz#utar/m4-1.4.1/examples/foreach.m4
+# foreach(x, (item_1, item_2, ..., item_n), stmt)
+define(`foreach', `pushdef(`$1', `')_foreach(`$1', `$2', `$3')popdef(`$1')')
+define(`_arg1', `$1')
+define(`_foreach',
+        `ifelse(`$2', `()', ,
+                `define(`$1', _arg1$2)$3`'_foreach(`$1', (shift$2), `$3')')')
+#---------------------------------------------------------------------
+
+#### I. Hardware #####################################################  
+
+# 00. Conversion system
+dev cnv_dac c0642/remdrv ~ 2  b:v5-l-cnv
+dev cnv_ctl v06xx/remdrv ~ 4  b:v5-l-cnv
+dev cnv_osc f4226/remdrv ~ 9  b:v5-l-cnv
+#           f4226          11 b:v5-l-cnv
+dev cnv_sds r0601/remdrv ~ 13 b:v5-l-cnv
+
+cpoint ic.linCNV.U.set      cnv_dac.out0
+cpoint ic.linCNV.swc        cnv_ctl.bit0
+cpoint ic.linCNV.is_on      cnv_sds.inprb0
+cpoint ic.linCNV.ilk_water  cnv_sds.inprb1
+cpoint ic.linCNV.ilk_door   cnv_sds.inprb2
+cpoint ic.linCNV.ilk_vacuum cnv_sds.inprb3
+
+cpoint ic.linCNV.ready      ic.linCNV.is_on
+
+# 0.
+dev slio   slio24_reg/remdrv ~ 0,7 b:v5-sr-rfr/
+###!!!dev slio   slio24_reg/noop ~ 0,7 b:v5-sr-rfr/
+# Code=(val-eoff)/eslo, eoff=2831316.8384, eslo=0.0122886464
+# Code=(val+D)*R => D=-2831316.8384, R=1/0.0122886464=81.37592762047413
+cpoint ic.linRF.frq.set slio.word24 81.37592762047413 -2831316.8384
+
+devtype syn_data w10d {
+	Fie4	0
+	Tie4	1
+	Fd16	2
+	Td16	3
+	Fosc	4
+	Tosc	5
+	Fv2k	6	# VEPP2000 (BEP)
+	Tv2k	7
+	Fv34	8	# VEPP3/4
+	Tv34	9
+}
+dev syn_info syn_data/noop ~ -
+
+# Note: we divide 1000000 instead of 1
+# because we use it to convert
+# KILOhertz (e3) to NANOseconds (e-9),
+# thus e-9*e3=e-6 => e-6 => 1/e-6 => e+6=1000000
+dev syn_info_calculator trig_exec - - \
+    t="_all_code; getchan ic.linRF.frq.set; ret;" \
+    e="_all_code; qryval; cmp_if_lt 1; ret; \
+       \
+       qryval; div 16;                    putchan %Fosc; \
+                     getchan %Fosc;       putchan syn_info.Fosc; \
+       push 1000000; getchan %Fosc; div;  putchan syn_info.Tosc; \
+       \
+       getchan %Fosc; div 571;            putchan %Fie4; \
+                     getchan %Fie4;       putchan syn_info.Fie4; \
+       push 1000000; getchan %Fie4; div;  putchan syn_info.Tie4; \
+       \
+       getchan %Fie4; mul 35;             putchan %Fdr;  \
+       \
+       getchan %Fdr;  mul 2;              putchan %Fd16; \
+                     getchan %Fd16;       putchan syn_info.Fd16; \
+       push 1000000; getchan %Fd16; div;  putchan syn_info.Td16; \
+       \
+       getchan %Fdr;  div 287;            putchan %Fv2k; \
+                     getchan %Fv2k;       putchan syn_info.Fv2k; \
+       push 1000000; getchan %Fv2k; div;  putchan syn_info.Tv2k; \
+       \
+       getchan %Fdr;  div 1281;           putchan %Fv34; \
+                     getchan %Fv34;       putchan syn_info.Fv34; \
+       push 1000000; getchan %Fv34; div;  putchan syn_info.Tv34; \
+       \
+       ret;"
+
+define(`D16S_LIST', `lrf_d16_2,xfr_d16_5,lbm_d16_6,lbm_d16_8,lbm_d16_10,lrf_d16_11,lrf_d16_12,lrf_d16_14,lbm_d16_16,lbm_d16_18,xfr_d16_21,ie_d16_2,ie_d16_4,ie_d16_16,ie_d16_18')
+dev d16s_fin_writer trig_exec - - \
+    t="_all_code; \
+       foreach(`x', `(D16S_LIST)', `getchan x._devstate; pop;') \
+       getchan syn_info.Td16; ret;" \
+    e="_all_code; \
+       foreach(`x', `(D16S_LIST)', `qryval; putchan x.f_in_ns;') \
+       ret;"
+
+dev d16p_fin_writer trig_exec - - \
+    t="_all_code; \
+       getchan xfr_d16_20._devstate; pop; \
+       getchan syn_info.Tv2k;        pop; \
+       getchan syn_info.Tv34;        pop; \
+       getchan xfr_mode.0; print_dbl 'xfr_mode=%f'; \
+       getchan xfr_mode.0; ret;" \
+    e="_all_code; \
+       qryval; print_dbl 'e: xfr_mode=%f'; \
+       qryval; cmp_if_lt 1; ret; \
+       qryval; cmp_if_lt 2; goto SET_FRQ_FOR_VEPP2000; \
+       qryval; cmp_if_lt 3; goto SET_FRQ_FOR_VEPP3_4; \
+       print_str 'none'; \
+       ret; \
+       label SET_FRQ_FOR_VEPP2000; \
+       print_str SET_FRQ_FOR_VEPP2000; \
+       getchan syn_info.Tv2k; putchan xfr_d16_20.f_in_ns; \
+       ret; \
+       label SET_FRQ_FOR_VEPP3_4; \
+       print_str SET_FRQ_FOR_VEPP3_4; \
+       getchan syn_info.Tv34; putchan xfr_d16_20.f_in_ns; \
+       ret;"
+
+dev ie4_fin_writer trig_exec - - \
+    t="_all_code; \
+      getchan syn_ie4._devstate; pop; \
+      getchan syn_info.Tie4; ret;" \
+    e="_all_code; \
+       qryval; putchan syn_ie4.f_in_ns; \
+       ret;"
+
+# 1. Rezonator
+dev rez208 cac208@sktcankoz ~ L_RST1,23  spd0=1000000
+
+# 2. RFsyn; f_in=21.874816112e6 <=> f_in=-45.7146700059
+#					  1
+dev lrf_d16_2	frolov_d16/remdrv	~ 2  b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#					  3	10.9MHz x2
+dev syn_ie4	frolov_ie4/remdrv	~ 4  b:v5-syn   f_in=0.312497373e6  kclk=1          fclk_sel=Fin start_sel=Y1       mode=Cont
+dev xfr_d16_5	frolov_d16/remdrv	~ 5  b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lbm_d16_6	frolov_d16/remdrv	~ 6  b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#				  	  7
+dev lbm_d16_8	frolov_d16/remdrv	~ 8  b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#				  	  9
+dev lbm_d16_10	frolov_d16/remdrv	~ 10 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lrf_d16_11	frolov_d16/remdrv	~ 11 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lrf_d16_12	frolov_d16/remdrv	~ 12 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#					  13
+dev lrf_d16_14	frolov_d16/remdrv	~ 14 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#					  15
+dev lbm_d16_16	frolov_d16/remdrv	~ 16 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#					  17	F20
+dev lbm_d16_18	frolov_d16/remdrv	~ 18 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev xfr_k4_19	frolov_k4x1/remdrv	~ 19 b:v5-syn
+dev xfr_d16_20	frolov_d16/remdrv	~ 20 b:v5-syn   f_in=0.0381094357e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=1 d16p a_only
+dev xfr_d16_21	frolov_d16/remdrv	~ 21 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+###!!!dev xfr_d16_20	frolov_d16/noop	~ 20 b:v5-syn   f_in=0.0381094357e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=1 d16p a_only
+###!!!dev xfr_d16_21	frolov_d16/noop	~ 21 b:v5-syn   f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#					  22	F20
+#					  23	F20
+
+# ---- Injection/extraction
+#					  1
+dev ie_d16_2	frolov_d16/remdrv	~ 2  b:v5-sr-ie f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#					  3
+dev ie_d16_4	frolov_d16/remdrv	~ 4  b:v5-sr-ie f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#					  5
+#					  6	F20
+dev ie_k4_7	frolov_k4x1_2x2x1/remdrv ~ 7  b:v5-sr-ie
+dev ie_k4_8	frolov_k4x1_2x2x1/remdrv ~ 8  b:v5-sr-ie
+#					  9
+dev ie_adc200_10 adc200/remdrv		~ 10 b:v5-sr-ie
+#					  11
+dev ie_adc200_12 adc200/remdrv		~ 12 b:v5-sr-ie
+#					  13	TTL
+#					  14
+dev ie_k4_15	frolov_k4x1_2x2x1/remdrv ~ 15 b:v5-sr-ie
+dev ie_d16_16	frolov_d16/remdrv	~ 16 b:v5-sr-ie f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#					  17
+dev ie_d16_18	frolov_d16/remdrv	~ 18 b:v5-sr-ie f_in=21.874816112e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#					  19
+#					  20	F20
+#					  21	i0634
+#					  22	K0632 (CAN-adapter)
+#					  23
+
+dev ie_cac208 cac208@sktcankoz ~ L_TMP_IE,15 
+
+# Code      178.5      2856
+# 356871 | 178435.4 | 2854966.4
+# 356866 | 178432.9 | 2854926.4
+#
+# ?0x1D60a6<->2854976?
+
+###!!!dev xfr_mode noop w1d -
+dev xfr_mode formula w1d - \
+    r="_all_code; \
+       getchan xfr_k4_19.in_sel; getchan xfr_k4_19.out_sel; \
+       add; cmp_if_lt 0.5; ret 0; \
+       getchan xfr_k4_19.out_sel; cmp_if_gt 1; ret 4; \
+       getchan xfr_k4_19.in_sel; ret; \
+       ret 0;" \
+    w="_all_code; \
+       qryval; cmp_if_lt 1; goto SET_OFF; \
+       qryval; cmp_if_lt 2; goto SET_VEPP2K; \
+       qryval; cmp_if_lt 3; goto SET_VEPP3; \
+       qryval; cmp_if_lt 4; goto SET_TEST; \
+       ret; \
+       label SET_OFF; \
+       push 0; putchan xfr_k4_19.in_sel; push 0; putchan xfr_k4_19.out_sel; \
+       ret; \
+       label SET_VEPP2K; \
+       push 1; putchan xfr_k4_19.in_sel; push 1; putchan xfr_k4_19.out_sel; \
+       ret; \
+       label SET_VEPP3; \
+       push 2; putchan xfr_k4_19.in_sel; push 1; putchan xfr_k4_19.out_sel; \
+       ret; \
+       label SET_TEST; \
+       push 3; putchan xfr_k4_19.in_sel; push 1; putchan xfr_k4_19.out_sel; \
+       ret;"
+
+dev kick_mode formula w1d - \
+    r="_all_code; \
+       getchan ie_k4_8.comm1;  getchan ie_k4_8.comm2; \
+       getchan ie_k4_15.comm1; getchan ie_k4_15.comm2; \
+       add; add; add; dup; \
+       cmp_if_lt 1; ret 0; \
+       cmp_if_lt 4; ret 2; \
+       ret 1;" \
+    w="_all_code; \
+       qryval; cmp_if_lt 1; goto SET_E; \
+       qryval; cmp_if_lt 2; goto SET_P; \
+       ret; \
+       label SET_E; \
+       push 0; putchan ie_k4_8.comm1; push 0; putchan ie_k4_8.comm2; push 0; putchan ie_k4_15.comm1; push 0; putchan ie_k4_15.comm2; \
+       ret; \
+       label SET_P; \
+       push 1; putchan ie_k4_8.comm1; push 1; putchan ie_k4_8.comm2; push 1; putchan ie_k4_15.comm1; push 1; putchan ie_k4_15.comm2; \
+       ret;"
+
+#### II. Cpoints and virtual hardware ################################
+
+dev rezonator kurrez_cac208 ~ - rez208
+
+# RFsyn
+
+# 1:dev 2:[0-3] 3:name_base 4/opt:R
+define(`ONE_D16_CLINE', `
+    cpoint $3.dly.set  $1.v$2 $4
+    cpoint $3.A        $1.a$2
+    cpoint $3.B        $1.b$2
+    cpoint $3.mask     $1.off$2
+')
+
+# 1:dev 2:name_pfx 3:name1 4:r1 5:name2 6:r2 7:name3 8:r3 9:name4 10:r4
+# Note: 2:name_pfx, if present, should end with '.'
+define(`ONE_D16_LINES', `
+    ONE_D16_CLINE($1, 0, $2$3, $4)
+    ONE_D16_CLINE($1, 1, $2$5, $6)
+    ONE_D16_CLINE($1, 2, $2$7, $8)
+    ONE_D16_CLINE($1, 3, $2$9, $10)
+')
+
+# 1:[0-3] 1:name_base
+define(`ONE_IE4_CLINE', `
+    cpoint $2.dly.set  syn_ie4.v$1 1e6
+    cpoint $2.A        syn_ie4.a$1
+    ifelse($1, `0', `', `
+    cpoint $2.repRate.set syn_ie4.k$1
+    ')
+    cpoint $2.mask     syn_ie4.off$1
+')
+
+cpoint ic.syn.all.mask syn_ie4.alloff
+ONE_IE4_CLINE(0, ic.syn.subbun)
+ONE_IE4_CLINE(1, ic.syn.linRF)
+ONE_IE4_CLINE(2, ic.syn.linBeam)
+ONE_IE4_CLINE(3, ic.syn.BProbe)
+
+ONE_D16_LINES(lrf_d16_2,  ic.syn., mod1,      1e3, mod2,       1e3, mod3,   1e3, mod4,  1e3)
+ONE_D16_LINES(xfr_d16_5,  ic.syn.xfer.,test1, 1e3, test2,      1e3, test3,  1e3, test4, 1e3)
+ONE_D16_LINES(lbm_d16_6,  ic.syn., gun_diag,  1e3, reserve6_2, 1e3, FC_ADC, 1e3, FC,    1e3)
+ONE_D16_LINES(lbm_d16_8,  ic.syn., gunHV,        , gunGrid,       , ADC200,    , syn2,     )
+ONE_D16_LINES(lbm_d16_10, ic.syn., linBPM,       , linIPP,        , PhMeas,    , ringBPM,  )
+ONE_D16_LINES(lrf_d16_11, ic.syn., mods,      1e3, RF,         1e3, RF_ADC, 1e3, syn3,  1e3)
+ONE_D16_LINES(lrf_d16_12, ic.syn., kl2RF,        , kl2Ph180,      , kl3RF,     , kl3Ph180, )
+ONE_D16_LINES(lrf_d16_14, ic.syn., kl1RF,        , kl1Ph180,      , kl4RF,     , kl4Ph180, )
+ONE_D16_LINES(lbm_d16_16, ic.syn., pp,           , cam,           , bp,        , bp4,      )
+ONE_D16_LINES(lbm_d16_18, ic.syn., inject,    1e3, bps700,     1e3, beam,   1e3, syn1,  1e3)
+
+ONE_D16_LINES(xfr_d16_20, ic.syn.xfer.,      extract, 1e6, BEP,          1e6, VEPP3,       1e6, tests,   1e6)
+ONE_D16_LINES(xfr_d16_21, ic.syn.xfer.extr., kickers, 1e3, K500MagStart, 1e3, K500MagStop, 1e3, K500IPP, 1e3)
+
+ONE_D16_LINES(ie_d16_2,  ic.eKickers., run,      1e3, chargeStart, 1e3, chargeStop, 1e3, ADC, 1e3)
+ONE_D16_LINES(ie_d16_4,  ic.eKickers., preKickP,    , preKickN,       , kickP,         , kickN,  )
+ONE_D16_LINES(ie_d16_16, ic.pKickers., run,      1e3, chargeStart, 1e3, chargeStop, 1e3, ADC, 1e3)
+ONE_D16_LINES(ie_d16_18, ic.pKickers., preKickP,    , preKickN,       , kickP,         , kickN,  )
+
+cpoint ic.eKickers {
+    all.mask     ie_d16_2.alloff
+    repRate.set  ie_d16_2.Kstart
+    StartSrc.set ie_d16_2.start_sel
+}
+cpoint ic.pKickers {
+    all.mask     ie_d16_16.alloff
+    repRate.set  ie_d16_16.Kstart
+    StartSrc.set ie_d16_16.start_sel
+}
+
+cpoint ic.eKickers.preKickU.set	ie_cac208.out0
+cpoint ic.eKickers.kickU.set	ie_cac208.out1
+cpoint ic.pKickers.preKickU.set	ie_cac208.out2
+cpoint ic.pKickers.kickU.set	ie_cac208.out3
+
+cpoint ic.extractor.clockSrc xfr_mode.0
+cpoint ic.kickers.mode.set   kick_mode.0

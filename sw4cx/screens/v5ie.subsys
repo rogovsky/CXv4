@@ -1,0 +1,119 @@
+
+# 1:id 2:label 3:units 4:dpyfmt.precision 5:r_base
+define(`SYN_LINE', `
+    knob           $1_s $2 text - $3 %10.$4`'f              r:$5.dly
+    knob           $1_d "" onoff "offcol=green color=black" r:$5.mask
+')
+
+# 1:id 2:label 3:units 4:dpyfmt.precision 5:r_base
+define(`SYG_LINE', `
+    knob/groupable $1_s $2 text - $3 %10.$4`'f              r:$5.dly
+    knob           $1_d "" onoff "offcol=green color=black" r:$5.mask
+')
+
+grouping main V5IE_grouping "VEPP5 Injection/Extraction" lrtb "vertical" \
+        content:6 {
+
+    container - - grid nodecor base:ic.syn content:1 {
+        disp hzs "Starts" text "withlabel" "Hz" %4.1f \
+                "_all_code;
+                 getchan linRF.repRate;   cmp_if_lt 0.5; ret 0;
+                 getchan linBeam.repRate; cmp_if_lt 0.5; ret 0;
+                 push 50;
+                 getchan linRF.repRate;   div;
+                 getchan linBeam.repRate; div;
+                 ret;"
+    }
+
+    container injextr_e "I/E: e-"     grid "nocoltitles" \
+            base:ic.eKickers nattl:4 ncols:2 content:eval(4 + 2*8) {
+
+        container - - invisible "with_content" content:1 {
+            disp - "" onoff victim=:kstart r:StartGen.StartSrc
+        }
+
+        knob starts ""  choicebs items:"#TExt\tLcl\b\blit=yellow" r:StartGen.StartSrc \
+                w:"_all_code;
+                   qryval; putchan StartGen.StartSrc;
+                   push 1; qryval; cmp_if_lt 0.5; putchan StartGen.repRate; # Ext: set kstart:=1
+                   push 5; qryval; cmp_if_gt 0.5; putchan StartGen.repRate; # Lcl: set kstart:=5
+                   ret;"
+        knob/fixedranges \
+             kstart "/" text  "withlabel" "" %3.0f       r:StartGen.repRate alwdrange:5-255
+        knob alloff ""  onoff "offcol=green color=black" r:all.mask
+
+        SYG_LINE(, "Run!",     mks, 5, run)
+        SYG_LINE(, "HV start", mks, 5, chargeStart)
+        SYG_LINE(, "HV stop",  mks, 5, chargeStop)
+        SYG_LINE(, "ADC200",   mks, 5, ADC)
+        SYG_LINE(, "PreK +",   ns,  2, preKickP)
+        SYG_LINE(, "PreK -",   ns,  2, preKickN)
+        SYG_LINE(, "Kick +",   ns,  2, kickP)
+        SYG_LINE(, "Kick -",   ns,  2, kickN)
+    } #layinfo:newline
+    container injextr_e_accords "" grid "nodecor" \
+            base:ic.eKickers ncols:3 content:3 {
+        knob accord1 "A1" text "withlabel,withunits,noincdec" "V" \
+                %5.3f alwdrange:0-4.3 r:preKick.Uset
+        knob accord2 "A2" text "withlabel,withunits,noincdec" "V" \
+                %5.3f alwdrange:0-4.3 r:Kick.Uset
+        container ":" "~~" subwin "resizable,compact,noclsbtn" \
+                        tip:"Accords 1 & 2 ADC200" \
+                subwintitle:"Accords 1 & 2 ADC200" \
+                content:1 {
+            pzframe adc "" adc200 "" .ie_adc200_10
+        }
+    } layinfo:offset=0
+    selector ie_mode "" selector r:ic.kickers.swc.mode \
+            items:"#Te-\te+\t\n?" \
+            layinfo:offset=0
+
+    container injextr_p "I/E: e+"     grid "nocoltitles" \
+            base:ic.pKickers nattl:4 ncols:2 content:eval(4 + 2*8) {
+
+        container - - invisible "with_content" content:1 {
+            disp - "" onoff victim=:kstart r:StartGen.StartSrc
+        }
+
+        knob starts ""  choicebs items:"#TExt\tLcl\b\blit=yellow" r:StartGen.StartSrc \
+                w:"_all_code;
+                   qryval; putchan StartGen.StartSrc;
+                   push 1; qryval; cmp_if_lt 0.5; putchan StartGen.repRate; # Ext: set kstart:=1
+                   push 5; qryval; cmp_if_gt 0.5; putchan StartGen.repRate; # Lcl: set kstart:=5
+                   ret;"
+        knob/fixedranges \
+             kstart "/" text  "withlabel" "" %3.0f       r:StartGen.repRate alwdrange:5-255
+        knob alloff ""  onoff "offcol=green color=black" r:all.mask
+
+        SYG_LINE(, "Run!",     mks, 5, run)
+        SYG_LINE(, "HV start", mks, 5, chargeStart)
+        SYG_LINE(, "HV stop",  mks, 5, chargeStop)
+        SYG_LINE(, "ADC200",   mks, 5, ADC)
+        SYG_LINE(, "PreK +",   ns,  2, preKickP)
+        SYG_LINE(, "PreK -",   ns,  2, preKickN)
+        SYG_LINE(, "Kick +",   ns,  2, kickP)
+        SYG_LINE(, "Kick -",   ns,  2, kickN)
+    }
+    container injextr_p_accords "" grid "nodecor" \
+            base:ic.pKickers ncols:3 content:3 {
+        knob accord3 "A3" text "withlabel,withunits,noincdec" "V" \
+                %5.3f alwdrange:0-4.3 r:preKick.Uset
+        knob accord4 "A4" text "withlabel,withunits,noincdec" "V" \
+                %5.3f alwdrange:0-4.3 r:Kick.Uset
+        container ":" "~~" subwin "resizable,compact,noclsbtn" \
+                        tip:"Accords 3 & 4 ADC200" \
+                subwintitle:"Accords 3 & 4 ADC200" \
+                content:1 {
+            pzframe adc "" adc200 "" .ie_adc200_12
+        }
+    } layinfo:offset=0
+
+
+}
+
+sysname   v5ie
+defserver canhw:19
+wintitle  main "VEPP5 Injection/Extraction"
+winname   main v5ie
+winclass  main V5IE
+winopts   main ""

@@ -686,10 +686,12 @@ int     CxsdDbResolveName(CxsdDb      db,
     dot_p = strrchr(name, '.');
     if (dot_p != NULL)
     {
-        if      (strcasecmp(dot_p + 1, "_devstate") == 0)
-            finding_special = 1;
+        if      (strcasecmp(dot_p + 1, "_logmask") == 0)
+            finding_special = 1 + CXSD_DB_CHAN_LOGMASK_OFS;
+        else if (strcasecmp(dot_p + 1, "_devstate") == 0)
+            finding_special = 1 + CXSD_DB_CHAN_DEVSTATE_OFS;
         else if (strcasecmp(dot_p + 1, "_devstate_description") == 0)
-            finding_special = 2;
+            finding_special = 1 + CXSD_DB_CHAN_DEVSTATE_DESCRIPTION_OFS;
     }
 
 
@@ -736,10 +738,8 @@ int     CxsdDbResolveName(CxsdDb      db,
                 }
                 else
                 {
-                    if      (finding_special == 1)
-                        chan = db->devlist[devid].chancount + CXSD_DB_CHAN_DEVSTATE_OFS;
-                    else if (finding_special == 2)
-                        chan = db->devlist[devid].chancount + CXSD_DB_CHAN_DEVSTATE_DESCRIPTION_OFS;
+                    if (finding_special != 0)
+                        chan = db->devlist[devid].chancount + finding_special - 1;
                     else
                     {
                         chan = FindChanInDevice(db, devid, dot_p + 1);
@@ -759,10 +759,8 @@ int     CxsdDbResolveName(CxsdDb      db,
             {
                 if (!last)
                 {
-                    if      (finding_special == 1)
-                        *chann_p = CXSD_DB_CHAN_DEVSTATE_OFS;
-                    else if (finding_special == 2)
-                        *chann_p = CXSD_DB_CHAN_DEVSTATE_DESCRIPTION_OFS;
+                    if (finding_special != 0)
+                        *chann_p = finding_special - 1;
                     else goto NOT_FOUND_IN_VIRTUAL;
                     /* Follow up to the endpoint */
                     gcn = item_data.ref_n | CXSD_DB_CPOINT_DIFF_MASK;
@@ -810,10 +808,8 @@ int     CxsdDbResolveName(CxsdDb      db,
         devid = CxsdDbFindDevice(db, name, devnamelen);
         if (devid < 0) return CXSD_DB_RESOLVE_ERROR;
 
-        if      (finding_special == 1)
-            chan = db->devlist[devid].chancount + CXSD_DB_CHAN_DEVSTATE_OFS;
-        else if (finding_special == 2)
-            chan = db->devlist[devid].chancount + CXSD_DB_CHAN_DEVSTATE_DESCRIPTION_OFS;
+        if (finding_special != 0)
+            chan = db->devlist[devid].chancount + finding_special - 1;
         else
         {
             chan = FindChanInDevice(db, devid, after_d);

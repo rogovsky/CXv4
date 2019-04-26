@@ -16,6 +16,10 @@ enum
     V5K5045_CHAN_RST_ILKS        = V5K5045_CHAN_WR_base + 5,
     V5K5045_CHAN_RESET_STATE     = V5K5045_CHAN_WR_base + 6,
     V5K5045_CHAN_RESET_C_ILKS    = V5K5045_CHAN_WR_base + 7,
+    V5K5045_CHAN_DELAY1          = V5K5045_CHAN_WR_base + 8,
+    V5K5045_CHAN_DELAY2          = V5K5045_CHAN_WR_base + 9,
+    V5K5045_CHAN_DELAY3          = V5K5045_CHAN_WR_base + 10,
+    V5K5045_CHAN_HVSET_NOMINAL   = V5K5045_CHAN_WR_base + 11,
 #if 0
     V5K5045_CHAN_ = V5K5045_CHAN_WR_base + ,
 #endif
@@ -24,6 +28,7 @@ enum
       V5K5045_CHAN_RD_count    = 80,
 
     V5K5045_CHAN_HVSET_CUR       = V5K5045_CHAN_RD_base + 0,
+    V5K5045_CHAN_IS_ON           = V5K5045_CHAN_RD_base + 1,
 
     V5K5045_CHAN_ILK_base      = V5K5045_CHAN_RD_base + 10,
       V5K5045_CHAN_ILK_count   = 32,
@@ -31,6 +36,8 @@ enum
     V5K5045_CHAN_C_ILK_base    = V5K5045_CHAN_RD_base + 42,
       V5K5045_CHAN_C_ILK_count = 32,
       
+    V5K5045_CHAN_ILK_SLOW_ANY  = V5K5045_CHAN_RD_base + 74,
+    V5K5045_CHAN_ILK_FAST_ANY  = V5K5045_CHAN_RD_base + 75,
 
     V5K5045_CHAN_VDEV_STATE = 99,
 

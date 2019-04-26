@@ -391,7 +391,7 @@ static void candac16_in (int devid, void *devptr,
             DoDriverLog(devid, 0 | DRIVERLOG_C_PKTINFO,
                         "in: WCHAN=%d code=0x%04X val=%duv",
                         l, code, val);
-            HandleSlowmoREADDAC_in(me, l, val);
+            HandleSlowmoREADDAC_in(me, l, val, 0);
             break;
 
         case DESC_FILE_CLOSE:

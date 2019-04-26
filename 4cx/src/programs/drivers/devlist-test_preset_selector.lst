@@ -1,0 +1,6 @@
+dev a noop w2i -
+dev b noop w2i -
+
+cpoint a.0 a.0 10
+
+dev p preset_selector w10i,w4i,w4i,w4i - 3 base=a 0 zzz::1 base=b 0 1

@@ -1435,6 +1435,13 @@ int           cda_get_dcval(cda_dataref_t  ref, double *v_p)
 int           cda_set_dcval(cda_dataref_t  ref, double  val)
 {
 #if 1
+  refinfo_t     *ri = AccessRefSlot(ref);
+
+    if (CheckRef(ref) != 0) return CDA_PROCESS_ERR;
+    if ((ri->options & CDA_DATAREF_OPT_DEBUG) != 0)
+        fprintf(stderr, "%s %s(): %s:=%-8.3f\n",
+                strcurtime(), __FUNCTION__, ri->reference, val);
+
     return cda_process_ref(ref, CDA_OPT_WR_FLA | CDA_OPT_DO_EXEC,
                            val,
                            NULL, 0);
@@ -1444,6 +1451,81 @@ int           cda_set_dcval(cda_dataref_t  ref, double  val)
                             &val);
 #endif
 }
+
+cda_dataref_t cda_add_ichan(cda_context_t  cid,
+                            const char    *name)
+{
+    return cda_add_chan(cid, NULL,
+                        name, CDA_OPT_NONE, CXDTYPE_INT32, 1,
+                        0, NULL, NULL);
+}
+
+int           cda_get_icval(cda_dataref_t  ref, int    *v_p)
+{
+    return cda_get_ref_ival(ref, v_p, NULL, NULL, NULL, NULL);
+}
+
+int           cda_set_icval(cda_dataref_t  ref, int     val)
+{
+  int32  v32 = val;
+
+    return cda_snd_ref_data(ref,
+                            CXDTYPE_INT32, 1,
+                            &v32);
+}
+
+int           cda_add_schan(cda_context_t  cid,
+                            const char    *name,
+                            size_t         maxlen)
+{
+    return cda_add_chan(cid, NULL,
+                        name, CDA_OPT_NONE, CXDTYPE_TEXT, maxlen,
+                        0, NULL, NULL);
+}
+
+int           cda_get_scval(cda_dataref_t  ref,
+                            char          *buf, size_t bufsize,
+                            size_t        *len_p)
+{
+  refinfo_t     *ri = AccessRefSlot(ref);
+
+  size_t         len;
+  void          *vp;
+
+    if (CheckRef(ref) != 0) return CDA_PROCESS_ERR;
+    if (ri->in_use        != REF_TYPE_CHN  ||
+        ri->current_dtype != CXDTYPE_TEXT)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if (bufsize == 0) /* Can't do anything */;
+    else
+    {
+        len = ri->current_nelems;
+        if (len > bufsize - 1)
+            len = bufsize - 1;
+        if (len != 0)
+        {
+            vp = ri->current_val;
+            if (vp == NULL) vp = &(ri->valbuf);
+            memcpy(buf, vp, len);
+        }
+        buf[len] = '\0';
+    }
+
+    if (len_p != NULL) *len_p = ri->current_nelems;
+
+    return 0;
+}
+
+int           cda_set_scval(cda_dataref_t  ref,
+                            char          *str, size_t len)
+{
+    return cda_snd_ref_data(ref, CXDTYPE_TEXT, len, str);
+}
+
 
 //////////////////////////////////////////////////////////////////////
 cda_dataref_t  cda_add_formula(cda_context_t         cid,
@@ -3873,12 +3955,71 @@ int cda_process_ref(cda_dataref_t ref, int options,
 int cda_get_ref_dval(cda_dataref_t ref,
                      double     *curv_p,
                      CxAnyVal_t *curraw_p, cxdtype_t *curraw_dtype_p,
-                     rflags_t *rflags_p, cx_time_t *timestamp_p)
+                     rflags_t   *rflags_p, cx_time_t *timestamp_p)
 {
   refinfo_t     *ri = AccessRefSlot(ref);
   ctxinfo_t     *ci;
   CxKnobParam_t *p;
   double         v;
+
+    if (CheckRef(ref) != 0) return -1;
+
+    if (ri->max_nelems != 1)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+    /* REF_TYPE_REG -- get value from reg */
+    if (ri->in_use == REF_TYPE_REG)
+    {
+        ci = AccessCtxSlot(ri->cid);
+        p  = AccessVarparmSlot(ri->hwr, ci);
+        v  = p->value;
+    }
+    else
+    {
+        /* Note: here we suppose that scalar values ALWAYS
+           go from valbuf (because of guard "ri->nelems != 1" above).
+           If this changes someday, data should be obtained via pointer. */
+        if      (ri->current_dtype == CXDTYPE_DOUBLE) v = ri->valbuf.f64;
+        else if (ri->current_dtype == CXDTYPE_SINGLE) v = ri->valbuf.f32;
+        else if (ri->current_dtype == CXDTYPE_INT32)  v = ri->valbuf.i32;
+        else if (ri->current_dtype == CXDTYPE_UINT32) v = ri->valbuf.u32;
+        else if (ri->current_dtype == CXDTYPE_INT16)  v = ri->valbuf.i16;
+        else if (ri->current_dtype == CXDTYPE_UINT16) v = ri->valbuf.u16;
+        else if (ri->current_dtype == CXDTYPE_INT64)  v = ri->valbuf.i64;
+        else if (ri->current_dtype == CXDTYPE_UINT64) v = ri->valbuf.u64;
+        else if (ri->current_dtype == CXDTYPE_INT8)   v = ri->valbuf.i8;
+        else if (ri->current_dtype == CXDTYPE_UINT8)  v = ri->valbuf.u8;
+        else
+        {
+            errno = EINVAL;
+            return -1;
+        }
+    }
+
+    if (curv_p         != NULL) *curv_p         = v;
+    if (curraw_p       != NULL) *curraw_p       = ri->curraw;
+    if (curraw_dtype_p != NULL) *curraw_dtype_p = ri->curraw_dtype;
+    if (rflags_p       != NULL) *rflags_p       = ri->rflags;
+    if (timestamp_p    != NULL) *timestamp_p    = ri->timestamp;
+
+    return 0;
+}
+
+/* Note:
+       cda_get_ref_ival() is a copy of cda_get_ref_dval(),
+       with "int" instead of double.
+ */
+int cda_get_ref_ival(cda_dataref_t ref,
+                     int        *curv_p,
+                     CxAnyVal_t *curraw_p, cxdtype_t *curraw_dtype_p,
+                     rflags_t   *rflags_p, cx_time_t *timestamp_p)
+{
+  refinfo_t     *ri = AccessRefSlot(ref);
+  ctxinfo_t     *ci;
+  CxKnobParam_t *p;
+  int            v;
 
     if (CheckRef(ref) != 0) return -1;
 

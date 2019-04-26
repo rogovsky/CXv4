@@ -132,6 +132,9 @@ void  FastadcGuiSetReper   (fastadc_gui_t *gui, int nr, int x);
 
 psp_paramdescr_t *FastadcGuiCreateText2LookTable(fastadc_gui_dscr_t *gkd);
 
+int   FastadcGuiCopy2Svd   (fastadc_gui_t *gui);
+void  FastadcGuiResetSvd   (fastadc_gui_t *gui);
+
 
 #ifdef __cplusplus
 }

@@ -30,7 +30,11 @@ void ParseCommandLine(int argc, char *argv[])
   unsigned long  instance;
   char          *endptr;
 
-    while ((c = getopt(argc, argv, "b:c:dDe:f:hnsv:w:")) != EOF)
+  int            log_set_mask;
+  int            log_clr_mask;
+  char          *log_parse_r;
+
+    while ((c = getopt(argc, argv, "b:c:dDe:f:hl:nsSv:w:")) != EOF)
     {
         switch (c)
         {
@@ -73,22 +77,36 @@ void ParseCommandLine(int argc, char *argv[])
             case 'f':
                 option_dbref = optarg;
                 break;
-                
+
             case 'h':
                 goto PRINT_HELP;
-                
+
             case 'l':
-                option_defdrvlog_mask = 0; /*!!!  */
+                log_parse_r = ParseDrvlogCategories(optarg, NULL,
+                                                    &log_set_mask, &log_clr_mask);
+                if (log_parse_r != NULL)
+                {
+                    fprintf(stderr,
+                            "%s: error parsing -l switch: %s\n",
+                            argv[0], log_parse_r);
+                    err++;
+                }
+                option_defdrvlog_mask =
+                    (option_defdrvlog_mask &~ log_clr_mask) | log_set_mask;
                 break;
-                
+
             case 'n':
                 option_norun = 1;
                 break;
 
             case 's':
-                option_simulate = 1;
+                option_simulate = CXSD_SIMULATE_YES;
                 break;
-                
+
+            case 'S':
+                option_simulate = CXSD_SIMULATE_SUP;
+                break;
+
             case 'v':
                 if (*optarg >= '0'  &&  *optarg <= '9'  &&
                     optarg[1] == '\0')
@@ -101,7 +119,7 @@ void ParseCommandLine(int argc, char *argv[])
                     err++;
                 }
                 break;
-                
+
             case 'w':
                 option_cacherfw = 1;
                 if (tolower(*optarg) == 'n'  ||  tolower(*optarg) == 'f'  ||
@@ -161,10 +179,13 @@ void ParseCommandLine(int argc, char *argv[])
            "  -c FILE   use FILE instead of " DEF_FILE_CXSD_CONF "\n"
            "  -d        don't daemonize, i.e. keep console and don't fork()\n"
            "  -D        don't trap signals\n"
+           "  -e CFG_L  execute CFG_L as if read from config file (AFTER cfg.file)\n"
            "  -f DBREF  obtain HW config from DBREF instead of " DEF_FILE_DEVLIST "\n"
            "  -h        display this help and exit\n"
-           "  -n        don't actually run, just parse the config file\n"
+           "  -n        don't actually run, just parse config and devlist\n"
+           "  -l LIST   default drvlog categories\n"
            "  -s        simulate hardware; for debugging only\n"
+           "  -S        super-simulate (as -s, plus ro-channels become rw)\n"
            "  -v N      verbosity level: 0 - lowest, 9 - highest (def=%d)\n"
            "  -w Y/N    cache reads from write channels (def=%s)\n"
            "<server> is an integer number of server instance\n"

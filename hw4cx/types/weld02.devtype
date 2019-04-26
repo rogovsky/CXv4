@@ -1,4 +1,4 @@
-devtype weld02 w8i,r10i {
+devtype weld02 w10i,r10i {
 	set_uh		0
 	set_ul		1
 	set_un		2
@@ -7,17 +7,19 @@ devtype weld02 w8i,r10i {
 	set_il		5
 	set_stab	6
 	set_gain	7
+	#set_uns8	8
+	set_p_indr	9
 
-	mes_uh		8
-	mes_ul		9
-	mes_un		10
-	mes_up		11
-	mes_ih		12
-	mes_il		13
-	mes_u_high	14
-	mes_u_powr	15
-	mes_u_heat	16
-	mes_i_indr	17
+	mes_uh		10
+	mes_ul		11
+	mes_un		12
+	mes_up		13
+	mes_ih		14
+	mes_il		15
+	mes_u_high	16
+	mes_u_powr	17
+	mes_u_heat	18
+	mes_i_indr	19
 
 	mes_u_indr	mes_u_high # For Chemy only
 }

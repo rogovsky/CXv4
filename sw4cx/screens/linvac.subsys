@@ -53,7 +53,7 @@ define(`LIN124_LINE', `
 
 sysname linvac
 defserver canhw:13
-wintitle main "Контроль вакуума в линаках etc."
+wintitle main "Vacuum Control"
 winname  main linvac
 winclass main LinVac
 

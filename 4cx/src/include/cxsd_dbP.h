@@ -15,9 +15,11 @@ extern "C"
 
 enum
 {
-    CXSD_DB_CHAN_DEVSTATE_OFS             = 0,
-    CXSD_DB_CHAN_DEVSTATE_DESCRIPTION_OFS = 1,
-    CXSD_DB_AUX_CHANCOUNT                 = 2,
+    CXSD_DB_CHAN_LOGMASK_OFS              = 0,
+    CXSD_DB_CHAN_RESERVED_1_OFS           = 1,
+    CXSD_DB_CHAN_DEVSTATE_OFS             = 2,
+    CXSD_DB_CHAN_DEVSTATE_DESCRIPTION_OFS = 3,
+    CXSD_DB_AUX_CHANCOUNT                 = 4,
 };
 
 enum
@@ -50,6 +52,7 @@ typedef int cxsd_cpntid_t;
 typedef struct
 {
     int                 is_builtin;
+    int                 is_simulated;
 
     int                 instname_ofs;
     int                 typename_ofs;

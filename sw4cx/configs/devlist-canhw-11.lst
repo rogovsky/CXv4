@@ -7,6 +7,7 @@ include(`canadc40.devtype')
 include(`candac16.devtype')
 include(`cdac20.devtype')
 include(`ist_cdac20.devtype')
+include(`sim_ist_cdac20.devtype')
 include(`vnn_ceac51.devtype')
 include(`v1k_cdac20.devtype')
 include(`v3h_a40d16.devtype')
@@ -146,6 +147,10 @@ MAGX_COR4016_DEV(rst1_a40_2, rst1_c16_2, rst1,
 ###!!!FLOAT: 020000/(336.0)       1000.0*3.5
 
 # ISTs
+dev    vit_sim_ist      sim_ist_cdac20/noop ~ -
+dev    vit_sim_ist_fail                noop w1i -
+cpoint vit_sim_ist.fail vit_sim_ist_fail.0
+
 MAGX_IST_CDAC20_DEV(esol,     icd_esol,    0.004) #!!!FLOAT: 1./250
 MAGX_IST_CDAC20_DEV(d1m,      icd_d1m,     0.008) #!!!FLOAT: 8./1000
 MAGX_IST_CDAC20_DEV(psol,     icd_psol,    0.004) #!!!FLOAT: 1./250

@@ -28,7 +28,7 @@ grouping main CANDAC16 "CANDAC16" \
          lrtb "" content:2 {
 
     container "" "DAC" grid "" \
-              3 8 2 \
+              3 16 2 \
               "Set, V\tMaxSpd, V/s\tCur, V" \
               "forloop(`N', 0, eval(CANDAC16_CHAN_OUT_n_COUNT-1), `N\t')" \
               layinfo:newline \

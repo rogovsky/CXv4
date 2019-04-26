@@ -17,7 +17,7 @@ define(`_foreach',
 
 sysname linthermcan
 defserver canhw:14
-wintitle main "Система термостабилизации - CAN"
+wintitle main "Thermostabilization system - CAN"
 winname  main linthermcan
 winclass main LinThermCAN
 

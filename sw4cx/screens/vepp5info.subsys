@@ -1,0 +1,17 @@
+sysname       vepp5info
+defserver     cxout:1
+wintitle main "VEPP-5 info"
+winname  main vepp5info
+winclass main VEPP5Info
+winopts  main "nostatusline,hist_period=0.1"
+
+#define(`ONE', `disp $1 $1 text "" "" %8.3f r:$1')
+define(`ONE', `disp $1 $1 text "" "" %$2f  r:$1 layinfo:horz=right')
+define(`MSG', `mesg $1 $1 text ""          r:$1 layinfo:horz=right')
+
+grouping main vepp5info "VEPP-5 info" lrtb "" content:1 {
+    container ringcur "Ring Current" grid "nocoltitles" base:ringcur_users content:2 {
+        ONE(beamcurrent,  7.3)
+        ONE(storagerate,  7.3)
+    }
+}

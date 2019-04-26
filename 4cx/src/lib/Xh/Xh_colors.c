@@ -74,7 +74,7 @@ static colinfo_t color_info[] =
     COLOR_LINE(GRAPH_AXIS,     "#000080"),  // Was: #0000C0, as grid
     COLOR_LINE(GRAPH_GRID,     "#0000C0"),
     COLOR_LINE(GRAPH_TITLES,   "#000000"),
-    COLOR_LINE(GRAPH_REPERS,   "#c0f0c0"),  // Was: #000000, than #808080, than 80b080
+    COLOR_LINE(GRAPH_REPERS,   "#ff00ff"),  // Was: #000000, than #808080, than 80b080, than c0f0c0
     COLOR_LINE(GRAPH_LINE1,    "#0000FF"),  // Blue
     COLOR_LINE(GRAPH_LINE2,    "#FF0000"),  // Red
     COLOR_LINE(GRAPH_LINE3,    "#00C000"),  // Dark green
@@ -93,7 +93,7 @@ static colinfo_t color_info[] =
     COLOR_LINE(BGRAPH_AXIS,    "#e0e0e0"),
     COLOR_LINE(BGRAPH_GRID,    "#a0a0a0"),
     COLOR_LINE(BGRAPH_TITLES,  "#FFFFFF"),
-    COLOR_LINE(BGRAPH_REPERS,  "#c0f0c0"),  // Was: #000000, than #808080, than 80b080
+    COLOR_LINE(BGRAPH_REPERS,  "#ff00ff"),  // Was: #000000, than #808080, than 80b080, than c0f0c0
     COLOR_LINE(BGRAPH_LINE1,   "#0000FF"),  // Blue
     COLOR_LINE(BGRAPH_LINE2,   "#FF0000"),  // Red
     COLOR_LINE(BGRAPH_LINE3,   "#00C000"),  // Dark green

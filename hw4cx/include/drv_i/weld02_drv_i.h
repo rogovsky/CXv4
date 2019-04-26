@@ -12,8 +12,10 @@ enum
     WELD02_SET_n_IL   = 5,
     WELD02_SET_n_STAB = 6,
     WELD02_SET_n_GAIN = 7,
+    WELD02_SET_n_UNS8 = 8,
+    WELD02_SET_n_PIND = 9,
 
-    WELD02_SET_n_count // =8
+    WELD02_SET_n_count // =10
 };
 
 enum
@@ -32,7 +34,7 @@ enum
     WELD02_MES_n_count // =10
 };
 
-// w8i,r10i
+// w10i,r10i
 enum
 {
     WELD02_CHAN_SET_base = 0,
@@ -44,6 +46,8 @@ enum
     WELD02_CHAN_SET_IL     = WELD02_CHAN_SET_base + WELD02_SET_n_IL,
     WELD02_CHAN_SET_STAB   = WELD02_CHAN_SET_base + WELD02_SET_n_STAB,
     WELD02_CHAN_SET_GAIN   = WELD02_CHAN_SET_base + WELD02_SET_n_GAIN,
+    WELD02_CHAN_SET_UNS8   = WELD02_CHAN_SET_base + WELD02_SET_n_UNS8,
+    WELD02_CHAN_SET_PIND   = WELD02_CHAN_SET_base + WELD02_SET_n_PIND,
 
     WELD02_CHAN_MES_base,
     WELD02_CHAN_MES_UH     = WELD02_CHAN_MES_base + WELD02_MES_n_UH,

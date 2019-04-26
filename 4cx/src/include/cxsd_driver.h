@@ -74,6 +74,8 @@ enum
     IS_AUTOUPDATED_NOT     = 0,
     IS_AUTOUPDATED_YES     = 1,
     IS_AUTOUPDATED_TRUSTED = 2,
+    IS_AUTOUPDATED_unused3 = 3,
+    DO_IGNORE_UPD_CYCLE    = 4,
 };
 
 
@@ -329,7 +331,7 @@ void SetChanRange     (int devid,
                        CxAnyVal_t minv, CxAnyVal_t maxv, cxdtype_t range_dtype);
 void SetChanReturnType(int devid,
                        int first, int count,
-                       int is_autoupdated);
+                       int return_type);
 
 
 void StdSimulated_rw_p(int devid, void *devptr,

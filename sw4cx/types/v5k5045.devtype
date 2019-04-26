@@ -7,11 +7,18 @@ devtype v5k5045 w20i,r80i {
 	rst_ilks	5
 	reset_state	6
 	reset_c_ilks	7
+	delay1		8
+	delay2		9
+	delay3		10
+	hvset_nominal	11
 
-	hvset_cur	50
+	hvset_cur	20
+	is_on		21
 
 	ilk<0-31>	30
 	c_ilk<0-31>	62
+	ilk_slow_any	94
+	ilk_fast_any	95
 
 	vdev_state	99
 }

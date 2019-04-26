@@ -1,0 +1,51 @@
+# A version of ist_cdac20 for simulation -- to use as
+#     dev NNN sim_ist_cdac20/noop
+devtype sim_ist_cdac20 w50i,w50i {
+	iset		0
+	iset_rate	1
+	switch_on	2
+	switch_off	3
+	rst_ilks	4
+	reset_state	5
+	do_calb_dac	6
+	autocalb_onoff	7
+	autocalb_secs	8
+	digcorr_mode	9
+	reset_c_ilks	10
+
+	dcct1		50
+	dcct2		51
+	dac_mes		52
+	u2		53
+	adc4		54
+	adc_dac		55
+	adc_0v		56
+	adc_p10v	57
+
+	iset_cur	58
+	digcorr_factor	59
+	opr		60
+
+	ilk_out_prot	61
+	ilk_water	62
+	ilk_imax	63
+	ilk_umax	64
+	ilk_battery	65
+	ilk_phase	66
+	ilk_temp	67
+
+	is_on		68
+
+	c_ilk_out_prot	69
+	c_ilk_water	70
+	c_ilk_imax	71
+	c_ilk_umax	72
+	c_ilk_battery	73
+	c_ilk_phase	74
+	c_ilk_temp	75
+
+	vdev_condition	97
+	cur_polarity	98
+	vdev_state	99
+	ist_state	vdev_state
+}

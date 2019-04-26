@@ -25,6 +25,9 @@ $(cxsd_fe_starogate.so_COMPONENTS):	SPECIFIC_CFLAGS=-fPIC
 EXPORTSFILES=	$(ARLIBS)
 EXPORTSDIR=	lib
 
+EXPORTSFILES2=	cxsd_fe_starogate.so
+EXPORTSDIR2=	lib/server/frontends/
+
 TOPDIR=         ../..
 include $(TOPDIR)/TopRules.mk
 

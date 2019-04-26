@@ -52,7 +52,7 @@ VcamimgDataFillStdDscr(vcamimg_type_dscr_t *vtd, const char *type_name,
 {
     bzero(vtd, sizeof(*vtd));
     PzframeDataFillDscr(&(vtd->ftd), type_name,
-                        behaviour,
+                        behaviour | PZFRAME_B_NO_SVD,
                         chan_dscrs, chan_count);
     vtd->ftd.vmt = vcamimg_data_std_pzframe_vmt;
 

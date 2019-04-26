@@ -1,0 +1,1 @@
+libMotifKnobs_cda.a: libMotifKnobs_cda.a(MotifKnobs_cda_knobset.o MotifKnobs_cda_scenario_knob.o MotifKnobs_cda_leds.o MotifKnobs_cda_leds_noop.o)

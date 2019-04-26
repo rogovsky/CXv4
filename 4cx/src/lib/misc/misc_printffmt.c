@@ -79,7 +79,7 @@ int ParseDoubleFormat (const char *fmt,
     }
 
     /* IV. A conversion character... */
-    if (*p == '\0'  ||  strchr("eEfFgG", *p) == NULL)
+    if (*p == '\0'  ||  strchr("aAeEfFgG", *p) == NULL)
     {
         check_snprintf(_printffmt_lasterr_str, sizeof(_printffmt_lasterr_str),
                        "%s: \"%s\" doesn't end with a valid conversion specifier",
@@ -163,6 +163,10 @@ int         GetTextColumns(const char *dpyfmt, const char *units)
         
         switch (tolower(conv_c))
         {
+            case 'a':
+                width = 24 /*-0x1.fffffffffffffp+1023*/;
+                break;
+
             case 'e':
                 width = 1/*sign*/ + 1/*before_point*/ +
                     (precision==0? 0:precision+1)/*point+after_point*/ +

@@ -4,7 +4,29 @@
 #include "drv_i/f4226_drv_i.h"
 
 
+/*** F4226 NAF reference table ***************************************
+A(0)F(0)   R1-12  read RAM cell
+A(0)F(1)   R1-12  read status reg
+A(0)F(8)          test status (L via Q?)
+A(0)F(9)          set to "write from computer"
+A(0)F(10)         reset LAM
+A(0)F(16)  W1-9   write RAM cell
+A(0)F(17)  W1-12  write status reg (except bits 6,7)
+A(0)F(24)         disable (mask) LAM
+A(0)F(25)         start ("")
+A(0)F(26)         enable (unmask) LAM
+ranges: 0:-256-+254, 1:-512-+508, 2:-1024-+1016, 2:-256-+254
+*********************************************************************/
+
+enum
+{
+    F4226_STATUS_B_6  = 1 << 5,
+    F4226_STATUS_B_7  = 1 << 6,
+    F4226_STATUS_B_12 = 1 << 11,
+};
+
 static int q2xs[] = {50, 100, 200, 400, 800, 1600, 3200, 0};
+static int32 param2quant[4] = {2000, 4000, 8000, 2000}; // -256-+254, -512-+508, -1024-+1026, -256-+254
 
 
 typedef int32 F4226_DATUM_T;
@@ -84,6 +106,28 @@ typedef struct
 
 #define PDR2ME(pdr) ((f4226_privrec_t*)pdr) //!!! Should better sufbtract offsetof(pz)
 
+static psp_lkp_t f4226_timing_lkp[] =
+{
+    {"50ns",  F4226_T_50NS},
+    {"100ns", F4226_T_100NS},
+    {"200ns", F4226_T_200NS},
+    {"400ns", F4226_T_400NS},
+    {"800ns", F4226_T_800NS},
+    {"1.6us", F4226_T_1_6US},
+    {"3.2us", F4226_T_3_2US},
+    {"ext",   F4226_T_EXT},
+    {NULL, 0},
+};
+
+static psp_lkp_t f4226_range_lkp[] =
+{
+    {"256mv", F4226_INP_256MV},
+    {"512mv", F4226_INP_512MV},
+    {"1v",    F4226_INP_1V},
+    {"test",  F4226_TST_256MV},
+    {NULL, 0},
+};
+
 static psp_lkp_t f4226_prehist64_lkp[] =
 {
     {"0",    0},
@@ -107,11 +151,43 @@ static psp_lkp_t f4226_prehist64_lkp[] =
 
 static psp_paramdescr_t f4226_params[] =
 {
+    PSP_P_LOOKUP("timing",  f4226_privrec_t, nxt_args[F4226_CHAN_TIMING],    -1, f4226_range_lkp),
+    PSP_P_LOOKUP("range",   f4226_privrec_t, nxt_args[F4226_CHAN_RANGE],     -1, f4226_timing_lkp),
     PSP_P_LOOKUP("prehist", f4226_privrec_t, nxt_args[F4226_CHAN_PREHIST64], -1, f4226_prehist64_lkp),
     PSP_P_FLAG("calcstats", f4226_privrec_t, nxt_args[F4226_CHAN_CALC_STATS], 1, 0),
     PSP_P_END()
 };
 
+//--------------------------------------------------------------------
+static void PerformStop(int N)
+{
+  int  x;
+  int  w;
+  int  junk;
+
+return;
+DO_NAF(CAMAC_REF, N, 0, 1, &w); fprintf(stderr, "%s 1 %d/0x%x/%o\n", __FUNCTION__, w, w, w);
+    DO_NAF(CAMAC_REF, N, 0, 24, &junk);  // Mask LAM
+    DO_NAF(CAMAC_REF, N, 0, 10, &junk);  // Drop LAM
+DO_NAF(CAMAC_REF, N, 0, 1, &w); fprintf(stderr, "%s 2 %d/0x%x/%o\n", __FUNCTION__, w, w, w);
+    DO_NAF(CAMAC_REF, N, 0,  9, &junk);  // Switch to "write from computer" mode
+DO_NAF(CAMAC_REF, N, 0, 1, &w); fprintf(stderr, "%s 3 %d/0x%x/%o\n", __FUNCTION__, w, w, w);
+
+    for (x = 0;  x < 1024;  x++)
+    {
+        w = x;
+        DO_NAF(CAMAC_REF, N, 0, 16, &w);
+    }
+DO_NAF(CAMAC_REF, N, 0, 1, &w); fprintf(stderr, "%s 4 %d/0x%x/%o\n", __FUNCTION__, w, w, w);
+    fprintf(stderr, "READ:");
+    for (x = 0;  x < 1024;  x++)
+    {
+        DO_NAF(CAMAC_REF, N, 0, 0, &w);
+        if (x < 20) fprintf(stderr, " %4x", w);
+    }
+    fprintf(stderr, "\n");
+DO_NAF(CAMAC_REF, N, 0, 1, &w); fprintf(stderr, "%s 5 %d/0x%x/%o\n", __FUNCTION__, w, w, w);
+}
 //--------------------------------------------------------------------
 
 static int32 ValidateParam(pzframe_drv_t *pdr, int n, int v)
@@ -162,17 +238,28 @@ static int   InitParams(pzframe_drv_t *pdr)
 
   rflags_t         rflags;
   int              w;
+  int              junk;
 
+    // Read status register
     rflags = status2rflags(DO_NAF(CAMAC_REF, me->N_DEV, 0, 1, &w));
 
+    PerformStop(me->N_DEV);
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 24, &junk);  // Mask LAM
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 10, &junk);  // Drop LAM
+
+    /* Initialize readable parametsrs... */
+    if (me->nxt_args[F4226_CHAN_TIMING]    < 0)
+        me->nxt_args[F4226_CHAN_TIMING]    =  w       & 0x07;
+    if (me->nxt_args[F4226_CHAN_RANGE]     < 0)
+        me->nxt_args[F4226_CHAN_RANGE]     = (w >> 3) & 0x03;
     if (me->nxt_args[F4226_CHAN_PREHIST64] < 0)
-        me->nxt_args[F4226_CHAN_PREHIST64] = (w >> 7) & 0xF;
+        me->nxt_args[F4226_CHAN_PREHIST64] = (w >> 7) & 0x0F;
 
-    /*!!! Should read status reg!!! */
+    /* ...and "virtual" ones too */
+    me->nxt_args[F4226_CHAN_PTSOFS] = 0;
     me->nxt_args[F4226_CHAN_NUMPTS] = F4226_MAX_NUMPTS;
-    me->nxt_args[F4226_CHAN_TIMING] = F4226_INP_256MV;
-    me->nxt_args[F4226_CHAN_RANGE]  = ValidateParam(&(me->pz), F4226_CHAN_RANGE, 0);
 
+    /* Return service channels */
     Return1Param(me, F4226_CHAN_XS_DIVISOR, 0);
     Return1Param(me, F4226_CHAN_XS_FACTOR,  -9);
 
@@ -191,6 +278,7 @@ static int  StartMeasurements(pzframe_drv_t *pdr)
   f4226_privrec_t *me = PDR2ME(pdr);
 
   int              w;
+  int              junk;
 
     /* "Actualize" requested parameters */
     memcpy(me->cur_args, me->nxt_args, sizeof(me->cur_args));
@@ -200,7 +288,17 @@ static int  StartMeasurements(pzframe_drv_t *pdr)
         Return1Param(me, F4226_CHAN_PTSOFS,   F4226_MAX_NUMPTS - me->cur_args[F4226_CHAN_NUMPTS]);
 
     /* Program the device */
-    /*!!!*/
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 24, &junk);  // Mask LAM
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 10, &junk);  // Drop LAM
+
+    w =
+        ((me->cur_args[F4226_CHAN_TIMING]    & 0x07)     ) |
+        ((me->cur_args[F4226_CHAN_RANGE]     & 0x03) << 3) |
+        ((me->cur_args[F4226_CHAN_PREHIST64] & 0x0F) << 7);
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 17, &w);     // Write to status register
+
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 26, &junk);  // Unmask LAM
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 25, &junk);  // Set to "Conversion" mode
 
     return PZFRAME_R_DOING;
 }
@@ -219,8 +317,11 @@ static int  TrggrMeasurements(pzframe_drv_t *pdr)
 static int  AbortMeasurements(pzframe_drv_t *pdr)
 {
   f4226_privrec_t *me = PDR2ME(pdr);
+  int              junk;
 
-    /*!!!*/
+    PerformStop(me->N_DEV);
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 24, &junk);  // Mask LAM
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 10, &junk);  // Drop LAM
 
     return PZFRAME_R_READY;
 }
@@ -228,6 +329,8 @@ static int  AbortMeasurements(pzframe_drv_t *pdr)
 static rflags_t ReadMeasurements(pzframe_drv_t *pdr)
 {
   f4226_privrec_t *me = PDR2ME(pdr);
+
+  int              junk;
 
   int              w;
   int              base0;
@@ -241,23 +344,36 @@ static rflags_t ReadMeasurements(pzframe_drv_t *pdr)
   int              v;
   int32            min_v, max_v, sum_v;
 
-    /*!!!*/
+DO_NAF(CAMAC_REF, me->N_DEV, 0, 1, &junk);
+fprintf(stderr, "%s status=%d/0x%x/%o\n", __FUNCTION__, junk, junk, junk);
+    /* Here we expect the device to be in "read" mode */
+
+    /*!!! Any other NAFs? "stop"? */
+
+    quant = param2quant[me->cur_args[F4226_CHAN_RANGE]];
 
     dp = me->retdata;
 
     if (me->cur_args[F4226_CHAN_CALC_STATS] == 0  ||  1)
     {
-        for (n = me->cur_args[F4226_CHAN_NUMPTS];  n > 0;  n -= count)
+        /* Note: we ALWAYS read 1024 points, not just NUMPTS */
+        for (n = F4226_MAX_NUMPTS;  n > 0;  n -= count)
         {
             count = n;
             if (count > COUNT_MAX) count = COUNT_MAX;
             
     /*!!!*/
-//            DO_NAFB(CAMAC_REF, me->N_DEV, A_MEMORY, 0, rdata, count);
-//            for (x = 0;  x < count;  x++)
-//            {
-//                *dp++ = quant * (rdata[x] & 0x0FFF) - base0;
-//            }
+            DO_NAFB(CAMAC_REF, me->N_DEV, 0, 0, rdata, count);
+            for (x = 0;  x < count;  x++)
+            {
+#if 0
+                w = rdata[x] & 255;
+                if ((w & 128) != 0) w -= 256;
+                *dp++ = w * quant;
+#else
+                *dp++ = rdata[x];
+#endif
+            }
         }
 
         me->cur_args[F4226_CHAN_MIN] =
@@ -269,6 +385,10 @@ static rflags_t ReadMeasurements(pzframe_drv_t *pdr)
         me->cur_args[F4226_CHAN_INT] =
         me->nxt_args[F4226_CHAN_INT] = 0;
     }
+
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 24, &junk);  // Mask LAM
+    DO_NAF(CAMAC_REF, me->N_DEV, 0, 10, &junk);  // Drop LAM
+    /*!!! Any other NAFs? "stop"? */
 
     return 0;
 }

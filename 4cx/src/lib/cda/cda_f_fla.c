@@ -103,6 +103,7 @@ enum
     OP_CMP_IF_GE,
     OP_CMP_IF_GT,
     OP_CMP_IF_NE,
+    OP_CMP_IF_ISNAN,
     
     //
     OP_GETCHAN,
@@ -117,6 +118,7 @@ enum
     //
     OP_PRINT_STR,
     OP_PRINT_DBL,
+    OP_COMMENT,
 
     //
     OP_LAPPROX,
@@ -413,7 +415,10 @@ static int proc_SLEEP(cda_f_fla_privrec_t *fla,
     fla->sleep_tid = sl_enq_tout_at(fla->uniq, fla,
                                     &add, SleepExp, NULL);
 
-    return CDA_PROCESS_FLAG_BUSY;
+    return
+        CDA_PROCESS_FLAG_BUSY
+        |
+        (fla->do_refresh? CDA_PROCESS_FLAG_REFRESH : 0);
 }
 
 static int proc_GOTO(cda_f_fla_privrec_t *fla,
@@ -476,6 +481,17 @@ DEFINE_CMP_PROC(proc_CMP_IF_EQ, ==)
 DEFINE_CMP_PROC(proc_CMP_IF_GE, >=)
 DEFINE_CMP_PROC(proc_CMP_IF_GT, >)
 DEFINE_CMP_PROC(proc_CMP_IF_NE, !=)
+
+static int proc_CMP_IF_ISNAN(cda_f_fla_privrec_t *fla,
+                             fla_val_t *stk, int *stk_idx_p)
+{
+  double val;
+
+    val = stk[(*stk_idx_p)++].number;
+    fla->nextflags = (fla->thisflags &~ FLAG_SKIP_COMMAND) |
+                     (isnan(val)? 0 : FLAG_SKIP_COMMAND);
+    return CMD_RC_OK;
+}
 
 
 static int proc_ADD(cda_f_fla_privrec_t *fla,
@@ -907,6 +923,7 @@ static cmd_descr_t  command_set[] =
     [OP_CMP_IF_GE]  = {"CMP_IF_GE",  proc_CMP_IF_GE,  2, 0, 0,          ARG_DOUBLE},
     [OP_CMP_IF_GT]  = {"CMP_IF_GT",  proc_CMP_IF_GT,  2, 0, 0,          ARG_DOUBLE},
     [OP_CMP_IF_NE]  = {"CMP_IF_NE",  proc_CMP_IF_NE,  2, 0, 0,          ARG_DOUBLE},
+    [OP_CMP_IF_ISNAN]={"CMP_IF_ISNAN",proc_CMP_IF_ISNAN,1,0,FLAG_NO_IM, ARG_NONE},
     [OP_GETCHAN]    = {"GETCHAN",    proc_GETCHAN,    1, 1, FLAG_IMMED, ARG_CHANREF},
     [OP_PUTCHAN]    = {"PUTCHAN",    proc_PUTCHAN,    2, 0, FLAG_IMMED, ARG_CHANREF},
     [OP_GETVAR]     = {"GETVAR",     proc_GETVAR,     1, 1, FLAG_IMMED, ARG_VARPARM},
@@ -915,6 +932,7 @@ static cmd_descr_t  command_set[] =
     [OP_GETTIME]    = {"GETTIME",    proc_GETTIME,    0, 1, FLAG_NO_IM, ARG_NONE},
     [OP_PRINT_STR]  = {"PRINT_STR",  proc_PRINT_STR,  1, 0, FLAG_IMMED, ARG_STRING},
     [OP_PRINT_DBL]  = {"PRINT_DBL",  proc_PRINT_DBL,  1, 0, FLAG_IMMED, ARG_STRING},
+    [OP_COMMENT]    = {"COMMENT",    NULL,            0, 0, 0,          ARG_STRING},
     [OP_LAPPROX]    = {"LAPPROX",    proc_LAPPROX,    2, 1, FLAG_IMMED, ARG_LAPPROX},
 };
 
@@ -1299,6 +1317,12 @@ static int  cda_f_fla_p_create (cda_dataref_t  ref,
                         {
                             if (stage == 1)
                             {
+                                /* A special case: label */
+                                if (opcode == OP_LABEL  &&
+                                    find_label(fla, buf) >= 0)
+                                    return DO_ERR("duplicate label \"%s\"", buf);
+
+                                /* Okay, store the string */
                                 arg.str = auxdatabuf + auxdatasize;
                                 memcpy(arg.str, buf, buf_used);
                             }
@@ -1307,6 +1331,7 @@ static int  cda_f_fla_p_create (cda_dataref_t  ref,
                         else if (descr->argtype == ARG_CHANREF)
                         {
                             if (stage == 1)
+                            {
                                 arg.chanref =
                                     buf[0] == '%'
                                     ?
@@ -1317,6 +1342,9 @@ static int  cda_f_fla_p_create (cda_dataref_t  ref,
                                                  base,
                                                  buf, CDA_OPT_NONE, CXDTYPE_DOUBLE, 1,
                                                  0, NULL, NULL);
+                                if (arg.chanref < 0)
+                                    return DO_ERR("unknown channel \"%s\"", buf);
+                            }
                         }
                         else if (descr->argtype == ARG_VARPARM)
                         {
@@ -1445,6 +1473,8 @@ static int  cda_f_fla_p_create (cda_dataref_t  ref,
             else
                 cp->arg.displacement = displacement;
         }
+        /* Drop IMMED from COMMENT opcodes too */
+        else if (cp->cmd == OP_COMMENT) cp->flags &=~ FLAG_IMMED;
     }
     
     return CDA_DAT_P_OPERATING;

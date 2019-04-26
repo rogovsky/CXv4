@@ -390,7 +390,7 @@ void SetChanRange     (int devid,
 
 void SetChanReturnType(int devid,
                        int first, int count,
-                       int is_autoupdated)
+                       int return_type)
 {
   remcxsd_dev_t       *dev = remcxsd_devices + devid;
   struct
@@ -406,7 +406,7 @@ void SetChanReturnType(int devid,
     pkt.hdr.command = REMDRV_C_RTTYPE;
     pkt.hdr.var.group.first = first;
     pkt.hdr.var.group.count = count;
-    pkt.data.is_autoupdated = is_autoupdated;
+    pkt.data.return_type    = return_type;
     if (fdio_send(dev->fhandle, &pkt, sizeof(pkt)) < 0)
         FreeDevID(devid);
 }

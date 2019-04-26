@@ -11,8 +11,11 @@ CSUBDIRS=	misc useful \
 XSUBDIRS=	AuxMotifWidgets Xh MotifKnobs Chl
 QSUBDIRS=	Qcxscheduler
 
-ifneq "$(NOX)" ""
+ifneq "$(NOX)"  ""
   XSUBDIRS=	
+endif
+ifneq "$(NOQT)" ""
+  QSUBDIRS=
 endif
 ifeq  "$(wildcard ../../../cx/src/include/cx.h)" ""
   NOV2CX=YES

@@ -388,12 +388,24 @@ static void DoRenew(pzframe_gui_t *inherited_gui,
     FastadcGuiRenewPlot(gui, gui->a.mes.cur_numpts, info_changed);
 }
 
+static void SvdCtl(pzframe_gui_t *inherited_gui,
+                   int   on_off)
+{
+  fastadc_gui_t *gui = (fastadc_gui_t *)inherited_gui;
+
+    if (on_off != 0)
+        FastadcGuiCopy2Svd(gui);
+    else
+        FastadcGuiResetSvd(gui);
+}
+
 static pzframe_gui_vmt_t fastadc_gui_std_pzframe_vmt =
 {
     .realize  = DoRealize,
     .evproc   = NULL,
     .newstate = UpdateBG,
     .do_renew = DoRenew,
+    .svd_ctl  = SvdCtl,
 };
 void  FastadcGuiFillStdDscr(fastadc_gui_dscr_t *gkd, fastadc_type_dscr_t *atd)
 {
@@ -434,7 +446,7 @@ static void        gui_draw   (void *privptr, int nl, int age,
   fastadc_gui_t *gui = privptr;
 
     XhPlotOneDraw(gui->plot,
-                  (/*!!!age == 0? */gui->a.mes.plots/*!!! : gui->a.svd.plots*/) + nl,
+                  (age == 0? gui->a.mes.plots : gui->a.svd.plots) + nl,
                   magn, gc);
 }
 
@@ -624,4 +636,20 @@ psp_paramdescr_t *FastadcGuiCreateText2LookTable(fastadc_gui_dscr_t *gkd)
     }
 
     return ret;
+}
+
+int   FastadcGuiCopy2Svd   (fastadc_gui_t *gui)
+{
+    if (FastadcDataCopy2Svd(&(gui->a)) < 0) return -1;
+    XhPlotSetNumSaved(gui->plot, 1);
+    XhPlotUpdate(gui->plot, 0);
+
+    return 0;
+}
+
+void  FastadcGuiResetSvd   (fastadc_gui_t *gui)
+{
+    FastadcDataResetSvd(&(gui->a));
+    XhPlotSetNumSaved(gui->plot, 0);
+    XhPlotUpdate     (gui->plot, 0);
 }

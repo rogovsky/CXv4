@@ -1,50 +1,79 @@
 # :19 -- linac/ring RF system
 #### 0. Includes #####################################################
+include(`slio24_reg.devtype')
+include(`c0642.devtype')
+include(`v06xx.devtype')
+include(`r0601.devtype')
 include(`cac208.devtype')
 include(`frolov_d16.devtype')
 include(`frolov_ie4.devtype')
 include(`frolov_k4x1.devtype')
 include(`frolov_k4x1_2x2x1.devtype')
 include(`adc200.devtype')
+include(`f4226.devtype')
+include(`adc333.devtype')
 include(`kurrez_cac208.devtype')
 
 include(`canhw_CAN_LINES_LIST.m4')
 
 #### I. Hardware #####################################################  
 
+# 00. Conversion system
+dev cnv_dac c0642/remdrv  ~ 2 b:v5-l-cnv
+dev cnv_ctl v06xx/remdrv  ~ 4 b:v5-l-cnv
+dev cnv_osc adc333/remdrv ~ 6 b:v5-l-cnv range0=off range1=off range2=off range3=4096 timing=500 # ~100us viewable
+#dev cnv_osc f4226/remdrv ~ 9 b:v5-l-cnv
+#           f4226          11 b:v5-l-cnv
+dev cnv_sds r0601/remdrv ~ 13 b:v5-l-cnv
+
+cpoint ic.linCNV.Uset       cnv_dac.out0
+cpoint ic.linCNV.swc        cnv_ctl.bit0
+cpoint ic.linCNV.is_on      cnv_sds.inprb0
+cpoint ic.linCNV.ilk_water  cnv_sds.inprb1
+cpoint ic.linCNV.ilk_door   cnv_sds.inprb2
+cpoint ic.linCNV.ilk_vacuum cnv_sds.inprb3
+
+cpoint ic.linCNV.ready      ic.linCNV.is_on
+
+# 0.
+dev slio   slio24_reg/remdrv ~ 0,7 b:v5-sr-rfr
+# Code=(val-eoff)/eslo, eoff=2831316.8384, eslo=0.0122886464
+# Code=(val+D)*R => D=-2831316.8384, R=1/0.0122886464=81.37592762047413
+cpoint ic.linRF.MasterGen.frq slio.word24 81.37592762047413 -2831316.8384
+
 # 1. Rezonator
 dev rez208 cac208@sktcankoz ~ L_RST1,23  spd0=1000000
 
-# 2. RFsyn
+# 2. RFsyn; f_in=21.8748098e6 <=> f_in=-45.7146831
 #					  1
-dev lrf_d16_2	frolov_d16/remdrv	~ 2  b:v5-syn f_in=21.8748098e6
+dev lrf_d16_2	frolov_d16/remdrv	~ 2  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  3	10.9MHz x2
-dev syn_ie4	frolov_ie4/remdrv	~ 4  b:v5-syn f_in=0.31249728e6
-dev xfr_d16_5	frolov_d16/remdrv	~ 5  b:v5-syn f_in=21.8748098e6
-dev lbm_d16_6	frolov_d16/remdrv	~ 6  b:v5-syn f_in=21.8748098e6
-#				  7
-dev lbm_d16_8	frolov_d16/remdrv	~ 8  b:v5-syn f_in=21.8748098e6
-#				  9
-dev lbm_d16_10	frolov_d16/remdrv	~ 10 b:v5-syn f_in=21.8748098e6
-dev lrf_d16_11	frolov_d16/remdrv	~ 11 b:v5-syn f_in=21.8748098e6 # f_in=-45.7146831
-dev lrf_d16_12	frolov_d16/remdrv	~ 12 b:v5-syn f_in=21.8748098e6
+dev syn_ie4	frolov_ie4/remdrv	~ 4  b:v5-syn   f_in=0.31249728e6 kclk=1          fclk_sel=Fin start_sel=Y1       mode=Cont
+dev xfr_d16_5	frolov_d16/remdrv	~ 5  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lbm_d16_6	frolov_d16/remdrv	~ 6  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#				  	  7
+dev lbm_d16_8	frolov_d16/remdrv	~ 8  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+#				  	  9
+dev lbm_d16_10	frolov_d16/remdrv	~ 10 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lrf_d16_11	frolov_d16/remdrv	~ 11 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
+dev lrf_d16_12	frolov_d16/remdrv	~ 12 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  13
-dev lrf_d16_14	frolov_d16/remdrv	~ 14 b:v5-syn f_in=21.8748098e6
+dev lrf_d16_14	frolov_d16/remdrv	~ 14 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  15
-dev lbm_d16_16	frolov_d16/remdrv	~ 16 b:v5-syn f_in=21.8748098e6
+dev lbm_d16_16	frolov_d16/remdrv	~ 16 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  17	F20
-dev lbm_d16_18	frolov_d16/remdrv	~ 18 b:v5-syn f_in=21.8748098e6
+dev lbm_d16_18	frolov_d16/remdrv	~ 18 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 dev xfr_k4_19	frolov_k4x1/remdrv	~ 19 b:v5-syn
-dev xfr_d16_20	frolov_d16/remdrv	~ 20 b:v5-syn f_in=0.03810941e6 d16p
-dev xfr_d16_21	frolov_d16/remdrv	~ 21 b:v5-syn f_in=21.8748098e6
+dev xfr_d16_20	frolov_d16/remdrv	~ 20 b:v5-syn   f_in=0.03810941e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=1 d16p a_only
+dev xfr_d16_21	frolov_d16/remdrv	~ 21 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  22	F20
 #					  23	F20
 
 # ---- Injection/extraction
 #					  1
-dev ie_d16_2	frolov_d16/remdrv	~ 2  b:v5-sr-ie f_in=21.874571e6
+dev ie_d16_2	frolov_d16/remdrv	~ 2  b:v5-sr-ie f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  3
-dev ie_d16_4	frolov_d16/remdrv	~ 4  b:v5-sr-ie f_in=21.874571e6
+dev ie_d16_4	frolov_d16/remdrv	~ 4  b:v5-sr-ie f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  5
 #					  6	F20
 dev ie_k4_7	frolov_k4x1_2x2x1/remdrv ~ 7  b:v5-sr-ie
@@ -56,9 +85,9 @@ dev ie_adc200_12 adc200/remdrv		~ 12 b:v5-sr-ie
 #					  13	TTL
 #					  14
 dev ie_k4_15	frolov_k4x1_2x2x1/remdrv ~ 15 b:v5-sr-ie
-dev ie_d16_16	frolov_d16/remdrv	~ 16 b:v5-sr-ie f_in=21.874571e6
+dev ie_d16_16	frolov_d16/remdrv	~ 16 b:v5-sr-ie f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  17
-dev ie_d16_18	frolov_d16/remdrv	~ 18 b:v5-sr-ie f_in=21.874571e6
+dev ie_d16_18	frolov_d16/remdrv	~ 18 b:v5-sr-ie f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #					  19
 #					  20	F20
 #					  21	i0634
@@ -66,6 +95,12 @@ dev ie_d16_18	frolov_d16/remdrv	~ 18 b:v5-sr-ie f_in=21.874571e6
 #					  23
 
 dev ie_cac208 cac208@sktcankoz ~ L_TMP_IE,15 
+
+# Code      178.5      2856
+# 356871 | 178435.4 | 2854966.4
+# 356866 | 178432.9 | 2854926.4
+#
+# ?0x1D60a6<->2854976?
 
 dev xfr_mode formula w1d - \
     r="_all_code; \
@@ -95,11 +130,11 @@ dev xfr_mode formula w1d - \
 
 dev kick_mode formula w1d - \
     r="_all_code; \
-       getchan ie_k4_15.comm1; cmp_if_gt 0; ret 2; \
-       getchan ie_k4_8.comm1; getchan ie_k4_8.comm2; getchan ie_k4_15.comm2; \
-       add; add; dup; \
+       getchan ie_k4_8.comm1;  getchan ie_k4_8.comm2; \
+       getchan ie_k4_15.comm1; getchan ie_k4_15.comm2; \
+       add; add; add; dup; \
        cmp_if_lt 1; ret 0; \
-       cmp_if_lt 3; ret 2; \
+       cmp_if_lt 4; ret 2; \
        ret 1;" \
     w="_all_code; \
        qryval; cmp_if_lt 1; goto SET_E; \
@@ -109,7 +144,7 @@ dev kick_mode formula w1d - \
        push 0; putchan ie_k4_8.comm1; push 0; putchan ie_k4_8.comm2; push 0; putchan ie_k4_15.comm1; push 0; putchan ie_k4_15.comm2; \
        ret; \
        label SET_P; \
-       push 1; putchan ie_k4_8.comm1; push 1; putchan ie_k4_8.comm2; push 0; putchan ie_k4_15.comm1; push 1; putchan ie_k4_15.comm2; \
+       push 1; putchan ie_k4_8.comm1; push 1; putchan ie_k4_8.comm2; push 1; putchan ie_k4_15.comm1; push 1; putchan ie_k4_15.comm2; \
        ret;"
 
 #### II. Cpoints and virtual hardware ################################
@@ -118,29 +153,42 @@ dev rezonator kurrez_cac208 ~ - rez208
 
 # RFsyn
 
-# 1:dev 2:[0-3] 3:name_base 4/opt:R
+# 1:dev 2:[0-3] 3:name_base1 4:name_base2 5/opt:R
 define(`ONE_D16_CLINE', `
-    cpoint $3.dly.set  $1.v$2 $4
-    cpoint $3.A        $1.a$2
-    cpoint $3.B        $1.b$2
-    cpoint $3.mask     $1.off$2
+    cpoint $3$4.dly        $1.v$2 $5
+    cpoint $3$4.A          $1.a$2
+    cpoint $3$4.B          $1.b$2
+    cpoint $3$4.mask       $1.off$2
+    #-
+    cpoint $3`'p0.$4.A     $1.p0.a$2
+    cpoint $3`'p0.$4.B     $1.p0.b$2
+    cpoint $3`'p0.$4.mask  $1.p0.off$2
+    cpoint $3`'p1.$4.A     $1.p1.a$2
+    cpoint $3`'p1.$4.B     $1.p1.b$2
+    cpoint $3`'p1.$4.mask  $1.p1.off$2
+    cpoint $3`'p2.$4.A     $1.p2.a$2
+    cpoint $3`'p2.$4.B     $1.p2.b$2
+    cpoint $3`'p2.$4.mask  $1.p2.off$2
+    cpoint $3`'p3.$4.A     $1.p3.a$2
+    cpoint $3`'p3.$4.B     $1.p3.b$2
+    cpoint $3`'p3.$4.mask  $1.p3.off$2
 ')
 
 # 1:dev 2:name_pfx 3:name1 4:r1 5:name2 6:r2 7:name3 8:r3 9:name4 10:r4
 # Note: 2:name_pfx, if present, should end with '.'
 define(`ONE_D16_LINES', `
-    ONE_D16_CLINE($1, 0, $2$3, $4)
-    ONE_D16_CLINE($1, 1, $2$5, $6)
-    ONE_D16_CLINE($1, 2, $2$7, $8)
-    ONE_D16_CLINE($1, 3, $2$9, $10)
+    ONE_D16_CLINE($1, 0, $2, $3, $4)
+    ONE_D16_CLINE($1, 1, $2, $5, $6)
+    ONE_D16_CLINE($1, 2, $2, $7, $8)
+    ONE_D16_CLINE($1, 3, $2, $9, $10)
 ')
 
 # 1:[0-3] 1:name_base
 define(`ONE_IE4_CLINE', `
-    cpoint $2.dly.set  syn_ie4.v$1 1e6
+    cpoint $2.dly      syn_ie4.v$1 1e6
     cpoint $2.A        syn_ie4.a$1
     ifelse($1, `0', `', `
-    cpoint $2.repRate.set syn_ie4.k$1
+    cpoint $2.repRate  syn_ie4.k$1
     ')
     cpoint $2.mask     syn_ie4.off$1
 ')
@@ -172,19 +220,64 @@ ONE_D16_LINES(ie_d16_18, ic.pKickers., preKickP,    , preKickN,       , kickP,  
 
 cpoint ic.eKickers {
     all.mask     ie_d16_2.alloff
-    repRate.set  ie_d16_2.Kstart
-    StartSrc.set ie_d16_2.start_sel
+    StartGen.repRate      ie_d16_2.Kstart
+    StartGen.StartSrc     ie_d16_2.start_sel
+    p0.all.mask  ie_d16_2.p0.alloff
+    p1.all.mask  ie_d16_2.p1.alloff
+    p2.all.mask  ie_d16_2.p2.alloff
+    p3.all.mask  ie_d16_2.p3.alloff
 }
 cpoint ic.pKickers {
     all.mask     ie_d16_16.alloff
-    repRate.set  ie_d16_16.Kstart
-    StartSrc.set ie_d16_16.start_sel
+    StartGen.repRate      ie_d16_16.Kstart
+    StartGen.StartSrc     ie_d16_16.start_sel
+    p0.all.mask  ie_d16_16.p0.alloff
+    p1.all.mask  ie_d16_16.p1.alloff
+    p2.all.mask  ie_d16_16.p2.alloff
+    p3.all.mask  ie_d16_16.p3.alloff
 }
 
-cpoint ic.eKickers.preKickU.set	ie_cac208.out0
-cpoint ic.eKickers.kickU.set	ie_cac208.out1
-cpoint ic.pKickers.preKickU.set	ie_cac208.out2
-cpoint ic.pKickers.kickU.set	ie_cac208.out3
-
 cpoint ic.extractor.clockSrc xfr_mode.0
-cpoint ic.kickers.mode.set   kick_mode.0
+cpoint ic.kickers.swc.mode   kick_mode.0
+
+cpoint ic.eKickers.preKick.Uset	ie_cac208.out0
+cpoint ic.eKickers.kick.Uset	ie_cac208.out1
+cpoint ic.pKickers.preKick.Uset	ie_cac208.out2
+cpoint ic.pKickers.kick.Uset	ie_cac208.out3
+
+dev kick_presets preset_selector w10i,w16i - 4 \
+	ic.eKickers.preKick.Uset \
+	ic.eKickers.kick.Uset    \
+	ic.pKickers.preKick.Uset \
+	ic.pKickers.kick.Uset
+cpoint ic.eKickers.p0.preKick.Uset  kick_presets.10
+cpoint ic.eKickers.p0.kick.Uset     kick_presets.11
+cpoint ic.pKickers.p0.preKick.Uset  kick_presets.12
+cpoint ic.pKickers.p0.kick.Uset     kick_presets.13
+cpoint ic.eKickers.p1.preKick.Uset  kick_presets.14
+cpoint ic.eKickers.p1.kick.Uset     kick_presets.15
+cpoint ic.pKickers.p1.preKick.Uset  kick_presets.16
+cpoint ic.pKickers.p1.kick.Uset     kick_presets.17
+cpoint ic.eKickers.p2.preKick.Uset  kick_presets.18
+cpoint ic.eKickers.p2.kick.Uset     kick_presets.19
+cpoint ic.pKickers.p2.preKick.Uset  kick_presets.20
+cpoint ic.pKickers.p2.kick.Uset     kick_presets.21
+cpoint ic.eKickers.p3.preKick.Uset  kick_presets.22
+cpoint ic.eKickers.p3.kick.Uset     kick_presets.23
+cpoint ic.pKickers.p3.preKick.Uset  kick_presets.24
+cpoint ic.pKickers.p3.kick.Uset     kick_presets.25
+
+dev comm_presets preset_selector w10i,w4i - 4 ic.kickers.swc.mode
+cpoint ic.kickers.p0.swc.mode       comm_presets.10
+cpoint ic.kickers.p1.swc.mode       comm_presets.11
+cpoint ic.kickers.p2.swc.mode       comm_presets.12
+cpoint ic.kickers.p3.swc.mode       comm_presets.13
+
+dev presets_sel_muxer mux_write w1i - \
+	kick_presets.0 \
+	comm_presets.0 \
+	ie_d16_2.activate_preset_n \
+	ie_d16_4.activate_preset_n \
+	ie_d16_16.activate_preset_n \
+	ie_d16_18.activate_preset_n
+cpoint ic.ie.activate_preset_n presets_sel_muxer.0

@@ -47,6 +47,8 @@ enum
     CDA_DATAREF_OPT_ON_UPDATE  = 1 << 27,  // Notify about this channel's updates immediately, not upon CYCLE (this flag is passed to server by CX plugin)
     CDA_DATAREF_OPT_rsrvd26    = 1 << 26,  // 
     CDA_DATAREF_OPT_NO_WR_WAIT = 1 << 25,  // Don't buffer writes until {R,D} info is received
+    CDA_DATAREF_OPT_rsrvd24    = 1 << 24,  // 
+    CDA_DATAREF_OPT_DEBUG      = 1 << 23,
 };
 
 /* Processing options - for cda_process_ref() */
@@ -201,6 +203,20 @@ cda_dataref_t cda_add_dchan(cda_context_t  cid,
 int           cda_get_dcval(cda_dataref_t  ref, double *v_p);
 int           cda_set_dcval(cda_dataref_t  ref, double  val);
 
+cda_dataref_t cda_add_ichan(cda_context_t  cid,
+                            const char    *name);
+int           cda_get_icval(cda_dataref_t  ref, int    *v_p);
+int           cda_set_icval(cda_dataref_t  ref, int     val);
+
+int           cda_add_schan(cda_context_t  cid,
+                            const char    *name,
+                            size_t         maxlen);
+int           cda_get_scval(cda_dataref_t  ref,
+                            char          *buf, size_t bufsize,
+                            size_t        *len_p);
+int           cda_set_scval(cda_dataref_t  ref,
+                            char          *str, size_t len);
+
 
 /* Formulae management */
 
@@ -274,7 +290,11 @@ int cda_process_ref(cda_dataref_t ref, int options,
 int cda_get_ref_dval(cda_dataref_t ref,
                      double     *curv_p,
                      CxAnyVal_t *curraw_p, cxdtype_t *curraw_dtype_p,
-                     rflags_t *rflags_p, cx_time_t *timestamp_p);
+                     rflags_t   *rflags_p, cx_time_t *timestamp_p);
+int cda_get_ref_ival(cda_dataref_t ref,
+                     int        *curv_p,
+                     CxAnyVal_t *curraw_p, cxdtype_t *curraw_dtype_p,
+                     rflags_t   *rflags_p, cx_time_t *timestamp_p);
 int cda_rd_convert  (cda_dataref_t ref, double raw, double *result_p);
 
 int cda_snd_ref_data(cda_dataref_t ref,

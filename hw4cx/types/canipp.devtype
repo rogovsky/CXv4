@@ -1,5 +1,5 @@
 # Note: identical to u0632
-devtype canipp r30i32,r120i32,r90i,w60i,w50i,r50i {
+devtype canipp r30i32,r120i32,r90i,w60i,w50i,r50i,r30i,w30i,r40i {
 	data<0-29>	0
 	bias_r0_<0-29>	30
 	bias_r1_<0-29>	60
@@ -23,7 +23,12 @@ devtype canipp r30i32,r120i32,r90i,w60i,w50i,r50i {
 	bias_steps_left	361
 	bias_cur_count	362
 
+	read_state	363
+
 	const32		370
+
+	cur_CREG<0-29>	400
+	CREG<0-29>	430
 
 	# !!!DEVTYPE-DOT-HACK
 	box<0-29>.data		0
@@ -32,4 +37,6 @@ devtype canipp r30i32,r120i32,r90i,w60i,w50i,r50i {
 	box<0-29>.cur_P		210
 	box<0-29>.M		240
 	box<0-29>.P		270
+	box<0-29>.cur_CREG	400
+	box<0-29>.CREG		430
 }

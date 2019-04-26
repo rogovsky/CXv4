@@ -23,7 +23,7 @@ define(`RGSWCH',
 
 sysname ringrf
 defserver canhw:19
-wintitle main "ВЧ-система накопителя"
+wintitle main "Ring RF System"
 winname  main ringrf
 winclass main RingRF
 winopts  main with_tbar_loggia
@@ -58,7 +58,11 @@ grouping main RINGRF_grouping "ВЧ-система" lrtb "" \
                 w:"_all_code; qryval; sub 1; putchan polarity; ret;"
         noop - ""
 
-        knob Uset  "Uset"  text "" kV     %4.2f uset  disprange:0-20
+        # Note: Uset is yellowed when Uset<Uset_min
+        knob Uset  "Uset"  text "" kV     %4.2f uset  disprange:0-20 \
+                c:"_all_code;
+                   getchan uset; getchan uset_min; cmp_if_lt; ret 1; ret 0;" \
+                                                      normrange:0-0.5
         disp Umes  "Umes"  text "" kV     %4.2f umes  disprange:0-20
 
         knob Iexc  "Iexc"  text "" A      %4.2f iexc  disprange:0-30

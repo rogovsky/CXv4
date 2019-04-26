@@ -47,6 +47,49 @@ define(`IE4_LINE', `
     knob off$1 "-"  onoff "color=black" ""         "" r:off$1
 ')
 
+# 1:id 2:label 3:dev 4:N_in_dev 5:preset_N
+define(`PRESET_D16_LINE', `
+    knob $1_a $2  text   - ""  %5.0f  r:$3.p$5.a$4
+    knob $1_b ""  text   - ""  %3.0f  r:$3.p$5.b$4
+    knob $1_o "-" onoff "color=black" r:$3.p$5.off$4
+')
+# 1:preset_N 2:label 3:dev 4:l1id 5:l1l 6:l2id 7:l2l 8:l3id 9:l3l 10:l4id 11:l4l
+define(`PRESET_ONE_D16', `
+    noop - \n$2 hlabel
+    noop
+    knob     $1.dsbl "X" onoff    "color=black"        r:$3.p$1.alloff
+    PRESET_D16_LINE($4,  $5,  $3, 0, $1)
+    PRESET_D16_LINE($6,  $7,  $3, 1, $1)
+    PRESET_D16_LINE($8,  $9,  $3, 2, $1)
+    PRESET_D16_LINE($10, $11, $3, 3, $1)
+')
+# 1:label 2:r
+define(`PRESET_ONE_ACCORD', `
+    knob - $1 text "withunits,noincdec" "V" %5.3f alwdrange:0-4.3 r:$2
+    noop
+    noop
+')
+# 1:preset_N 2:title
+define(`IE_PRESET_PANEL', `
+    container preset_$1 "Preset $1 ("$2")" grid coltitles:"A\tB\t-" ncols:3 nattl:1 content:eval(1+3*(4*5)+3*1+3*4) {
+        button -activate "Activate!" button \
+                r:"_all_code; ret 0;" \
+                w:"_all_code; push $1; putchan .ic.ie.activate_preset_n; ret;"
+        PRESET_ONE_D16($1, `"e- #2"',   ie_d16_2,  d16_4_on,  ":4 start",   ehigh_on, "High strt", ehigh_off,"High stop", a200_on,  "ADC200")
+        PRESET_ONE_D16($1, `"e- #4"',   ie_d16_4,  p_pre,     "+ pre",      m_pre,    "- pre",     p_kick,   "+ kick",    m_kick,   "- kick")
+        PRESET_ONE_D16($1, `"e+ #16"',  ie_d16_16, d16_18_on, ":18 start",  phigh_on, "High strt", phigh_off,"High stop", a200_on,  "ADC200")
+        PRESET_ONE_D16($1, `"e- #18"',  ie_d16_18, p_pre,     "+ pre",      m_pre,    "- pre",     p_kick,   "+ kick",    m_kick,   "- kick")
+        knob ie_mode "" selector r:ic.kickers.p$1.swc.mode \
+                items:"#Te-\te+\t\n?"
+        noop
+        noop
+        PRESET_ONE_ACCORD(A1, ic.eKickers.p$1.preKick.Uset)
+        PRESET_ONE_ACCORD(A2, ic.eKickers.p$1.kick.Uset)
+        PRESET_ONE_ACCORD(A3, ic.pKickers.p$1.preKick.Uset)
+        PRESET_ONE_ACCORD(A4, ic.pKickers.p$1.kick.Uset)
+    }
+')
+
 
 grouping main RFSYN_ENG_grouping "RFSyn: engineering screen" lrtb "vertical" \
         content:5 {
@@ -96,49 +139,58 @@ grouping main RFSYN_ENG_grouping "RFSyn: engineering screen" lrtb "vertical" \
 
     container acc "Acceleration" grid coltitles:"A\tB, ns\tT, ns\t-\tStarts" \
             ncols:5 content:eval(4*25) {
-         ONE_D16(_11, `"D16 #11"', lrf_d16_11, klss,     "Klystrons",  rf,       "RF",        rf_adc,   "RF ADC",    synchr3,  "Synchr.3")
-         ONE_D16(_2,  `"D16 #2"',  lrf_d16_2,  kls1,     "Kls 1",      kls2,     "Kls 2",     kls3,     "Kls 3",     kls4,     "Kls 4")
-         ONE_D16(_12, `"D16 #12"', lrf_d16_12, rf_k2,    "RF K2",      phase_k2, "Phase K2",  rf_k3,    "RF K3",     phase_k3, "Phase K3")
-         ONE_D16(_14, `"D16 #14"', lrf_d16_14, rf_k1,    "RF K1",      phase_k1, "Phase K1",  rf_k4,    "RF K4",     phase_k4, "Phase K4")
+        ONE_D16(_11, `"D16 #11"', lrf_d16_11, klss,     "Klystrons",  rf,       "RF",        rf_adc,   "RF ADC",    synchr3,  "Synchr.3")
+        ONE_D16(_2,  `"D16 #2"',  lrf_d16_2,  kls1,     "Kls 1",      kls2,     "Kls 2",     kls3,     "Kls 3",     kls4,     "Kls 4")
+        ONE_D16(_12, `"D16 #12"', lrf_d16_12, rf_k2,    "RF K2",      phase_k2, "Phase K2",  rf_k3,    "RF K3",     phase_k3, "Phase K3")
+        ONE_D16(_14, `"D16 #14"', lrf_d16_14, rf_k1,    "RF K1",      phase_k1, "Phase K1",  rf_k4,    "RF K4",     phase_k4, "Phase K4")
     }
 
     container rad "Rad.mode" grid coltitles:"A\tB, ns\tT, ns\t-\tStarts" \
-            ncols:5 content:eval(5*25) {
-         ONE_D16(_18, `"D16 #18"', lbm_d16_18, kicker,   "Kicker",     r_18_2,   "reserve",   gun_dly,  "Gun delay", synchr1,  "Synchr.1")
-         ONE_D16(_6,  `"D16 #6"',  lbm_d16_6,  gun_diag, "Gun diag",   r_6_2,    "reserve",   adc_trg,  "Targ ADC",  magc_s,   "Mag Conc")
-         ONE_D16(_10, `"D16 #10"', lbm_d16_10, bunk_sr,  "(bunk SR)",  ipp,      "IPP",       f2856,    "Phs 2856",  h2_pick,  "H2 pick")
-         ONE_D16(_8,  `"D16 #8"',  lbm_d16_8,  gun_hv,   "Gun HV",     gun_grid, "Gun grid",  gun_200,  "Gun A200",  synchr2,  "Synchr.2")
-         ONE_D16(_16, `"D16 #16"', lbm_d16_16, h1_esens, "H1 esens",   h1_phcam, "H1 camrs",  h2_esens, "H2 esens",  h2_phcam, "H2 camrs")
+            ncols:5 content:eval(6*25) {
+        ONE_D16(_18, `"D16 #18"', lbm_d16_18, kicker,   "Kicker",     r_18_2,   "reserve",   gun_dly,  "Gun delay", synchr1,  "Synchr.1")
+        ONE_D16(_6,  `"D16 #6"',  lbm_d16_6,  gun_diag, "Gun diag",   r_6_2,    "reserve",   adc_trg,  "Targ ADC",  magc_s,   "Mag Conc")
+        ONE_D16(_10, `"D16 #10"', lbm_d16_10, bunk_sr,  "(bunk SR)",  ipp,      "IPP",       f2856,    "Phs 2856",  h2_pick,  "H2 pick")
+        ONE_D16(_8,  `"D16 #8"',  lbm_d16_8,  gun_hv,   "Gun HV",     gun_grid, "Gun grid",  gun_200,  "Gun A200",  synchr2,  "Synchr.2")
+        ONE_D16(_16, `"D16 #16"', lbm_d16_16, h1_esens, "H1 esens",   h1_phcam, "H1 camrs",  h2_esens, "H2 esens",  h2_phcam, "H2 camrs")
+        ONE_D16(_5,  `"D16 #5"',  xfr_d16_5,  hbz1,     "hbz1",       hbz2,     "hbz2",      hbz3,     "hbz3",      h2_phcam, "hbz4")
     } layinfo:newline
 
     container trs "Transfer" grid coltitles:"A\tB, ns\tT, ns\t-\tStarts" \
             ncols:5 nattl:2 content:eval(2*25 + 2) {
-         selector in  "In" choicebs r:xfr_k4_19.in_sel  items:"-\t1\t2\t3\t4"
-         selector out "->" choicebs r:xfr_k4_19.out_sel items:"-\tO1\tOIn\tO1+OIn"
+        selector in  "In" choicebs r:xfr_k4_19.in_sel  items:"-\t1\t2\t3\t4"
+        selector out "->" choicebs r:xfr_k4_19.out_sel items:"-\tO1\tOIn\tO1+OIn"
 
-         ONE_D16(_20, `"D16 #20"', xfr_d16_20, vepp5,    "VEPP 5",     vepp2k,   "VEPP 2K",   vepp3,    "VEPP 3",    r_20_4,   "reserve",
-                 `container _20_start_stop "" grid nodecor ncols:3 content:3 {
-                      button tyk       ">!"  button r:xfr_d16_20.do_shot
-                      disp   was_start ""    led    r:xfr_d16_20.was_start
-                      button ones_stop "stp" button r:xfr_d16_20.ones_stop
-                  }
-                 ')
-         ONE_D16(_21, `"D16 #21"', xfr_d16_21, r_21_1,   "reserve",    magn_on,  "Mag strt",  magn_off, "Mag stop",  ipp_k500, "IPP k500")
+        ONE_D16(_20, `"D16 #20"', xfr_d16_20, vepp5,    "VEPP 5",     vepp2k,   "VEPP 2K",   vepp3,    "VEPP 3",    r_20_4,   "reserve",
+                `container _20_start_stop "" grid nodecor ncols:3 content:3 {
+                     button tyk       ">!"  button r:xfr_d16_20.do_shot
+                     disp   was_start ""    led    r:xfr_d16_20.was_start
+                     button ones_stop "stp" button r:xfr_d16_20.ones_stop
+                 }
+                ')
+        ONE_D16(_21, `"D16 #21"', xfr_d16_21, r_21_1,   "reserve",    magn_on,  "Mag strt",  magn_off, "Mag stop",  ipp_k500, "IPP k500")
     } layinfo:newline
 
-    container iek "Inj/Extr" grid coltitles:"A\tB, ns\tT, ns\t-\tStarts" \
-            ncols:5 nattl:6 content:eval(4*25 + 6) {
-         selector k8_1   "a200:10" choicebs r:ie_k4_8.comm1  items:"-1\t-3"
-         noop
-         selector k8_2   "" choicebs r:ie_k4_8.comm2  items:"+1\t+3"
-         selector k15_1  "a200:12" choicebs r:ie_k4_15.comm1 items:"-2\t-4"
-         noop
-         selector k15_2  "" choicebs r:ie_k4_15.comm2 items:"+2\t+4"
+    container iek "I/E" grid coltitles:"A\tB, ns\tT, ns\t-\tStarts" \
+            ncols:5 nattl:7 content:eval(4*25 + 7) {
+        container "-presets" "..." subwin subwintitle:"I/E presets" content:1 {
+            container "" "" lrtb content:4 {
+                IE_PRESET_PANEL(0, "e- VEPP4")
+                IE_PRESET_PANEL(1, "e+ VEPP4")
+                IE_PRESET_PANEL(2, "e- VEPP2K")
+                IE_PRESET_PANEL(3, "e+ VEPP2K")
+            }
+        }
+        selector k8_1   "a200:10" choicebs r:ie_k4_8.comm1  items:"-1\t-3"
+        noop
+        selector k8_2   "" choicebs r:ie_k4_8.comm2  items:"+1\t+3"
+        selector k15_1  "a200:12" choicebs r:ie_k4_15.comm1 items:"-2\t-4"
+        noop
+        selector k15_2  "" choicebs r:ie_k4_15.comm2 items:"+2\t+4"
 
-         ONE_D16(_2,  `"e- #2"',   ie_d16_2,  d16_4_on,  ":4 start",   ehigh_on, "High strt", ehigh_off,"High stop", a200_on,  "ADC200")
-         ONE_D16(_4,  `"e- #4"',   ie_d16_4,  p_pre,     "+ pre",      m_pre,    "- pre",     p_kick,   "+ kick",    m_kick,   "- kick")
-         ONE_D16(_16, `"e+ #16"',  ie_d16_16, d16_18_on, ":18 start",  phigh_on, "High strt", phigh_off,"High stop", a200_on,  "ADC200")
-         ONE_D16(_18, `"e- #18"',  ie_d16_18, p_pre,     "+ pre",      m_pre,    "- pre",     p_kick,   "+ kick",    m_kick,   "- kick")
+        ONE_D16(_2,  `"e- #2"',   ie_d16_2,  d16_4_on,  ":4 start",   ehigh_on, "High strt", ehigh_off,"High stop", a200_on,  "ADC200")
+        ONE_D16(_4,  `"e- #4"',   ie_d16_4,  p_pre,     "+ pre",      m_pre,    "- pre",     p_kick,   "+ kick",    m_kick,   "- kick")
+        ONE_D16(_16, `"e+ #16"',  ie_d16_16, d16_18_on, ":18 start",  phigh_on, "High strt", phigh_off,"High stop", a200_on,  "ADC200")
+        ONE_D16(_18, `"e- #18"',  ie_d16_18, p_pre,     "+ pre",      m_pre,    "- pre",     p_kick,   "+ kick",    m_kick,   "- kick")
     }
 
 }

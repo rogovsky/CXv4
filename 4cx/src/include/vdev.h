@@ -13,6 +13,8 @@ enum
     VDEV_IMPR = 1 << 0,  // Internally-IMPoRtant channel
     VDEV_PRIV = 1 << 1,  // Privately-used channel
     VDEV_TUBE = 1 << 2,  // Tube -- map our channel to target's one
+
+    VDEV_DO_RD_CONV = 1 << 31, // Do NOT use CDA_DATAREF_OPT_NO_RD_CONV
 };
 
 typedef struct

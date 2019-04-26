@@ -29,6 +29,8 @@ static int max_set_values[WELD02_SET_n_count] =
     4095, //???
     3,
     1,
+    0,
+    4095, //???
 };
 
 
@@ -41,6 +43,7 @@ typedef struct
     int              handle;
 
     int              supports_adc9;
+    int              supports_out9;
 
     struct
     {
@@ -94,6 +97,7 @@ static int weld02_init_d(int devid, void *devptr,
     SetChanRDs       (devid, WELD02_CHAN_SET_UP,     1,   4095.0/250/*!!!???*/, 0.0);
     SetChanRDs       (devid, WELD02_CHAN_SET_IH,     1,       10,          0.0);
     SetChanRDs       (devid, WELD02_CHAN_SET_IL,     1,       10,          0.0);
+    SetChanRDs       (devid, WELD02_CHAN_SET_PIND,   1, 224587.0/20/128,   0.0);
     SetChanRDs       (devid, WELD02_CHAN_MES_UH,     1,   4095.0/6000,     0.0);
     SetChanRDs       (devid, WELD02_CHAN_MES_UL,     1,   4095.0/6000,     0.0);
     SetChanRDs       (devid, WELD02_CHAN_MES_UN,     1,   4095.0/125,      0.0);
@@ -137,6 +141,7 @@ static void weld02_ff (int devid, void *devptr, int is_a_reset)
 
     me->lvmt->get_dev_ver(me->handle, NULL, &sw_ver, NULL);
     me->supports_adc9 = (sw_ver >= 9);
+    me->supports_out9 = (sw_ver >= 9);
 
     SetChanRDs(devid, WELD02_CHAN_MES_UN, 1,
                (sw_ver <= 8)? 4095.0/125 : 4095.0/25, 
@@ -148,6 +153,10 @@ static void weld02_ff (int devid, void *devptr, int is_a_reset)
         ReSendSetting(devid, me, WELD02_CHAN_SET_UL);
         ReSendSetting(devid, me, WELD02_CHAN_SET_UN);
     }
+
+    if (me->supports_out9)
+        me->lvmt->q_enq_v(me->handle, SQ_IF_NONEORFIRST, 1,
+                          DESC_QRY_base + WELD02_SET_n_PIND);
 }
 
 static void weld02_in (int devid, void *devptr __attribute__((unused)),
@@ -245,7 +254,9 @@ static void weld02_rw_p(int devid, void *devptr,
             val = 0xFFFFFFFF; // That's just to make GCC happy
 
         if      (chn >= WELD02_CHAN_SET_base  &&
-                 chn <= WELD02_CHAN_SET_base + WELD02_SET_n_count-1)
+                 chn <= WELD02_CHAN_SET_base + WELD02_SET_n_count-1  &&
+                 chn != WELD02_CHAN_SET_UNS8  &&
+                 (chn != WELD02_CHAN_SET_PIND  ||  me->supports_out9))
         {
             attr = chn - WELD02_CHAN_SET_base;
 #define USE_AA 1

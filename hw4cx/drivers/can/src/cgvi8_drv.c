@@ -45,7 +45,7 @@ static inline uint16 quants2code(int32  quants, int prescaler)
 
 //////////////////////////////////////////////////////////////////////
 
-#define DEBUG_CGVI8M_MASK 1
+#define DEBUG_CGVI8M_MASK 0
 typedef struct
 {
     cankoz_vmt_t    *lvmt;
@@ -58,9 +58,6 @@ typedef struct
     int32                cur_codes     [CGVI8_CHAN_OUT_count];
     int                  cur_codes_read[CGVI8_CHAN_OUT_count];
 
-#if DEBUG_CGVI8M_MASK
-        int rd_req_sent;
-#endif
     struct
     {
         /* General behavioral properties */
@@ -98,6 +95,32 @@ static void send_wrmode_cmd(privrec_t *me)
 //    me->mode.wrt_prescaler = 0; /* With this uncommented, prescaler stops changing upon mode loads */
 }
 
+#if DEBUG_CGVI8M_MASK
+static void OnSendRdModeCmdCB(int         devid   __attribute__((unused)),
+                              void       *devptr,
+                              sq_try_n_t  try_n   __attribute__((unused)),
+                              void       *privptr __attribute__((unused)),
+                              int         desc  __attribute__((unused)),
+                              size_t      dlc   __attribute__((unused)),
+                              uint8      *data  __attribute__((unused)))
+{
+  privrec_t *me = devptr;
+
+    me->mode.rd_req_sent = 1;
+}
+#endif
+static void send_rdmode_cmd(privrec_t *me, sq_enqcond_t how)
+{
+    me->lvmt->q_enqueue_v(me->handle, how,
+                          SQ_TRIES_INF, 0,
+#if DEBUG_CGVI8M_MASK
+                          OnSendRdModeCmdCB, NULL,
+#else
+                          NULL,              NULL,
+#endif
+                          0, 1, CANKOZ_DESC_GETDEVSTAT);
+}
+
 //////////////////////////////////////////////////////////////////////
 
 static void cgvi8_ff (int devid, void *devptr, int is_a_reset);
@@ -111,8 +134,9 @@ static void cgvi8_mask_hbt(int devid, void *devptr,
   privrec_t *me = devptr;
 
     sl_enq_tout_after(devid, devptr, 60*1000000, cgvi8_mask_hbt, NULL);
-    me->lvmt->q_enq_v(me->handle, SQ_IF_ABSENT,
-                      1, CANKOZ_DESC_GETDEVSTAT);
+    if (privptr == NULL) // !=NULL means "do NOT send"
+        me->lvmt->q_enq_v(me->handle, SQ_IF_ABSENT,
+                          1, CANKOZ_DESC_GETDEVSTAT);
 }
 #endif
 static int  cgvi8_init_d(int devid, void *devptr,
@@ -143,7 +167,7 @@ static int  cgvi8_init_d(int devid, void *devptr,
     SetChanReturnType(devid, CGVI8_CHAN_HW_VER, 1, IS_AUTOUPDATED_TRUSTED);
     SetChanReturnType(devid, CGVI8_CHAN_SW_VER, 1, IS_AUTOUPDATED_TRUSTED);
 #if DEBUG_CGVI8M_MASK
-    cgvi8_mask_hbt(devid, devptr, -1, NULL);
+    cgvi8_mask_hbt(devid, devptr, -1, lint2ptr(1));
 #endif
 
     return DEVSTATE_OPERATING;
@@ -235,10 +259,7 @@ static void cgvi8_in (int devid, void *devptr,
             if (me->mode.pend)
             {
                 send_wrmode_cmd(me);
-#if DEBUG_CGVI8M_MASK
-                (me->mode.rd_req_sent = 1),
-#endif
-                me->lvmt->q_enq_v(me->handle, SQ_ALWAYS, 1, CANKOZ_DESC_GETDEVSTAT);
+                send_rdmode_cmd(me, SQ_ALWAYS);
             }
 
             /* Finally, return received data */
@@ -339,11 +360,7 @@ static void cgvi8_rw_p(int devid, void *devptr,
         {
             /* Read? */
             if (action == DRVA_READ)
-#if DEBUG_CGVI8M_MASK
-                (me->mode.rd_req_sent = 1),
-#endif
-                me->lvmt->q_enq_v(me->handle, SQ_IF_ABSENT,
-                                  1, CANKOZ_DESC_GETDEVSTAT);
+                send_rdmode_cmd(me, SQ_IF_ABSENT);
             /* No, some form of write */
             else
             {
@@ -374,20 +391,12 @@ static void cgvi8_rw_p(int devid, void *devptr,
                 {
                     /*!!! Should use SQ_REPLACE_NOTFIRST and send READ only if NOTFOUND */
                     send_wrmode_cmd(me);
-#if DEBUG_CGVI8M_MASK
-                    (me->mode.rd_req_sent = 1),
-#endif
-                    me->lvmt->q_enq_v(me->handle, SQ_ALWAYS, 1,
-                                      CANKOZ_DESC_GETDEVSTAT);
+                    send_rdmode_cmd(me, SQ_ALWAYS);
                 }
                 /* No, we should request read first... */
                 else
                 {
-#if DEBUG_CGVI8M_MASK
-                    (me->mode.rd_req_sent = 1),
-#endif
-                    me->lvmt->q_enq_v(me->handle, SQ_IF_ABSENT, 1,
-                                      CANKOZ_DESC_GETDEVSTAT);
+                    send_rdmode_cmd(me, SQ_IF_ABSENT);
                 }
             }
         }
@@ -414,18 +423,10 @@ static void cgvi8_rw_p(int devid, void *devptr,
                     /*!!! Should use SQ_REPLACE_NOTFIRST and send READ only if NOTFOUND */
                     me->lvmt->q_enq_ons_v(me->handle, SQ_ALWAYS, 2,
                                           DESC_WRITE_BASEBYTE, c_c);
-#if DEBUG_CGVI8M_MASK
-                    (me->mode.rd_req_sent = 1),
-#endif
-                    me->lvmt->q_enq_v    (me->handle, SQ_ALWAYS, 1,
-                                          CANKOZ_DESC_GETDEVSTAT);
+                    send_rdmode_cmd(me, SQ_ALWAYS);
                 }
                 else
-#if DEBUG_CGVI8M_MASK
-                    (me->mode.rd_req_sent = 1),
-#endif
-                    me->lvmt->q_enq_v(me->handle, SQ_IF_NONEORFIRST, 1,
-                                      CANKOZ_DESC_GETDEVSTAT);
+                    send_rdmode_cmd(me, SQ_IF_NONEORFIRST);
             }
             else
                 ReturnInt32Datum(devid, chn, 0, CXRF_UNSUPPORTED);

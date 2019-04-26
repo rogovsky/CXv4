@@ -4,7 +4,7 @@
 
 /* Note: channel map is identical to U0632 (KIPP) */
 
-// r30i32,r120i32,r90i,w60i,w50i,r50i
+// r30i32,r120i32,r90i,w60i,w50i,r50i,r30i,w30i,r40i
 enum
 {
     CANIPP_MAXUNITS       = 30,  // 15 boxes per line, 2 lines
@@ -38,9 +38,15 @@ enum
     CANIPP_CHAN_BIAS_STEPS_LEFT = CANIPP_CHAN_RD_base + 11,
     CANIPP_CHAN_BIAS_CUR_COUNT  = CANIPP_CHAN_RD_base + 12,
 
+    CANIPP_CHAN_READ_STATE      = CANIPP_CHAN_RD_base + 13,
+
     CANIPP_CHAN_CONST32         = CANIPP_CHAN_RD_base + 20,
 
-    CANIPP_NUMCHANS           = 400,
+    CANIPP_CHAN_CREG_ADD_base   = 400,
+    CANIPP_CHAN_CUR_CREG_n_base = 400,
+    CANIPP_CHAN_CREG_n_base     = 430,
+
+    CANIPP_NUMCHANS           = 500,
 };
 
 enum

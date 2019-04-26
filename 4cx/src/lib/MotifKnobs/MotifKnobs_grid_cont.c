@@ -527,7 +527,7 @@ dataknob_cont_vmt_t motifknobs_grid_vmt =
 dataknob_cont_vmt_t motifknobs_def_cont_vmt =
 {
     {DATAKNOB_CONT, DEFAULT_KNOB_LOOK_NAME,
-        sizeof(grid_privrec_t), text2gridopts,
+        sizeof(grid_privrec_t), NULL,
         0,
         CreateDefCont, MotifKnobs_CommonDestroy_m, NULL, NULL},
     NULL, NULL, NULL, NULL, NULL, NULL,

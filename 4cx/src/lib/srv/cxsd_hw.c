@@ -18,7 +18,7 @@ enum {_DEVSTATE_DESCRIPTION_MAX_NELEMS = 100};
 
 
 
-static int             MustSimulateHardware = 0;
+static int             MustSimulateHardware = CXSD_SIMULATE_OFF;
 static int             MustCacheRFW         = 1;
 static int             IsReqRofWrChsIng     = 0; // Is-(request-read-of-write-channels)'ing
 static int             ReturningInternal    = 0;
@@ -119,6 +119,16 @@ static int  CxsdHwCallChanEvprocs(cxsd_gchnid_t gcid,
 
 //////////////////////////////////////////////////////////////////////
 
+static void report_logmask(int devid)
+{
+  cxsd_hw_dev_t *dev_p = cxsd_hw_devices + devid;
+
+    ReturningInternal = 1;
+    ReturnInt32Datum(devid, dev_p->count + CXSD_DB_CHAN_LOGMASK_OFS, dev_p->logmask, 0);
+}
+
+//////////////////////////////////////////////////////////////////////
+
 static void CxsdHwList(FILE *fp)
 {
   int                lyr_n;
@@ -158,8 +168,93 @@ static void CxsdHwList(FILE *fp)
                 dev_p->first, dev_p->count, dev_p->wauxcount,
                 CxsdDbGetStr(cxsd_hw_cur_db, dev_p->db_ref->auxinfo_ofs));
     }
+    fprintf(fp, "==== %d layers, %d devices, %d channels ====\n",
+            cxsd_hw_numlyrs, cxsd_hw_numdevs, cxsd_hw_numchans);
 }
 
+
+static int LogspecPluginParser(const char *str, const char **endptr,
+                               void *rec, size_t recsize __attribute__((unused)),
+                               const char *separators __attribute__((unused)), const char *terminators __attribute__((unused)),
+                               void *privptr __attribute__((unused)), char **errstr)
+{
+  int         logmask;
+  int        *lmp = (int *)rec;
+  
+  int         log_set_mask;
+  int         log_clr_mask;
+  char       *log_parse_r;
+  
+    logmask = cxsd_hw_defdrvlog_mask;
+  
+    if (str != NULL)
+    {
+        log_parse_r = ParseDrvlogCategories(str, endptr,
+                                            &log_set_mask, &log_clr_mask);
+        if (log_parse_r != NULL)
+        {
+            if (errstr != NULL) *errstr = log_parse_r;
+            return PSP_R_USRERR;
+        }
+        
+        logmask = (logmask &~ log_clr_mask) | log_set_mask;
+    }
+
+    *lmp = logmask;
+
+    return PSP_R_OK;
+}
+
+typedef struct
+{
+    int  logmask;
+} drvopts_t;
+
+static psp_paramdescr_t text2drvopts[] =
+{
+    PSP_P_PLUGIN ("log", drvopts_t, logmask, LogspecPluginParser, NULL),
+    PSP_P_END()
+};
+
+
+static size_t FillInternalChanProps(int gchan,
+                                    int rw, cxdtype_t dtype, int nelems,
+                                    int devid, int stage, size_t current_val_bufsize)
+{
+  cxsd_hw_chan_t    *chn_p;
+  size_t             usize;                // Size of data-units
+  size_t             csize;                // Channel data size
+
+    usize  = sizeof_cxdtype(dtype);
+    csize  = usize * nelems;
+    /* ...alignment */
+    current_val_bufsize = (current_val_bufsize + usize-1)
+                          & (~(usize - 1));
+    if (stage)
+    {
+        chn_p = cxsd_hw_channels + gchan;
+        chn_p->rw             = rw;
+        chn_p->is_autoupdated = 1;
+        chn_p->is_internal    = 1;
+        chn_p->devid          = devid;
+        chn_p->boss           = -1; /*!!!*/
+#if CXSD_HW_SUPPORTS_CXDTYPE_UNKNOWN
+        chn_p->dtype          = chn_p->current_dtype = dtype;
+        chn_p->max_nelems     = nelems;
+        chn_p->usize          = chn_p->current_usize = usize;
+#else
+        chn_p->dtype          = dtype;
+        chn_p->max_nelems     = nelems;
+        chn_p->usize          = usize;
+#endif
+        chn_p->timestamp.sec  = INITIAL_TIMESTAMP_SECS;
+        chn_p->timestamp.nsec = 0;
+        chn_p->fresh_age      = (cx_time_t){0,0}; /*Infinite*/
+        chn_p->current_val    = cxsd_hw_current_val_buf + current_val_bufsize;
+        chn_p->current_nelems = 1;
+    }
+    return current_val_bufsize + csize;
+}
 static int chan_evproc_remover(cxsd_hw_chan_cbrec_t *p, void *privptr)
 {
     /*!!! should call RlsChanCbSlot() somehow, but it requires "id" instead of "p" */
@@ -186,61 +281,68 @@ int  CxsdHwSetDb   (CxsdDb db)
   cxsd_hw_chan_t    *chn_p;
   int                nchans;
 
-#if CXSD_HW_ALLOC_ALL
   size_t             layers_bufsize;
   size_t             devices_bufsize;
   size_t             channels_bufsize;
-#endif
   size_t             current_val_bufsize;
   size_t             next_wr_val_bufsize;
   size_t             usize;                // Size of data-units
   size_t             csize;                // Channel data size
 
+////////////
+  int                numlyrs;
+  int                numdevs;
+
+  int                other_devid;
+  CxsdDbDevLine_t   *other_db_dev_p;
+  const char        *other_lyrname;
+
+  size_t             ofs;
+  size_t             lyr_bufofs;
+  size_t             dev_bufofs;
+  size_t             chn_bufofs;
+  size_t             crv_bufofs;
+  size_t             nwr_bufofs;
+  size_t             rqd_bufsize;
+
     db->is_readonly = 1;
     cxsd_hw_cur_db  = db;
 
-    /* II. Free old data */
-    safe_free(cxsd_hw_current_val_buf); cxsd_hw_current_val_buf = NULL;
-    safe_free(cxsd_hw_next_wr_val_buf); cxsd_hw_next_wr_val_buf = NULL;
+    /*!!! Here MUST do the following:
+      1. Drop all on-channel callbacks
+      2. Set all cxsd_hw_num*=0 */
 
-    /* III. Clear info */
-#if CXSD_HW_ALLOC_ALL
-#else
-    cxsd_hw_numlyrs  = 0;
-    cxsd_hw_numdevs  = 0;
-    cxsd_hw_numchans = 0;
-    bzero(&cxsd_hw_layers,   sizeof(cxsd_hw_layers));
-    bzero(&cxsd_hw_devices,  sizeof(cxsd_hw_devices));
-    bzero(&cxsd_hw_channels, sizeof(cxsd_hw_channels));
-    for (devid = 0;  devid < countof(cxsd_hw_devices);  devid++)
-        cxsd_hw_devices[devid].state = DEVSTATE_OFFLINE;
-#endif
-    
-    /* IV. Fill devices' and channels' properties according to now-current DB,
-           adding devices one-by-one */
+    /* Fill devices' and channels' properties according to now-current DB,
+       adding devices one-by-one */
 
-    /* Put aside a zero-id layer */
-    cxsd_hw_numlyrs = 1;
-    cxsd_hw_layers[0].lyrname_ofs = -1;
-    
     /* On stage 0 we just count sizes, and
-       fill properties on stage 1 */
+       on stage 1 do fill properties */
     for (stage = 0;  stage <= 1;  stage++)
     {
         current_val_bufsize = 0;
         next_wr_val_bufsize = 0;
+
+        /* Put aside a zero-id layer */
+        numlyrs = 1;
+        if (stage)
+            cxsd_hw_layers[0].lyrname_ofs = -1;
 
         /* Enumerate devices */
         for (devid = 0, hw_d = cxsd_hw_cur_db->devlist, nchans = 0;
              devid < cxsd_hw_cur_db->numdevs;
              devid++,   hw_d++)
         {
-            dev_p = cxsd_hw_devices + devid;
+            if (stage)
+            {
+                dev_p = cxsd_hw_devices + devid;
 
-            dev_p->db_ref = hw_d;
+                dev_p->db_ref       = hw_d;
+                dev_p->is_simulated = hw_d->is_simulated;
+                dev_p->state        = DEVSTATE_OFFLINE;
 
-            /* Remember 1st (0th!) channel number */
-            dev_p->first = nchans;
+                /* Remember 1st (0th!) channel number */
+                dev_p->first = nchans;
+            }
             
             /* Go through channel groups */
             for (g = 0,  grp_p = hw_d->changroups;
@@ -252,6 +354,10 @@ int  CxsdHwSetDb   (CxsdDb db)
                 /* Perform padding for alignment, if required */
                 if (csize > 0  &&
                     /* Is it a power of 2?  I.e., does alignment have sense? */
+                    /* (In fact, ANY dtype has a size==power_of_2, because
+                        of cxdtype_t organization: CXDTYPE_SIZE_MASK part
+                        contains the 2-exponrnt of the size in bytes;
+                        thus, ONLY power-of-2 sizes are representable.) */
                     (/* NO == 1 */    usize == 2   ||  
                      usize == 4   ||  usize == 8   ||  
                      usize == 16  ||  usize == 32  ||  
@@ -267,144 +373,149 @@ int  CxsdHwSetDb   (CxsdDb db)
                 }
 ////if (stage) fprintf(stderr, "\tdev#%d.g#%d: usize=%zd,csize=%zd v=%zd w=%zd\n", devid, g, usize, csize, current_val_bufsize, next_wr_val_bufsize);
 
-                /* Iterate individual channels */
-                for (x = 0,  chn_p = cxsd_hw_channels + nchans;
-                     x < grp_p->count;
-                     x++,    chn_p++,  nchans++)
+                /* On stage 0 just count required buffers' sizes */
+                if (stage == 0)
                 {
-                    chn_p->rw             = grp_p->rw;
-                    chn_p->devid          = devid;
-                    chn_p->boss           = -1; /*!!!*/
-#if CXSD_HW_SUPPORTS_CXDTYPE_UNKNOWN
-                    chn_p->dtype          = chn_p->current_dtype = grp_p->dtype;
-                    chn_p->max_nelems     = grp_p->max_nelems;
-                    chn_p->usize          = chn_p->current_usize = usize;
-#else
-                    chn_p->dtype          = grp_p->dtype;
-                    chn_p->max_nelems     = grp_p->max_nelems;
-                    chn_p->usize          = usize;
-#endif
-                    chn_p->timestamp.sec  = INITIAL_TIMESTAMP_SECS;
-                    chn_p->timestamp.nsec = 0;
-                    if (chn_p->rw == 0)
-                        chn_p->fresh_age  = (cx_time_t){5,0}; /*!!!*/
-                    else
-                        chn_p->fresh_age  = (cx_time_t){0,0}; /* No-fresh-aging */
-
-                    chn_p->q_dtype        = chn_p->dtype;
-
-                    if (stage)
+                    current_val_bufsize += csize * grp_p->count;
+                    if (grp_p->rw  ||
+                        hw_d->is_simulated   >= CXSD_SIMULATE_SUP  ||
+                        MustSimulateHardware >= CXSD_SIMULATE_SUP)
+                        next_wr_val_bufsize += csize * grp_p->count;
+                    nchans += grp_p->count;
+                }
+                /* On stage 1 terate individual channels */
+                else
+                    for (x = 0,  chn_p = cxsd_hw_channels + nchans;
+                         x < grp_p->count;
+                         x++,    chn_p++,  nchans++)
                     {
-                        chn_p->current_val = cxsd_hw_current_val_buf + current_val_bufsize;
+                        chn_p->rw             = (grp_p->rw  ||
+                                                 hw_d->is_simulated   >= CXSD_SIMULATE_SUP  ||
+                                                 MustSimulateHardware >= CXSD_SIMULATE_SUP);
+                        chn_p->devid          = devid;
+                        chn_p->boss           = -1; /*!!!*/
+#if CXSD_HW_SUPPORTS_CXDTYPE_UNKNOWN
+                        chn_p->dtype          = chn_p->current_dtype = grp_p->dtype;
+                        chn_p->max_nelems     = grp_p->max_nelems;
+                        chn_p->usize          = chn_p->current_usize = usize;
+#else
+                        chn_p->dtype          = grp_p->dtype;
+                        chn_p->max_nelems     = grp_p->max_nelems;
+                        chn_p->usize          = usize;
+#endif
+                        chn_p->timestamp.sec  = INITIAL_TIMESTAMP_SECS;
+                        chn_p->timestamp.nsec = 0;
+                        if (chn_p->rw == 0)
+                            chn_p->fresh_age  = (cx_time_t){5,0}; /*!!!*/
+                        else
+                            chn_p->fresh_age  = (cx_time_t){0,0}; /* No-fresh-aging */
+
+                        chn_p->q_dtype        = chn_p->dtype;
+
                         if (chn_p->max_nelems == 1) /* Pre-set 1 for scalar channels */
                             chn_p->current_nelems = 1;
-                        if (grp_p->rw)
-                            chn_p->next_wr_val = cxsd_hw_next_wr_val_buf + next_wr_val_bufsize;
-                    }
 
-                    current_val_bufsize += csize;
-                    if (grp_p->rw) next_wr_val_bufsize += csize;
-                }
+                        // Consume buffers
+                        chn_p->current_val = cxsd_hw_current_val_buf + current_val_bufsize;
+                        current_val_bufsize += csize;
+                        if (chn_p->rw)
+                        {
+                            chn_p->next_wr_val = cxsd_hw_next_wr_val_buf + next_wr_val_bufsize;
+                            next_wr_val_bufsize += csize;
+                        }
+                    }
             }
 
             /* Fill in # of channels */
-            dev_p->count = nchans - dev_p->first;
+            if (stage)
+                dev_p->count     = nchans - dev_p->first;
 
-            /*!!! _devstate: For now, simply duplicate that code */
-            /* 1. _devstate */
-            chn_p = cxsd_hw_channels + nchans + CXSD_DB_CHAN_DEVSTATE_OFS;
-            chn_p->rw             = 0;
-            chn_p->is_autoupdated = 1;
-            chn_p->is_internal    = 1;
-            chn_p->devid          = devid;
-            chn_p->boss           = -1; /*!!!*/
-#if CXSD_HW_SUPPORTS_CXDTYPE_UNKNOWN
-            chn_p->dtype          = chn_p->current_dtype = CXDTYPE_INT32;
-            chn_p->max_nelems     = 1;
-            chn_p->usize          = chn_p->current_usize = sizeof_cxdtype(chn_p->dtype);
-#else
-            chn_p->dtype          = CXDTYPE_INT32;
-            chn_p->max_nelems     = 1;
-            chn_p->usize          = sizeof_cxdtype(chn_p->dtype);
-#endif
-            chn_p->timestamp.sec  = INITIAL_TIMESTAMP_SECS;
-            chn_p->timestamp.nsec = 0;
-            chn_p->fresh_age      = (cx_time_t){0,0}; /*Infinite*/
-            /* ...alignment */
-            current_val_bufsize     = (current_val_bufsize + chn_p->usize-1)
-                                      & (~(chn_p->usize - 1));
-            if (stage)
-            {
-                chn_p->current_val = cxsd_hw_current_val_buf + current_val_bufsize;
-                chn_p->current_nelems = 1;
-            }
-            current_val_bufsize += chn_p->usize * chn_p->max_nelems;
-            /* 2. _devstate_description */
-            chn_p = cxsd_hw_channels + nchans + CXSD_DB_CHAN_DEVSTATE_DESCRIPTION_OFS;
-            chn_p->rw             = 0;
-            chn_p->is_autoupdated = 1;
-            chn_p->is_internal    = 1;
-            chn_p->devid          = devid;
-            chn_p->boss           = -1; /*!!!*/
-#if CXSD_HW_SUPPORTS_CXDTYPE_UNKNOWN
-            chn_p->dtype          = chn_p->current_dtype = CXDTYPE_TEXT;
-            chn_p->max_nelems     = _DEVSTATE_DESCRIPTION_MAX_NELEMS;
-            chn_p->usize          = chn_p->current_usize = sizeof_cxdtype(chn_p->dtype);
-#else
-            chn_p->dtype          = CXDTYPE_TEXT;
-            chn_p->max_nelems     = _DEVSTATE_DESCRIPTION_MAX_NELEMS;
-            chn_p->usize          = sizeof_cxdtype(chn_p->dtype);
-#endif
-            chn_p->timestamp.sec  = INITIAL_TIMESTAMP_SECS;
-            chn_p->timestamp.nsec = 0;
-            chn_p->fresh_age      = (cx_time_t){0,0}; /*Infinite*/
-            if (stage)
-            {
-                chn_p->current_val = cxsd_hw_current_val_buf + current_val_bufsize;
-                chn_p->current_nelems = 0;
-            }
-            current_val_bufsize += chn_p->usize * chn_p->max_nelems;
+            /* Special _-channels (_logmask, _devstate, _devstate_description) */
+            /* 0. _logmask */
+            current_val_bufsize = FillInternalChanProps(nchans + CXSD_DB_CHAN_LOGMASK_OFS,
+                                                        1, CXDTYPE_INT32, 1,
+                                                        devid, stage, current_val_bufsize);
+            /* 1. _reserved_1 */
+            current_val_bufsize = FillInternalChanProps(nchans + CXSD_DB_CHAN_RESERVED_1_OFS,
+                                                        0, CXDTYPE_INT32, 1,
+                                                        devid, stage, current_val_bufsize);
+            /* 2. _devstate */
+            current_val_bufsize = FillInternalChanProps(nchans + CXSD_DB_CHAN_DEVSTATE_OFS,
+                                                        1, CXDTYPE_INT32, 1,
+                                                        devid, stage, current_val_bufsize);
+            /* 3. _devstate_description */
+            current_val_bufsize = FillInternalChanProps(nchans + CXSD_DB_CHAN_DEVSTATE_DESCRIPTION_OFS,
+                                                        0, CXDTYPE_TEXT, _DEVSTATE_DESCRIPTION_MAX_NELEMS,
+                                                        devid, stage, current_val_bufsize);
             /* count them */
             nchans += CXSD_DB_AUX_CHANCOUNT;
-            dev_p->wauxcount = dev_p->count + CXSD_DB_AUX_CHANCOUNT;
+            if (stage)
+                dev_p->wauxcount = dev_p->count + CXSD_DB_AUX_CHANCOUNT;
 
-            /* On stage 1 perform layer allocation if required */
-            if (stage  &&
-                (dev_lyrname = CxsdDbGetStr(cxsd_hw_cur_db, hw_d->lyrname_ofs)) != NULL)
+            if ((dev_lyrname = CxsdDbGetStr(cxsd_hw_cur_db, hw_d->lyrname_ofs)) != NULL)
             {
-                for (lyr_n = 1,  lyr_p = cxsd_hw_layers + 1;
-                     lyr_n < cxsd_hw_numlyrs;
-                     lyr_n++,    lyr_p++)
-                    if ((lyr_lyrname = CxsdDbGetStr(cxsd_hw_cur_db, lyr_p->lyrname_ofs)) != NULL  &&
-                        strcasecmp(dev_lyrname, lyr_lyrname) == 0) break;
-
-                /* Didn't we find it? */
-                if (lyr_n == cxsd_hw_numlyrs) /*!!! Check for overflow! */
+                /* On stage 0 just count layers */
+                if (stage == 0)
                 {
-                    /* Allocate a layer... */
-                    cxsd_hw_numlyrs++;
-                    lyr_p->lyrname_ofs = hw_d->lyrname_ofs;
+                    for (other_devid = 1, other_db_dev_p = cxsd_hw_cur_db->devlist + other_devid;
+                         other_devid < devid;
+                         other_devid++,   other_db_dev_p++)
+                        if ((other_lyrname = CxsdDbGetStr(cxsd_hw_cur_db,
+                                                          other_db_dev_p->lyrname_ofs)) != NULL  &&
+                            strcasecmp(dev_lyrname, other_lyrname) == 0) break;
+                        if (other_devid == devid)
+                            numlyrs++;
                 }
+                /* On stage 1 perform layer allocation */
+                else
+                {
+                    for (lyr_n = 1,  lyr_p = cxsd_hw_layers + lyr_n;
+                         lyr_n < numlyrs;
+                         lyr_n++,    lyr_p++)
+                        if ((lyr_lyrname = CxsdDbGetStr(cxsd_hw_cur_db, lyr_p->lyrname_ofs)) != NULL  &&
+                            strcasecmp(dev_lyrname, lyr_lyrname) == 0) break;
+                    if (lyr_n == numlyrs)
+                    {
+                        /* Allocate a layer... */
+                        numlyrs++;
+                        lyr_p->lyrname_ofs = hw_d->lyrname_ofs;
+                    }
 
-                dev_p->lyrid = -lyr_n;
+                    dev_p->lyrid = -lyr_n;
+                }
             }
         }
+        numdevs = devid;
 
-        /* Allocate buffers */
+        /* Allocate buffer and assign individual buffer-pointers */
         if (stage == 0)
         {
-            if (current_val_bufsize > 0)
-            {
-                if ((cxsd_hw_current_val_buf = malloc(current_val_bufsize))
-                    == NULL) goto CLEANUP;
-                bzero(cxsd_hw_current_val_buf, current_val_bufsize);
-            }
-            if (next_wr_val_bufsize > 0  &&
-                (cxsd_hw_next_wr_val_buf = malloc(next_wr_val_bufsize)) == NULL)
+            layers_bufsize   = numlyrs * sizeof(cxsd_hw_lyr_t);
+            devices_bufsize  = numdevs * sizeof(cxsd_hw_dev_t);
+            channels_bufsize = nchans  * sizeof(cxsd_hw_chan_t);
+
+            ofs = 0;
+            lyr_bufofs = ofs; ofs += (layers_bufsize      + 15) &~15UL;
+            dev_bufofs = ofs; ofs += (devices_bufsize     + 15) &~15UL;
+            chn_bufofs = ofs; ofs += (channels_bufsize    + 15) &~15UL;
+            crv_bufofs = ofs; ofs += (current_val_bufsize + 15) &~15UL;
+            nwr_bufofs = ofs; ofs += (next_wr_val_bufsize + 15) &~15UL;
+            rqd_bufsize = ofs;
+
+//            if ((cxsd_hw_buffers = malloc(rqd_bufsize)) == NULL)
+            if (GrowBuf(&cxsd_hw_buffers, &cxsd_hw_buf_size, rqd_bufsize) < 0)
                 goto CLEANUP;
+            bzero(cxsd_hw_buffers, rqd_bufsize);
+
+            cxsd_hw_layers          = (void *)(cxsd_hw_buffers + lyr_bufofs);
+            cxsd_hw_devices         = (void *)(cxsd_hw_buffers + dev_bufofs);
+            cxsd_hw_channels        = (void *)(cxsd_hw_buffers + chn_bufofs);
+            cxsd_hw_current_val_buf = (current_val_bufsize > 0)? cxsd_hw_buffers + crv_bufofs : NULL;
+            cxsd_hw_next_wr_val_buf = (next_wr_val_bufsize > 0)? cxsd_hw_buffers + nwr_bufofs : NULL;
         }
     }
-    cxsd_hw_numdevs  = devid;
+    cxsd_hw_numlyrs  = numlyrs;
+    cxsd_hw_numdevs  = numdevs;
     cxsd_hw_numchans = cxsd_hw_cur_db->numchans = nchans;
 
     if (1) CxsdHwList(stderr);
@@ -464,7 +575,7 @@ int  CxsdHwActivate(const char *argv0)
          devid < cxsd_hw_numdevs;
          devid++,    dev_p++)
     {
-        if (MustSimulateHardware
+        if ((MustSimulateHardware  ||  dev_p->is_simulated)
             ||
             (
              (dev_p->lyrid == 0  ||  cxsd_hw_layers[-dev_p->lyrid].active)
@@ -563,25 +674,49 @@ static int  CheckDevice(int devid)
 
 static void InitDevice (int devid)
 {
-  cxsd_hw_dev_t    *dev;
+  cxsd_hw_dev_t    *dev_p;
   CxsdDbDevLine_t  *db_ref;
   CxsdDriverModRec *metric;
   const char       *auxinfo;
+  const char       *options;
+  drvopts_t         drvopts;
   int               state;
   int               s_devid;
   
     /*!!! Check validity of devid!*/
 
-    dev     = cxsd_hw_devices + devid;
-    db_ref  = dev->db_ref;
-    metric  = dev->metric;
+    dev_p   = cxsd_hw_devices + devid;
+    db_ref  = dev_p->db_ref;
+    metric  = dev_p->metric;
     auxinfo = CxsdDbGetStr(cxsd_hw_cur_db, db_ref->auxinfo_ofs);
-    
-    dev->logmask = cxsd_hw_defdrvlog_mask; /*!!! Should use what specified in [:OPTIONS] */
+    options = CxsdDbGetStr(cxsd_hw_cur_db, db_ref->options_ofs);
 
+    if (options != NULL)
+    {
+        if (psp_parse(options, NULL,
+                      &drvopts,
+                      '=', ",:", "",
+                      text2drvopts) != PSP_R_OK)
+        {
+            DoDriverLog(devid, DRIVERLOG_ERR,
+                        "psp_parse(options)@InitDevice: %s",
+                        psp_error());
+            TerminDev(devid, CXRF_CFG_PROBL, "psp_parse(auxinfo)@InitDevice error");
+            return;
+        }
+    }
+    else
+        /* Just initialize drvopts */
+        psp_parse(NULL, NULL,
+                  &drvopts,
+                  '=', ",:", "",
+                  text2drvopts);
+    dev_p->logmask = drvopts.logmask;
+    report_logmask(devid);
+    
     RstDevTimestamps(devid);
 
-    if (MustSimulateHardware)
+    if (MustSimulateHardware  ||  dev_p->is_simulated)
         ReviveDev(devid);
     else
     {
@@ -599,19 +734,19 @@ static void InitDevice (int devid)
         /* Allocate privrecsize bytes */
         if (metric->privrecsize != 0)
         {
-            dev->devptr = malloc(metric->privrecsize);
-            if (dev->devptr == NULL)
+            dev_p->devptr = malloc(metric->privrecsize);
+            if (dev_p->devptr == NULL)
             {
                 TerminDev(devid, CXRF_DRV_PROBL, "malloc(privrecsize) error");
                 return;
             }
-            bzero(dev->devptr, metric->privrecsize);
+            bzero(dev_p->devptr, metric->privrecsize);
 
             /* Do psp_parse() if required */
             if (metric->paramtable != NULL)
             {
                 if (psp_parse(auxinfo, NULL,
-                              dev->devptr,
+                              dev_p->devptr,
                               '=', " \t", "",
                               metric->paramtable) != PSP_R_OK)
                 {
@@ -625,15 +760,15 @@ static void InitDevice (int devid)
             }
         }
 
-        dev->state = DEVSTATE_OPERATING;
+        dev_p->state = DEVSTATE_OPERATING;
         ENTER_DRIVER_S(devid, s_devid);
-        state     = dev->state;
+        state     = dev_p->state;
         if (metric->init_dev != NULL)
-            state = metric->init_dev(devid, dev->devptr,
+            state = metric->init_dev(devid, dev_p->devptr,
                                      db_ref->businfocount, db_ref->businfo,
                                      auxinfo);
         LEAVE_DRIVER_S(s_devid);
-        gettimeofday(&(dev->stattime), NULL);
+        gettimeofday(&(dev_p->stattime), NULL);
 
         /*!!! Check state!!! */
         if      (state < 0)
@@ -651,8 +786,8 @@ static void InitDevice (int devid)
         }
 
 
-        /*!!! ...and write to dev->state  */
-        dev->state = state;
+        /*!!! ...and write to dev_p->state  */
+        dev_p->state = state;
     }
 }
 
@@ -661,18 +796,18 @@ static void InitDevice (int devid)
 static void HandleSimulatedHardware(void)
 {
   int            devid;
-  cxsd_hw_dev_t *dev;
+  cxsd_hw_dev_t *dev_p;
   int            chan;
 
     return; /* No need now, when SendChanRequest() supports on-request simulation */
     if (!MustSimulateHardware) return;
 
-    for (devid = 1,  dev = cxsd_hw_devices + devid;
+    for (devid = 1,  dev_p = cxsd_hw_devices + devid;
          devid < cxsd_hw_numdevs;
-         devid++,    dev++)
-        for (chan = 0;  chan < dev->count;  chan++)
-            if (cxsd_hw_channels[dev->first + chan].rw == 0)
-                StdSimulated_rw_p(devid, dev->devptr,
+         devid++,    dev_p++)
+        for (chan = 0;  chan < dev_p->count;  chan++)
+            if (cxsd_hw_channels[dev_p->first + chan].rw == 0)
+                StdSimulated_rw_p(devid, dev_p->devptr,
                                   DRVA_READ,
                                   1, &chan,
                                   NULL, NULL, NULL);
@@ -682,7 +817,7 @@ static void HandleSimulatedHardware(void)
 
 int  CxsdHwSetSimulate(int state)
 {
-    MustSimulateHardware = (state != 0);
+    MustSimulateHardware = state;  // We do NOT filter this anymore since 26.01.2019, because it is now an enum instead of just boolean
 
     return 0;
 }
@@ -828,6 +963,121 @@ int  CxsdHwSetCleanup (cxsd_hw_cleanup_proc proc)
     cleanup_proc = proc;
 
     return 0;
+}
+
+//--------------------------------------------------------------------
+
+typedef struct
+{
+    const char *name;
+    int         c;
+} catdesc_t;
+
+/* Note: this list should be kept in sync/order with
+   DRIVERLOG_CN_ enums in cxsd_driver.h */
+static catdesc_t  catlist[] =
+{
+    {"DEFAULT",           DRIVERLOG_C_DEFAULT},
+    {"ENTRYPOINT",        DRIVERLOG_C_ENTRYPOINT},
+    {"PKTDUMP",           DRIVERLOG_C_PKTDUMP},
+    {"PKTINFO",           DRIVERLOG_C_PKTINFO},
+    {"DATACONV",          DRIVERLOG_C_DATACONV},
+    {"REMDRV_PKTDUMP",    DRIVERLOG_C_REMDRV_PKTDUMP},
+    {"REMDRV_PKTINFO",    DRIVERLOG_C_REMDRV_PKTINFO},
+    {NULL,         0}
+};
+
+char * ParseDrvlogCategories(const char *str, const char **endptr,
+                             int *set_mask_p, int *clr_mask_p)
+{
+  int          set_mask = 0;
+  int          clr_mask = 0;
+  const char  *srcp;
+  const char  *name_b;
+  int          op_is_set;
+  char         namebuf[100];
+  size_t       namelen;
+  int          cat_value;
+  
+  static char  errdescr[100];
+
+  catdesc_t   *cat;
+  
+    srcp = str;
+    errdescr[0] = '\0';
+
+    if (srcp != NULL)
+        while (1)
+        {
+            op_is_set = 1;
+            
+            /* A leading '+'/'-'? */
+            if (*srcp == '+'  ||  *srcp == '-')
+            {
+                op_is_set = (*srcp == '+');
+                srcp++;
+            }
+
+            /* Okay, let's extract the name... */
+            name_b = srcp;
+            while (isalnum(*srcp)  ||  *srcp == '_') srcp++;
+
+            /* Did we hit the terminator? */
+            if (srcp == name_b)
+            {
+                /*!!!Here we should check that there was no orphan '+'/'-' --
+                 if (srcp!=str && (*(srcp-1) == '+' || *(srcp-1) == '-') {error} */
+                goto END_PARSE;
+            }
+
+            /* Extract name... */
+            namelen = srcp - name_b;
+            if (namelen > sizeof(namebuf) - 1) namelen = sizeof(namebuf) - 1;
+            memcpy(namebuf, name_b, namelen);
+            namebuf[namelen] = '\0';
+            
+            /* Find category in the list... */
+            cat_value = DRIVERLOG_m_CHECKMASK_ALL;
+            for (cat = catlist;  cat->name != NULL;  cat++)
+                if (strcasecmp(namebuf, cat->name) == 0)
+                {
+                    cat_value = DRIVERLOG_m_C_TO_CHECKMASK(cat->c);
+                    break;
+                }
+
+            if (cat->name != NULL  ||  strcasecmp(namebuf, "all") == 0)
+            {
+                if (op_is_set) set_mask |= cat_value;
+                else           clr_mask |= cat_value;
+            }
+            else
+            {
+                if (errdescr[0] == '\0')
+                    snprintf(errdescr, sizeof(errdescr),
+                             "Unrecognized drvlog category '%s'", namebuf);
+            }
+            
+            /* Well, if there is a ',', there must be more to parse... */
+            if (*srcp != ',') goto END_PARSE;
+            srcp++;
+        }
+  
+ END_PARSE:
+    
+    if (set_mask_p != NULL) *set_mask_p = set_mask;
+    if (clr_mask_p != NULL) *clr_mask_p = clr_mask;
+    if (endptr != NULL) *endptr = srcp;
+
+    return errdescr[0] == '\0'? NULL : errdescr;
+}
+
+const char *GetDrvlogCatName(int category)
+{
+    category = (category & DRIVERLOG_C_mask) >> DRIVERLOG_C_shift;
+    if (category >= DRIVERLOG_CN_default  &&  category < countof(catlist) - 1)
+        return catlist[category].name;
+    else
+        return "???";
 }
 
 //--------------------------------------------------------------------
@@ -1126,8 +1376,38 @@ int            CxsdHwGetCpnProps(cxsd_cpntid_t  cpid,
     return 0;
 }
 
+int            CxsdHwGetChanType(cxsd_gchnid_t  gcid,
+                                 int           *is_rw_p,
+                                 cxdtype_t     *dtype_p,
+                                 int           *max_nelems_p)
+{
+    if (gcid <= 0  &&  gcid >= cxsd_hw_numchans) return -1;
 
-enum {DRVA_IGNORE = -999};
+    if (is_rw_p      != NULL) *is_rw_p      = cxsd_hw_channels[gcid].rw;
+    if (dtype_p      != NULL) *dtype_p      = cxsd_hw_channels[gcid].dtype;
+    if (max_nelems_p != NULL) *max_nelems_p = cxsd_hw_channels[gcid].max_nelems;
+
+    return 0;
+}
+
+int            CxsdHwGetDevPlace(int            devid,
+                                 int           *first_p,
+                                 int           *count_p)
+{
+    CHECK_SANITY_OF_DEVID_WO_STATE(-1);
+
+    if (first_p != NULL) *first_p = cxsd_hw_devices[devid].first;
+    if (count_p != NULL) *count_p = cxsd_hw_devices[devid].count;
+
+    return 0;
+}
+
+
+enum
+{
+    DRVA_IGNORE      = 1024,
+    DRVA_INTERNAL_WR = 1025,
+};
 
 static inline int IsCompatible(cxsd_hw_chan_t *chn_p,
                                cxdtype_t dtype, int nels)
@@ -1321,6 +1601,72 @@ static void StoreForSending(cxsd_gchnid_t gcid,
     *values_p = chn_p->next_wr_val;
 }
 
+static void is_internal_rw_p(int devid, void *devptr __attribute__((unused)),
+                             int action,
+                             int count, int *addrs,
+                             cxdtype_t *dtypes, int *nelems, void **values)
+{
+  cxsd_hw_dev_t   *dev_p = cxsd_hw_devices + devid;
+  int              n;    // channel N in addrs[]/.../values[] (loop ctl var)
+  int              chn;  // channel
+  int32            ival;
+
+    /* Notes:
+           1. No checks for devid and other parameters,
+              because this is called from SendChanRequest() only,
+              after all appropriate checks already performed.
+           2. The "action" is unused, because (as of 04.12.2018)
+              this is called for write of "_devstate" only.
+           3. This is called for write ONLY, and never for read;
+              it is NOT affected by ReqRofWrChsOf() and ReRequestDevData(),
+              because those operate only in the [0,count) range, while all
+              "is_internal" channels are in the [count,wauxcount) range.
+           4. Neither dtypes[] nor nelems[] are used, and values[x] is
+              taken to point to int32 because appropriate conversion
+              should have been performed previously in the calling sequence.
+    */
+////fprintf(stderr, "%s[%d] count=%d\n", __FUNCTION__, devid, count);
+if (action != DRVA_WRITE  &&  action != DRVA_INTERNAL_WR)
+{
+    fprintf(stderr, "%s[%d],count=%d,addrs[0]=%d: action=%d, !=DRVA_WRITE\n", __FUNCTION__, devid, count, addrs[0], action);
+    return;
+}
+
+    for (n = 0;  n < count;  n++)
+    {
+        // Obtain channel number in "CXSD_DB_CHAN_nnn_OFS" nomenclature
+        chn = addrs[n] - cxsd_hw_devices[devid].count;
+        if      (chn == CXSD_DB_CHAN_LOGMASK_OFS)
+        {
+            ival = *((int32*)(values[chn]));
+            dev_p->logmask = ival;
+            report_logmask(devid);
+        }
+        else if (chn == CXSD_DB_CHAN_DEVSTATE_OFS)
+        {
+            ival = *((int32*)(values[chn]));
+////fprintf(stderr, "\t:=%d\n", ival);
+            if      (ival <  0)
+            {
+                // "Switch off"
+                TerminDev(devid, 0, "terminated via _devstate=-1");
+            }
+            else if (ival == 0)
+            {
+                // "Reset": terminate first (if not already offline), than initialize
+                if (dev_p->state != DEVSTATE_OFFLINE)
+                    TerminDev(devid, 0, "terminated for reset via _devstate=0");
+                InitDevice(devid);
+            }
+            else /*  ival >  0 */
+            {
+                // "Switch on": initialize if offline
+                if (dev_p->state == DEVSTATE_OFFLINE)
+                    InitDevice(devid);
+            }
+        }
+    }
+}
 /* Note:
        This code supposes that ALL channels belong to a same single devid. */
 static void SendChanRequest(int            requester,
@@ -1332,7 +1678,8 @@ static void SendChanRequest(int            requester,
 {
   int              devid;
   int              s_devid;
-  cxsd_hw_dev_t   *dev;
+  cxsd_hw_dev_t   *dev_p;
+  int              is_internal;
 
   CxsdDevChanProc  do_rw;
 
@@ -1344,7 +1691,7 @@ static void SendChanRequest(int            requester,
   int              x;
 
     gcids += offset;
-    if (action == DRVA_WRITE)
+    if (action == DRVA_WRITE  ||  action == DRVA_INTERNAL_WR)
     {
         dtypes += offset;
         nelems += offset;
@@ -1358,33 +1705,40 @@ static void SendChanRequest(int            requester,
     }
 
     devid = cxsd_hw_channels[*gcids].devid;
-    dev   = cxsd_hw_devices + devid;
-    do_rw = dev->metric != NULL? dev->metric->do_rw : NULL;
-    if (MustSimulateHardware) do_rw = StdSimulated_rw_p;
+    dev_p = cxsd_hw_devices + devid;
+    do_rw = dev_p->metric != NULL? dev_p->metric->do_rw : NULL;
+    if (MustSimulateHardware  ||  dev_p->is_simulated) do_rw = StdSimulated_rw_p;
+    is_internal = cxsd_hw_channels[*gcids].is_internal;
 
 //fprintf(stderr, "%s/%d(ofs=%d,count=%d)", __FUNCTION__, action, offset, length);
 //for (n = 0;  n < length;  n++) fprintf(stderr, " %d", gcids[n]);
 //fprintf(stderr, "\n");
-    for (n = 0;  n < length;  n += seglen)
+    for (n = 0;  n < length;  n += seglen, gcids += seglen)
     {
         seglen = length - n;
         if (seglen > SEGLEN_MAX) seglen = SEGLEN_MAX;
 
         for (x = 0;  x < seglen;  x++)
-            addrs[x] = gcids[x] - dev->first;
+            addrs[x] = gcids[x] - dev_p->first;
 
         //ENTER_DRIVER_S(devid, s_devid);
         {
-            if (do_rw != NULL  &&  dev->state == DEVSTATE_OPERATING)
-                do_rw(devid, dev->devptr,
-                      action,
-                      seglen,
-                      addrs,
-                      dtypes, nelems, values);
+            if      (is_internal)
+                is_internal_rw_p(devid, dev_p->devptr,
+                                 action,
+                                 seglen,
+                                 addrs,
+                                 dtypes, nelems, values);
+            else if (do_rw != NULL  &&  dev_p->state == DEVSTATE_OPERATING)
+                do_rw           (devid, dev_p->devptr,
+                                 action,
+                                 seglen,
+                                 addrs,
+                                 dtypes, nelems, values);
         }
         //LEAVE_DRIVER_S(s_devid);
 
-        if (action == DRVA_WRITE)
+        if (action == DRVA_WRITE  ||  action == DRVA_INTERNAL_WR)
         {
             dtypes += seglen;
             nelems += seglen;
@@ -1411,7 +1765,9 @@ static int  ConsiderRequest(int            requester,
     if (chn_p->rw == 0)
     {
         if (chn_p->rd_req  ||  
-            (chn_p->upd_cycle == current_cycle  &&  ignore_upd_cycle == 0)  ||
+            (chn_p->upd_cycle == current_cycle  &&  
+             (chn_p->do_ignore_upd_cycle == 0  ||  ignore_upd_cycle == 0)
+            )  ||
             chn_p->is_autoupdated)
         {
             return DRVA_IGNORE;
@@ -1453,7 +1809,7 @@ static int  ConsiderRequest(int            requester,
                                 0);
                 chn_p->wr_req = 1;
             }
-            return DRVA_WRITE;
+            return chn_p->is_internal? DRVA_INTERNAL_WR : DRVA_WRITE;
         }
     }
     else
@@ -1499,6 +1855,42 @@ fprintf(stderr, "\n");
     ignore_upd_cycle = (action & CXSD_HW_DRVA_IGNORE_UPD_CYCLE_FLAG) != 0;
     action &=~ CXSD_HW_DRVA_IGNORE_UPD_CYCLE_FLAG;
 
+    if (action != DRVA_READ  &&  action != DRVA_WRITE) return -1;
+#if 000
+if (action == DRVA_WRITE  &&  gcids[0] == 103)
+{
+#if 0
+  // dev a noop r1i,w1i -
+  int       s_gcids [2] = {104,104,104};
+  cxdtype_t s_dtypes[2] = {CXDTYPE_INT32, CXDTYPE_INT32, CXDTYPE_INT32};
+  int       s_nelems[2] = {1,1,1};
+  int32     s_data  [2] = {-1, 0, +1};
+  void     *s_values[2] = {s_data+0,s_data+1,s_data+2};
+
+    CxsdHwDoIO(requester, DRVA_WRITE, 3, s_gcids, s_dtypes, s_nelems, s_values);
+    fprintf(stderr, "TRIG\n");
+#endif
+#if 1
+  // dev a noop w2000i -
+  int       s_gcids [2000];
+  cxdtype_t s_dtypes[2000];
+  int       s_nelems[2000];
+  int32     s_data  [2000];
+  void     *s_values[2000];
+    fprintf(stderr, "TRIG\n");
+    for (n = 0;  n < countof(s_gcids);  n++)
+    {
+        s_gcids [n] = 102 + n;
+        s_dtypes[n] = CXDTYPE_INT32;
+        s_nelems[n] = 1;
+        s_data  [n] = 10000+n;
+        s_values[n] = s_data + n;
+    }
+    CxsdHwDoIO(requester, DRVA_WRITE, countof(s_gcids), s_gcids, s_dtypes, s_nelems, s_values);
+#endif
+}
+#endif
+
     for (n = 0;  n < count;  /*NO-OP*/)
     {
         /* Skip "invalid" references */
@@ -1536,6 +1928,7 @@ fprintf(stderr, "\n");
             case DRVA_IGNORE: break;
             case DRVA_READ:
             case DRVA_WRITE:
+            case DRVA_INTERNAL_WR:
                 SendChanRequest(requester, f_act,
                                 first, length,
                                 gcids, dtypes, nelems, values);
@@ -1556,7 +1949,7 @@ int  CxsdHwLockChannels (int  requester,
 static void ReqRofWrChsOf(int devid)
 {
   int              rrowc;
-  cxsd_hw_dev_t   *dev;
+  cxsd_hw_dev_t   *dev_p;
   int              n;
   int              last;
   enum            {SEGLEN_MAX = 1000};
@@ -1571,28 +1964,28 @@ static void ReqRofWrChsOf(int devid)
     rrowc = IsReqRofWrChsIng;
     IsReqRofWrChsIng = 1;
 
-    dev   = cxsd_hw_devices + devid;
+    dev_p = cxsd_hw_devices + devid;
 
     for (n = 0;
-         n < dev->count  &&  dev->state == DEVSTATE_OPERATING;
+         n < dev_p->count  &&  dev_p->state == DEVSTATE_OPERATING;
          n += seglen)
     {
         /* Filter-out non-rw channels: */
         /* 1. Find first rw channel */
-        while (n    < dev->count  &&
-               cxsd_hw_channels[dev->first + n   ].rw == 0) n++;
+        while (n    < dev_p->count  &&
+               cxsd_hw_channels[dev_p->first + n   ].rw == 0) n++;
         /* 2. Find last rw channel */
         last = n;
-        while (last < dev->count  &&
-               cxsd_hw_channels[dev->first + last].rw != 0) last++;
+        while (last < dev_p->count  &&
+               cxsd_hw_channels[dev_p->first + last].rw != 0) last++;
 
         seglen = last - n;
         if (seglen == 0) break;
-        //seglen = dev->count - n;
+        //seglen = dev_p->count - n;
         if (seglen > SEGLEN_MAX) seglen = SEGLEN_MAX;
 
         for (x = 0;  x < seglen;  x++)
-            addrs[x] = dev->first + n + x;
+            addrs[x] = dev_p->first + n + x;
 
         CxsdHwDoIO(0, DRVA_READ, seglen, addrs, NULL, NULL, NULL);
     }
@@ -1715,7 +2108,8 @@ static void TerminDev(int devid, rflags_t rflags_to_set, const char *description
     rflags_to_set |= CXRF_OFFLINE;
 
     /* I. Call its termination function */
-    if (dev_p->state != DEVSTATE_OFFLINE  &&  !MustSimulateHardware)
+    if (dev_p->state != DEVSTATE_OFFLINE  &&
+        !(MustSimulateHardware  ||  dev_p->is_simulated))
     {
         ENTER_DRIVER_S(devid, s_devid);
         if (dev_p->metric           != NULL  &&
@@ -1827,7 +2221,7 @@ static int  ShouldReRequestChan(cxsd_gchnid_t  gcid)
 }
 void        ReRequestDevData (int devid)
 {
-  cxsd_hw_dev_t *dev;
+  cxsd_hw_dev_t *dev_p;
   cxsd_gchnid_t  barrier;
   cxsd_gchnid_t  gcid;
   cxsd_gchnid_t  first;
@@ -1845,12 +2239,12 @@ void        ReRequestDevData (int devid)
 
     CHECK_SANITY_OF_DEVID();
 
-    dev   = cxsd_hw_devices + devid;
+    dev_p = cxsd_hw_devices + devid;
 
-    barrier = dev->first + dev->count;
+    barrier = dev_p->first + dev_p->count;
 
-    for (gcid = dev->first;
-         gcid < barrier  &&  dev->state == DEVSTATE_OPERATING;
+    for (gcid = dev_p->first;
+         gcid < barrier  &&  dev_p->state == DEVSTATE_OPERATING;
          /*NO-OP*/)
     {
         /* Get "model" parameters */
@@ -1867,7 +2261,7 @@ void        ReRequestDevData (int devid)
         if (f_act == DRVA_IGNORE) goto NEXT_GROUP;
 
         for (n = 0;
-             n < length  &&  dev->state == DEVSTATE_OPERATING;
+             n < length  &&  dev_p->state == DEVSTATE_OPERATING;
              n += seglen)
         {
             seglen = length - n;
@@ -1875,7 +2269,7 @@ void        ReRequestDevData (int devid)
             
             for (x = 0;  x < seglen;  x++)
             {
-                addrs[x] = first + x/* - dev->first*/;
+                addrs[x] = first + x/* - dev_p->first*/;
                 if (f_act == DRVA_WRITE)
                 {
                     dtypes[x] = cxsd_hw_channels[first + x].dtype;
@@ -1907,10 +2301,10 @@ void        ReRequestDevData (int devid)
 
 //--------------------------------------------------------------------
 
-static inline int ShouldWrNext(cxsd_hw_dev_t  *dev, int chan)
+static inline int ShouldWrNext(cxsd_hw_dev_t  *dev_p, int chan)
 {
-    return chan >= 0  &&  chan < dev->count  &&
-        cxsd_hw_channels[dev->first + chan].next_wr_val_pnd;
+    return chan >= 0  &&  chan < dev_p->count  &&
+        cxsd_hw_channels[dev_p->first + chan].next_wr_val_pnd;
 }
 /* Note:
        This code supposes that ALL channels belong to a same single devid. */
@@ -1919,7 +2313,7 @@ static void TryWrNext (int devid,
                        int *addrs)
 {
 #if 1
-  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+  cxsd_hw_dev_t  *dev_p = cxsd_hw_devices + devid;
 
   int             first; /*!!! In "flush" rename "count" to seglen */
   int             length;
@@ -1938,15 +2332,15 @@ static void TryWrNext (int devid,
   cxsd_hw_chan_t *chn_p;
 
     for (n = 0;
-         n < count  &&  dev->state == DEVSTATE_OPERATING;
+         n < count  &&  dev_p->state == DEVSTATE_OPERATING;
          /* NO-OP */)
     {
         /* Get "model" parameters */
         first = n;
-        should_wr = ShouldWrNext(dev, addrs[first]);
+        should_wr = ShouldWrNext(dev_p, addrs[first]);
 
         /* Find out how many channels can be packed */
-        while (n < count  &&  ShouldWrNext(dev, addrs[n]) == should_wr)
+        while (n < count  &&  ShouldWrNext(dev_p, addrs[n]) == should_wr)
             n++;
 
         length = n - first;
@@ -1954,7 +2348,7 @@ static void TryWrNext (int devid,
 ////if (should_wr) fprintf(stderr, "should_wr [%d]=%d %d\n", first, addrs[first], length);
         if (should_wr)
             for (z = 0;
-                 z < length  &&  dev->state == DEVSTATE_OPERATING;
+                 z < length  &&  dev_p->state == DEVSTATE_OPERATING;
                  z += seglen)
             {
                 seglen = length - z;
@@ -1962,7 +2356,7 @@ static void TryWrNext (int devid,
                 
                 for (x = 0;  x < seglen;  x++)
                 {
-                    gcid = dev->first + addrs[first + z];
+                    gcid = dev_p->first + addrs[first + z];
 ////fprintf(stderr, " gcid=%d\n", gcid);
                     chn_p = cxsd_hw_channels + gcid;
                     gchans[x] = gcid;
@@ -1990,7 +2384,7 @@ void ReturnDataSet    (int devid,
                        int *addrs, cxdtype_t *dtypes, int *nelems,
                        void **values, rflags_t *rflags, cx_time_t *timestamps)
 {
-  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+  cxsd_hw_dev_t  *dev_p = cxsd_hw_devices + devid;
 
   struct timeval  timenow;
   cx_time_t       timestamp;
@@ -2031,11 +2425,11 @@ void ReturnDataSet    (int devid,
 
         /* Check the 'count' */
         if (count == 0) return;
-        if (count < 0  ||  count > dev->count)
+        if (count < 0  ||  count > dev_p->count)
         {
             logline(LOGF_MODULES, LOGL_WARNING,
-                    "%s(devid=%d/active=%d): count=%d, out_of[1...dev->count=%d]",
-                    __FUNCTION__, devid, active_devid, count, dev->count);
+                    "%s(devid=%d/active=%d): count=%d, out_of[1...dev_p->count=%d]",
+                    __FUNCTION__, devid, active_devid, count, dev_p->count);
             return;
         }
     }
@@ -2050,14 +2444,14 @@ void ReturnDataSet    (int devid,
         /* Get pointer to the channel in question */
         chan = addrs[x];
         if (!internal  &&
-            (chan < 0  ||  chan >= dev->count))
+            (chan < 0  ||  chan >= dev_p->count))
         {
             logline(LOGF_MODULES, LOGL_WARNING,
-                    "%s(devid=%d/active=%d): addrs[%d]=%d, out_of[0...dev->count=%d)",
-                    __FUNCTION__, devid, active_devid, x, chan, dev->count);
+                    "%s(devid=%d/active=%d): addrs[%d]=%d, out_of[0...dev_p->count=%d)",
+                    __FUNCTION__, devid, active_devid, x, chan, dev_p->count);
             goto NEXT_TO_UPDATE;
         }
-        gcid  = chan + dev->first;
+        gcid  = chan + dev_p->first;
         chn_p = cxsd_hw_channels + gcid;
 
         /* Check nelems */
@@ -2303,9 +2697,9 @@ void ReturnDataSet    (int devid,
         /* Get pointer to the channel in question */
         chan = addrs[x];
         if (!internal  &&
-            (chan < 0  ||  chan >= dev->count))
+            (chan < 0  ||  chan >= dev_p->count))
             goto NEXT_TO_CALL;
-        gcid = chan + dev->first;
+        gcid = chan + dev_p->first;
 
         CxsdHwCallChanEvprocs(gcid, &call_info);
  NEXT_TO_CALL:;
@@ -2341,7 +2735,7 @@ void SetChanRDs       (int devid,
                        int first, int count,
                        double phys_r, double phys_d)
 {
-  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+  cxsd_hw_dev_t  *dev_p = cxsd_hw_devices + devid;
 
   int             x;
   cxsd_hw_chan_t *chn_p;
@@ -2351,24 +2745,24 @@ void SetChanRDs       (int devid,
     CHECK_SANITY_OF_DEVID();
 
     /* Check the `first' */
-    if (first < 0  ||  first >= dev->count)
+    if (first < 0  ||  first >= dev_p->count)
     {
         logline(LOGF_MODULES, LOGL_WARNING,
-                "%s(devid=%d/active=%d): first=%d, out_of[0...dev->count=%d)",
-                __FUNCTION__, devid, active_devid, first, dev->count);
+                "%s(devid=%d/active=%d): first=%d, out_of[0...dev_p->count=%d)",
+                __FUNCTION__, devid, active_devid, first, dev_p->count);
         return;
     }
 
     /* Now check the `count' */
-    if (count < 1  ||  count > dev->count - first)
+    if (count < 1  ||  count > dev_p->count - first)
     {
         logline(LOGF_MODULES, LOGL_WARNING,
-                "%s:(devid=%d/active=%d) count=%d, out_of[1..%d] (first=%d, dev->count=%d)",
-                __FUNCTION__, devid, active_devid, count, dev->count - first, first, dev->count);
+                "%s:(devid=%d/active=%d) count=%d, out_of[1..%d] (first=%d, dev_p->count=%d)",
+                __FUNCTION__, devid, active_devid, count, dev_p->count - first, first, dev_p->count);
         return;
     }
 
-    for (x = 0, chn_p = cxsd_hw_channels + dev->first + first;
+    for (x = 0, chn_p = cxsd_hw_channels + dev_p->first + first;
          x < count;
          x++, chn_p++)
     {
@@ -2383,7 +2777,7 @@ void SetChanRDs       (int devid,
 
     for (x = 0;  x < count;  x++)
     {
-        CxsdHwCallChanEvprocs(dev->first + first + x, &call_info);
+        CxsdHwCallChanEvprocs(dev_p->first + first + x, &call_info);
     }
 }
 
@@ -2391,7 +2785,7 @@ void SetChanFreshAge  (int devid,
                        int first, int count,
                        cx_time_t fresh_age)
 {
-  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+  cxsd_hw_dev_t  *dev_p = cxsd_hw_devices + devid;
 
   int             x;
   cxsd_hw_chan_t *chn_p;
@@ -2401,24 +2795,24 @@ void SetChanFreshAge  (int devid,
     CHECK_SANITY_OF_DEVID();
 
     /* Check the `first' */
-    if (first < 0  ||  first >= dev->count)
+    if (first < 0  ||  first >= dev_p->count)
     {
         logline(LOGF_MODULES, LOGL_WARNING,
-                "%s(devid=%d/active=%d): first=%d, out_of[0...dev->count=%d)",
-                __FUNCTION__, devid, active_devid, first, dev->count);
+                "%s(devid=%d/active=%d): first=%d, out_of[0...dev_p->count=%d)",
+                __FUNCTION__, devid, active_devid, first, dev_p->count);
         return;
     }
 
     /* Now check the `count' */
-    if (count < 1  ||  count > dev->count - first)
+    if (count < 1  ||  count > dev_p->count - first)
     {
         logline(LOGF_MODULES, LOGL_WARNING,
-                "%s:(devid=%d/active=%d) count=%d, out_of[1..%d] (first=%d, dev->count=%d)",
-                __FUNCTION__, devid, active_devid, count, dev->count - first, first, dev->count);
+                "%s:(devid=%d/active=%d) count=%d, out_of[1..%d] (first=%d, dev_p->count=%d)",
+                __FUNCTION__, devid, active_devid, count, dev_p->count - first, first, dev_p->count);
         return;
     }
 
-    for (x = 0, chn_p = cxsd_hw_channels + dev->first + first;
+    for (x = 0, chn_p = cxsd_hw_channels + dev_p->first + first;
          x < count;
          x++, chn_p++)
     {
@@ -2431,7 +2825,7 @@ void SetChanFreshAge  (int devid,
 
     for (x = 0;  x < count;  x++)
     {
-        CxsdHwCallChanEvprocs(dev->first + first + x, &call_info);
+        CxsdHwCallChanEvprocs(dev_p->first + first + x, &call_info);
     }
 }
 
@@ -2439,7 +2833,7 @@ void SetChanQuant     (int devid,
                        int first, int count,
                        CxAnyVal_t q, cxdtype_t q_dtype)
 {
-  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+  cxsd_hw_dev_t  *dev_p = cxsd_hw_devices + devid;
 
   int             x;
   cxsd_hw_chan_t *chn_p;
@@ -2449,24 +2843,24 @@ void SetChanQuant     (int devid,
     CHECK_SANITY_OF_DEVID();
 
     /* Check the `first' */
-    if (first < 0  ||  first >= dev->count)
+    if (first < 0  ||  first >= dev_p->count)
     {
         logline(LOGF_MODULES, LOGL_WARNING,
-                "%s(devid=%d/active=%d): first=%d, out_of[0...dev->count=%d)",
-                __FUNCTION__, devid, active_devid, first, dev->count);
+                "%s(devid=%d/active=%d): first=%d, out_of[0...dev_p->count=%d)",
+                __FUNCTION__, devid, active_devid, first, dev_p->count);
         return;
     }
 
     /* Now check the `count' */
-    if (count < 1  ||  count > dev->count - first)
+    if (count < 1  ||  count > dev_p->count - first)
     {
         logline(LOGF_MODULES, LOGL_WARNING,
-                "%s:(devid=%d/active=%d) count=%d, out_of[1..%d] (first=%d, dev->count=%d)",
-                __FUNCTION__, devid, active_devid, count, dev->count - first, first, dev->count);
+                "%s:(devid=%d/active=%d) count=%d, out_of[1..%d] (first=%d, dev_p->count=%d)",
+                __FUNCTION__, devid, active_devid, count, dev_p->count - first, first, dev_p->count);
         return;
     }
 
-    for (x = 0, chn_p = cxsd_hw_channels + dev->first + first;
+    for (x = 0, chn_p = cxsd_hw_channels + dev_p->first + first;
          x < count;
          x++, chn_p++)
     {
@@ -2480,7 +2874,7 @@ void SetChanQuant     (int devid,
 
     for (x = 0;  x < count;  x++)
     {
-        CxsdHwCallChanEvprocs(dev->first + first + x, &call_info);
+        CxsdHwCallChanEvprocs(dev_p->first + first + x, &call_info);
     }
 }
 
@@ -2488,7 +2882,7 @@ void SetChanRange     (int devid,
                        int first, int count,
                        CxAnyVal_t minv, CxAnyVal_t maxv, cxdtype_t range_dtype)
 {
-  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+  cxsd_hw_dev_t  *dev_p = cxsd_hw_devices + devid;
 
   int             x;
   cxsd_hw_chan_t *chn_p;
@@ -2498,24 +2892,24 @@ void SetChanRange     (int devid,
     CHECK_SANITY_OF_DEVID();
 
     /* Check the `first' */
-    if (first < 0  ||  first >= dev->count)
+    if (first < 0  ||  first >= dev_p->count)
     {
         logline(LOGF_MODULES, LOGL_WARNING,
-                "%s(devid=%d/active=%d): first=%d, out_of[0...dev->count=%d)",
-                __FUNCTION__, devid, active_devid, first, dev->count);
+                "%s(devid=%d/active=%d): first=%d, out_of[0...dev_p->count=%d)",
+                __FUNCTION__, devid, active_devid, first, dev_p->count);
         return;
     }
 
     /* Now check the `count' */
-    if (count < 1  ||  count > dev->count - first)
+    if (count < 1  ||  count > dev_p->count - first)
     {
         logline(LOGF_MODULES, LOGL_WARNING,
-                "%s:(devid=%d/active=%d) count=%d, out_of[1..%d] (first=%d, dev->count=%d)",
-                __FUNCTION__, devid, active_devid, count, dev->count - first, first, dev->count);
+                "%s:(devid=%d/active=%d) count=%d, out_of[1..%d] (first=%d, dev_p->count=%d)",
+                __FUNCTION__, devid, active_devid, count, dev_p->count - first, first, dev_p->count);
         return;
     }
 
-    for (x = 0, chn_p = cxsd_hw_channels + dev->first + first;
+    for (x = 0, chn_p = cxsd_hw_channels + dev_p->first + first;
          x < count;
          x++, chn_p++)
     {
@@ -2530,15 +2924,15 @@ void SetChanRange     (int devid,
 
     for (x = 0;  x < count;  x++)
     {
-        CxsdHwCallChanEvprocs(dev->first + first + x, &call_info);
+        CxsdHwCallChanEvprocs(dev_p->first + first + x, &call_info);
     }
 }
 
 void SetChanReturnType(int devid,
                        int first, int count,
-                       int is_autoupdated)
+                       int return_type)
 {
-  cxsd_hw_dev_t  *dev = cxsd_hw_devices + devid;
+  cxsd_hw_dev_t  *dev_p = cxsd_hw_devices + devid;
 
   int             x;
   cxsd_hw_chan_t *chn_p;
@@ -2548,40 +2942,42 @@ void SetChanReturnType(int devid,
     CHECK_SANITY_OF_DEVID();
 
     /* Check the `first' */
-    if (first < 0  ||  first >= dev->count)
+    if (first < 0  ||  first >= dev_p->count)
     {
         logline(LOGF_MODULES, LOGL_WARNING,
-                "%s(devid=%d/active=%d): first=%d, out_of[0...dev->count=%d)",
-                __FUNCTION__, devid, active_devid, first, dev->count);
+                "%s(devid=%d/active=%d): first=%d, out_of[0...dev_p->count=%d)",
+                __FUNCTION__, devid, active_devid, first, dev_p->count);
         return;
     }
 
     /* Now check the `count' */
-    if (count < 1  ||  count > dev->count - first)
+    if (count < 1  ||  count > dev_p->count - first)
     {
         logline(LOGF_MODULES, LOGL_WARNING,
-                "%s:(devid=%d/active=%d) count=%d, out_of[1..%d] (first=%d, dev->count=%d)",
-                __FUNCTION__, devid, active_devid, count, dev->count - first, first, dev->count);
+                "%s:(devid=%d/active=%d) count=%d, out_of[1..%d] (first=%d, dev_p->count=%d)",
+                __FUNCTION__, devid, active_devid, count, dev_p->count - first, first, dev_p->count);
         return;
     }
 
-    for (x = 0, chn_p = cxsd_hw_channels + dev->first + first;
+    for (x = 0, chn_p = cxsd_hw_channels + dev_p->first + first;
          x < count;
          x++, chn_p++)
     {
-        chn_p->is_autoupdated = is_autoupdated != 0;
-        if (is_autoupdated == IS_AUTOUPDATED_TRUSTED)
+        chn_p->is_autoupdated      = (return_type == IS_AUTOUPDATED_YES  ||
+                                      return_type == IS_AUTOUPDATED_TRUSTED);
+        chn_p->do_ignore_upd_cycle = (return_type == DO_IGNORE_UPD_CYCLE);
+        if (return_type == IS_AUTOUPDATED_TRUSTED)
             chn_p->fresh_age  = (cx_time_t){0,0};
     }
 
-    if (is_autoupdated != IS_AUTOUPDATED_TRUSTED) return;
+    if (return_type != IS_AUTOUPDATED_TRUSTED) return;
     /* II. Call who requested */
     call_info.reason = CXSD_HW_CHAN_R_FRESHCHG;
     call_info.evmask = 1 << call_info.reason;
 
     for (x = 0;  x < count;  x++)
     {
-        CxsdHwCallChanEvprocs(dev->first + first + x, &call_info);
+        CxsdHwCallChanEvprocs(dev_p->first + first + x, &call_info);
     }
 }
 

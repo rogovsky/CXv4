@@ -312,7 +312,7 @@ int  PzframeDataRealize   (pzframe_data_t *pfr,
         r_total = r_refs + r_dpls + r_data*2 + r_vals;
         if ((buf = malloc(r_total)) == NULL) return -1;
         bzero(buf, r_total);
-        buf_p = buf;
+        buf_p = pfr->buf = buf;
 
         pfr->refs     = buf_p;  buf_p += r_refs;
         pfr->dpls     = buf_p;  buf_p += r_dpls;

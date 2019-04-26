@@ -12,7 +12,7 @@
 #include "KnobsP.h"
 #include "MotifKnobsP.h"
 
-#include "MotifKnobs_grid_cont.h"
+#include "MotifKnobs_loggia_cont.h"
 
 
 static int CreateLoggiaCont(DataKnob k, CxWidget parent)

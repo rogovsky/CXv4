@@ -134,13 +134,16 @@ typedef struct
     sl_tid_t         read_tid;
 
     int32            def_kind;
+    int32            def_nwires;
     int32            unit_online[CANIPP_MAXUNITS];
     int32            unit_kind  [CANIPP_MAXUNITS];
+    int32            unit_nwires[CANIPP_MAXUNITS]; // Number of wires to read (1-32)
     int32            unit_M     [CANIPP_MAXUNITS]; // int*32* to be suitable
     int32            unit_P     [CANIPP_MAXUNITS]; // for Return*()
+    int32            unit_CREG  [CANIPP_MAXUNITS];
     rflags_t         unit_rflags[CANIPP_MAXUNITS];
 
-    int32            unit_d_rcvd[CANIPP_MAXUNITS];
+    int32            unit_d_rcvd[CANIPP_MAXUNITS]; // all Data was received
     int32            unit_data  [CANIPP_MAXUNITS]/*just-alignment*/[CANIPP_CELLS_PER_UNIT];
 
     int32            unit_bias  [CANIPP_MAXUNITS][CANIPP_NUMRANGES][CANIPP_CELLS_PER_UNIT];
@@ -164,8 +167,13 @@ static psp_lkp_t kind_lkp[] =
 
 static psp_paramdescr_t canipp_params[] =
 {
-    PSP_P_LOOKUP("def_kind", privrec_t, def_kind, UNIT_KIND_DEFAULT, kind_lkp),
-#define ONE_KIND(n) PSP_P_LOOKUP(__CX_STRINGIZE(n), privrec_t, unit_kind[n], UNIT_KIND_DEFAULT, kind_lkp)
+    PSP_P_LOOKUP("def_kind",   privrec_t, def_kind,   UNIT_KIND_DEFAULT, kind_lkp),
+    PSP_P_INT   ("def_nwires", privrec_t, def_nwires, 0, 1, CANIPP_CELLS_PER_UNIT),
+
+#define ONE_KIND(n) \
+    PSP_P_LOOKUP(__CX_STRINGIZE(n), privrec_t, unit_kind[n], UNIT_KIND_DEFAULT, kind_lkp), \
+    PSP_P_INT   ("nwires"__CX_STRINGIZE(n), privrec_t, unit_nwires[n], 0, 1, CANIPP_CELLS_PER_UNIT)
+
     ONE_KIND(0),  ONE_KIND(1),  ONE_KIND(2),  ONE_KIND(3),  ONE_KIND(4),
     ONE_KIND(5),  ONE_KIND(6),  ONE_KIND(7),  ONE_KIND(8),  ONE_KIND(9),
     ONE_KIND(10), ONE_KIND(11), ONE_KIND(12), ONE_KIND(13), ONE_KIND(14),
@@ -336,28 +344,26 @@ static int  StartMeasurements(privrec_t *me)
     {
         me->unit_rflags[unit] = 0;
         me->unit_d_rcvd[unit] = 0;
-        for (cell = 0;  cell < CANIPP_CELLS_PER_UNIT;  cell++)
+        for (cell = 0;  cell < me->unit_nwires[unit];  cell++)
             me->unit_data[unit][cell] = CANIPP_DATUM_ABSENT;
 
         if (me->unit_online[unit])
         {
-            the_m = me->bias_state == BIAS_STATE_MEASURING? me->bias_mes_r
-                                                          : me->unit_M[unit];
-            the_p =                                         me->unit_P[unit];
-            creg_code = (the_m << SETTING_M_SHIFT) | (the_p << SETTING_P_SHIFT);
-
-            for (addr = 0;  addr < CANIPP_CELLS_PER_UNIT;  addr++)
+            if (me->unit_kind[unit] == UNIT_KIND_REPKOV)
             {
-                me->lvmt->q_enq_ons_v(me->handle, SQ_ALWAYS,
-                                      3,
-                                      DESC_WRITE_n_base + unitn2unitcode(unit),
-                                      cell,
-                                      creg_code);
-                me->lvmt->q_enq_v    (me->handle, SQ_ALWAYS,
-                                      2, 
-                                      DESC_READ_n_base  + unitn2unitcode(unit),
-                                      cell);
+                the_m = me->bias_state == BIAS_STATE_MEASURING? me->bias_mes_r
+                                                              : me->unit_M[unit];
+                the_p =                                         me->unit_P[unit];
+                creg_code = (the_m << SETTING_M_SHIFT) | (the_p << SETTING_P_SHIFT);
             }
+            else
+                creg_code = me->unit_CREG[unit];
+
+            me->lvmt->q_enq_ons_v(me->handle, SQ_ALWAYS,
+                                  3,
+                                  DESC_WRITE_n_base + unitn2unitcode(unit),
+                                  CANIPP_CADDR,
+                                  creg_code);
         }
     }
 
@@ -367,6 +373,7 @@ static int  StartMeasurements(privrec_t *me)
                           ADDR_ACCESS_CREG | ADDR_ST1);
 
     me->read_state = READ_STATE_WAIT;
+    ReturnInt32Datum(me->devid, CANIPP_CHAN_READ_STATE, me->read_state, 0);
 
     return 0;
 }
@@ -389,6 +396,7 @@ static int  AbortMeasurements(privrec_t *me)
                           ADDR_ACCESS_CREG/*Note: '0' in ST1 and ST2 bits*/);
 
     me->read_state = READ_STATE_NONE;
+    ReturnInt32Datum(me->devid, CANIPP_CHAN_READ_STATE, me->read_state, 0);
     DropReadTout(me);
 
     if (me->bias_state != BIAS_STATE_ABSENT  &&
@@ -401,6 +409,7 @@ static int  AbortMeasurements(privrec_t *me)
 static void ReadMeasurements (privrec_t *me)
 {
     me->read_state = READ_STATE_NONE;
+    ReturnInt32Datum(me->devid, CANIPP_CHAN_READ_STATE, me->read_state, 0);
     DropReadTout(me);
 }
 
@@ -425,19 +434,21 @@ static void PerformReturn(privrec_t *me, rflags_t rflags)
                      me->bias_state == BIAS_STATE_PRESENT)
             {
                 unit_rflags = me->unit_rflags[unit] | rflags;
-                if (me->bias_state == BIAS_STATE_PRESENT)
+                if (me->bias_state == BIAS_STATE_PRESENT  &&
+                    me->unit_kind[unit] == UNIT_KIND_REPKOV)
                 {
-                    for (cell = 0;  cell < CANIPP_CELLS_PER_UNIT;  cell++)
+                    for (cell = 0;  cell < me->unit_nwires[unit];  cell++)
                         me->unit_data[unit][cell] -= me->unit_bias[unit][me->unit_M[unit]][cell];
                 }
-                SetChanRDs   (me->devid, CANIPP_CHAN_DATA_n_base + unit, 1,
-                              r2q[me->unit_M[unit]], 0.0);
+                if (me->unit_kind[unit] == UNIT_KIND_REPKOV)
+                    SetChanRDs   (me->devid, CANIPP_CHAN_DATA_n_base + unit, 1,
+                                  r2q[me->unit_M[unit]], 0.0);
 #if __GNUC__ < 3
-                r_addrs [0] = CANIPP_CHAN_CUR_M_n_base + unit; r_addrs [1] = CANIPP_CHAN_CUR_P_n_base + unit; r_addrs [2] = CANIPP_CHAN_DATA_n_base + unit;
-                r_dtypes[0] = CXDTYPE_INT32;                   r_dtypes[1] = CXDTYPE_INT32;                   r_dtypes[2] = CXDTYPE_INT32;
-                r_nelems[0] = 1;                               r_nelems[1] = 1;                               r_nelems[2] = CANIPP_CELLS_PER_UNIT;
-                r_values[0] = me->unit_M               + unit; r_values[1] = me->unit_P               + unit; r_values[2] = me->unit_data           + unit;
-                r_rflags[0] =                                  r_rflags[1] =                                  r_rflags[2] = unit_rflags;
+                r_addrs [0] = CANIPP_CHAN_CUR_M_n_base + unit; r_addrs [1] = CANIPP_CHAN_CUR_P_n_base + unit; r_addrs [2] = CANIPP_CHAN_CUR_CREG_n_base + unit; r_addrs [3] = CANIPP_CHAN_DATA_n_base + unit;
+                r_dtypes[0] = CXDTYPE_INT32;                   r_dtypes[1] = CXDTYPE_INT32;                   r_dtypes[2] = CXDTYPE_INT32;                      r_dtypes[3] = CXDTYPE_INT32;
+                r_nelems[0] = 1;                               r_nelems[1] = 1;                               r_nelems[2] = 1;                                  r_nelems[3] = me->unit_nwires[unit];
+                r_values[0] = me->unit_M               + unit; r_values[1] = me->unit_P               + unit; r_values[2] = me->unit_CREG               + unit; r_values[3] = me->unit_data           + unit;
+                r_rflags[0] =                                  r_rflags[1] =                                  r_rflags[2] =                                     r_rflags[3] = unit_rflags;
                 ReturnDataSet(me->devid,
                               3,
                               r_addrs,
@@ -448,18 +459,19 @@ static void PerformReturn(privrec_t *me, rflags_t rflags)
                               NULL);
 #else
                 ReturnDataSet(me->devid,
-                              3,
-                              (int      []){CANIPP_CHAN_CUR_M_n_base + unit, CANIPP_CHAN_CUR_P_n_base + unit, CANIPP_CHAN_DATA_n_base + unit},
-                              (cxdtype_t[]){CXDTYPE_INT32,                   CXDTYPE_INT32,                   CXDTYPE_INT32},
-                              (int      []){1,                               1,                               CANIPP_CELLS_PER_UNIT},
-                              (void*    []){me->unit_M               + unit, me->unit_P               + unit, me->unit_data           + unit},
-                              (rflags_t []){unit_rflags,                     unit_rflags,                     unit_rflags},
+                              4,
+                              (int      []){CANIPP_CHAN_CUR_M_n_base + unit, CANIPP_CHAN_CUR_P_n_base + unit, CANIPP_CHAN_CUR_CREG_n_base + unit, CANIPP_CHAN_DATA_n_base + unit},
+                              (cxdtype_t[]){CXDTYPE_INT32,                   CXDTYPE_INT32,                   CXDTYPE_INT32,                      CXDTYPE_INT32},
+                              (int      []){1,                               1,                               1,                                  me->unit_nwires[unit]},
+                              (void*    []){me->unit_M               + unit, me->unit_P               + unit, me->unit_CREG               + unit, me->unit_data           + unit},
+                              (rflags_t []){unit_rflags,                     unit_rflags,                     unit_rflags,                        unit_rflags},
                               NULL);
 #endif
             }
-            else if (me->bias_state == BIAS_STATE_MEASURING)
+            else if (me->bias_state == BIAS_STATE_MEASURING  &&
+                     me->unit_kind[unit] == UNIT_KIND_REPKOV)
             {
-                for (cell = 0;  cell < CANIPP_CELLS_PER_UNIT;  cell++)
+                for (cell = 0;  cell < me->unit_nwires[unit];  cell++)
                     me->unit_bias[unit][me->bias_mes_r][cell] += me->unit_data[unit][cell];
             }
         }
@@ -576,6 +588,19 @@ static void RequestScan(privrec_t *me)
 }
 
 //////////////////////////////////////////////////////////////////////
+static void canipp_start_hbt(int devid, void *devptr,
+                           sl_tid_t tid, void *privptr)
+{
+  privrec_t *me = devptr;
+
+    sl_enq_tout_after(devid, devptr, 10*1000000, canipp_start_hbt, NULL);
+    if (me->read_state == READ_STATE_WAIT)
+        me->lvmt->q_enq_ons_v(me->handle, SQ_ALWAYS, 
+                              2,
+                              DESC_ACCESS_CREG,
+                              ADDR_ACCESS_CREG | ADDR_ST1);
+}
+//////////////////////////////////////////////////////////////////////
 
 
 static void canipp_ff(int devid, void *devptr, int is_a_reset);
@@ -593,11 +618,17 @@ static int canipp_init_d(int devid, void *devptr,
 
     DoDriverLog(devid, 0 | DRIVERLOG_C_ENTRYPOINT, "ENTRY %s(%s)", __FUNCTION__, auxinfo);
 
-    if (me->def_kind == UNIT_KIND_DEFAULT) me->def_kind = UNIT_KIND_REPKOV;
+    if (me->def_kind   == UNIT_KIND_DEFAULT) me->def_kind   = UNIT_KIND_REPKOV;
+    if (me->def_nwires <= 0)                 me->def_nwires = CANIPP_CELLS_PER_UNIT;
     for (unit = 0;  unit < CANIPP_MAXUNITS;  unit++)
-        if (me->unit_kind[unit] == UNIT_KIND_DEFAULT)
-            me->unit_kind[unit] = me->def_kind;
-fprintf(stderr, "#%d: unit_kind[0]=%d\n", devid, me->unit_kind[0]);
+    {
+        if (me->unit_kind  [unit] == UNIT_KIND_DEFAULT)
+            me->unit_kind  [unit]  = me->def_kind;
+        if (me->unit_nwires[unit] <= 0)
+            me->unit_nwires[unit]  = me->def_nwires;
+            
+    }
+////fprintf(stderr, "#%d: unit_kind[0]=%d\n", devid, me->unit_kind[0]);
 
     /* Initialize interface */
     me->lvmt   = GetLayerVMT(devid);
@@ -621,22 +652,27 @@ fprintf(stderr, "#%d: unit_kind[0]=%d\n", devid, me->unit_kind[0]);
     SetChanReturnType(devid, CANIPP_CHAN_DATA_n_base,   CANIPP_MAXUNITS, IS_AUTOUPDATED_YES);
 
     for (unit = 0; unit < CANIPP_MAXUNITS;  unit++)
-        for (range_n = 0;  range_n < CANIPP_NUMRANGES;  range_n++)
-            SetChanRDs(me->devid,
-                       CANIPP_CHAN_BIAS_R0_n_base + range_n * CANIPP_MAXUNITS + unit,
-                       1,
-                       r2q[range_n], 0.0);
+        if (me->unit_kind[unit] == UNIT_KIND_REPKOV)
+            for (range_n = 0;  range_n < CANIPP_NUMRANGES;  range_n++)
+                SetChanRDs(me->devid,
+                           CANIPP_CHAN_BIAS_R0_n_base + range_n * CANIPP_MAXUNITS + unit,
+                           1,
+                           r2q[range_n], 0.0);
 
     SetChanReturnType(devid, CANIPP_CHAN_BIAS_R0_n_base, CANIPP_MAXUNITS*CANIPP_NUMRANGES, IS_AUTOUPDATED_TRUSTED);
     SetChanReturnType(devid, CANIPP_CHAN_BIAS_IS_ON,      1, IS_AUTOUPDATED_TRUSTED);
     SetChanReturnType(devid, CANIPP_CHAN_BIAS_STEPS_LEFT, 1, IS_AUTOUPDATED_TRUSTED);
     SetChanReturnType(devid, CANIPP_CHAN_BIAS_CUR_COUNT,  1, IS_AUTOUPDATED_TRUSTED);
+    SetChanReturnType(devid, CANIPP_CHAN_READ_STATE,      1, IS_AUTOUPDATED_TRUSTED);
     SetChanReturnType(devid, CANIPP_CHAN_CONST32,         1, IS_AUTOUPDATED_TRUSTED);
     ReturnInt32Datum (devid, CANIPP_CHAN_BIAS_IS_ON,      0, 0);
     ReturnInt32Datum (devid, CANIPP_CHAN_BIAS_STEPS_LEFT, 0, 0);
     ReturnInt32Datum (devid, CANIPP_CHAN_BIAS_CUR_COUNT,  me->bias_count = 5, 0);
+    ReturnInt32Datum (devid, CANIPP_CHAN_READ_STATE,      me->read_state,     0);
     ReturnInt32Datum (devid, CANIPP_CHAN_CONST32,         CANIPP_CELLS_PER_UNIT, 0);
     SwitchToABSENT(me);
+
+    canipp_start_hbt(devid, devptr, -1, NULL);
 
     return DEVSTATE_OPERATING;
 }
@@ -700,14 +736,17 @@ static void canipp_in(int devid, void *devptr,
                     me->unit_online[unit] = 0;
                     me->unit_M     [unit] = 0;
                     me->unit_P     [unit] = 0;
+                    me->unit_CREG  [unit] = 0;
                 }
                 else
                 {
                     me->unit_online[unit] = 1;
                     me->unit_M     [unit] = ((code & SETTING_M_MASK) >> SETTING_M_SHIFT);
                     me->unit_P     [unit] = ((code & SETTING_P_MASK) >> SETTING_P_SHIFT);
+                    me->unit_CREG  [unit] = code;
                 }
                 rflags = (me->unit_online [unit]? 0 : CXRF_CAMAC_NO_Q);
+DoDriverLog(devid, 0, "unit=%-02d %c:%-2d M=%d P=%d CREG=%d", unit, me->unit_kind==UNIT_KIND_REPKOV?'r':'c', me->unit_nwires[unit], me->unit_M[unit], me->unit_P[unit], me->unit_CREG[unit]);
 
                 ReturnInt32Datum(devid,
                                  CANIPP_CHAN_M_n_base      + unit,
@@ -715,6 +754,9 @@ static void canipp_in(int devid, void *devptr,
                 ReturnInt32Datum(devid,
                                  CANIPP_CHAN_P_n_base      + unit,
                                  me->unit_P                 [unit], rflags);
+                ReturnInt32Datum(devid,
+                                 CANIPP_CHAN_CREG_n_base   + unit,
+                                 me->unit_CREG              [unit], rflags);
                 /* Note: "online" flag is returned *after* M and P, for their values to be ready when "box becomes ready" */
                 ReturnInt32Datum(devid,
                                  CANIPP_CHAN_ONLINE_n_base + unit,
@@ -723,18 +765,22 @@ static void canipp_in(int devid, void *devptr,
                 if (unit == CANIPP_MAXUNITS-1) // The last one? OK, scan finished
                     RequestMeasurements(me);
             }
-            else if (addr >= 0  &&  addr < CANIPP_CELLS_PER_UNIT)
+            else if (addr >= 0  &&  addr < me->unit_nwires[unit])
             {
                 if (me->measuring_now == 0) return;
                 if (me->unit_d_rcvd[unit])  return;
                 /*!!! should also check if "state==STATE_READING" */
 
                 /* Store datum */
+#if 1
+                wire = addr;
+#else
                 wire = (addr + CANIPP_CELLS_PER_UNIT+1) % CANIPP_CELLS_PER_UNIT;
+#endif
                 me->unit_data[unit][wire] = IPPvalue2int(code);
 
                 /* Is ALL box data received? */
-                for (wire = 0;  wire < CANIPP_CELLS_PER_UNIT;  wire++)
+                for (wire = 0;  wire < me->unit_nwires[unit];  wire++)
                     if (me->unit_data[unit][wire] == CANIPP_DATUM_ABSENT) return;
                 me->unit_d_rcvd[unit] = 1;
 
@@ -744,6 +790,7 @@ static void canipp_in(int devid, void *devptr,
                         me->unit_d_rcvd[unit] == 0) return;
 
                 me->read_state = READ_STATE_NONE;
+                ReturnInt32Datum(me->devid, CANIPP_CHAN_READ_STATE, me->read_state, 0);
                 drdy_p(me, 1, 0);
             }
             else
@@ -773,15 +820,15 @@ static void canipp_in(int devid, void *devptr,
             /* Request reading of all active boxen */
             for (unit = 0; unit < CANIPP_MAXUNITS;  unit++)
                 if (me->unit_online[unit])
-                    for (addr = 0;  addr < CANIPP_CELLS_PER_UNIT; addr++)
+                    for (addr = 0;  addr < me->unit_nwires[unit]; addr++)
                         me->lvmt->q_enq_v(me->handle, SQ_ALWAYS,
                                           2, 
                                           DESC_READ_n_base + unitn2unitcode(unit),
                                           addr);
             me->read_state = READ_STATE_READ;
+            ReturnInt32Datum(me->devid, CANIPP_CHAN_READ_STATE, me->read_state, 0);
             DropReadTout(me);
             me->read_tid   = sl_enq_tout_after(devid, me, 10*1000000, read_timeout, NULL);
-            /*!!! Schedule a timeout? */
             break;
     }
 }
@@ -839,6 +886,13 @@ static void canipp_rw_p(int devid, void *devptr,
                 ReturnInt32Datum(devid, chn, me->unit_P[unit], rflags);
                 break;
 
+            case CANIPP_CHAN_CREG_n_base ... CANIPP_CHAN_CREG_n_base+CANIPP_MAXUNITS-1:
+                unit = chn - CANIPP_CHAN_CREG_n_base;
+                if (action == DRVA_WRITE) me->unit_CREG[unit] = value & 0xFFFF;
+                rflags = (me->unit_online [unit]? 0 : CXRF_CAMAC_NO_Q);
+                ReturnInt32Datum(devid, chn, me->unit_CREG[unit], rflags);
+                break;
+
             case CANIPP_CHAN_BIAS_GET:
                 if (action == DRVA_WRITE  &&  value == CX_VALUE_COMMAND)
                     SwitchToSTARTING(me);
@@ -864,6 +918,10 @@ static void canipp_rw_p(int devid, void *devptr,
             case CANIPP_CHAN_HW_VER:
             case CANIPP_CHAN_SW_VER:
                 /* Do-nothing -- returned from _ff() */
+                break;
+
+            case CANIPP_CHAN_READ_STATE:
+                /* Do-nothing -- returned upon change */
                 break;
 
             default:

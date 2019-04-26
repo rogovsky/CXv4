@@ -9,7 +9,9 @@ VDEV_DRIVERS=	ist_cdac20_drv.so v1k_cdac20_drv.so v3h_a40d16_drv.so \
 		double_iset_drv.so \
 		vepp4_gimn_drv.so \
 		v5k5045_drv.so \
-		weldproc_drv.so
+		v5phaseconv_drv.so \
+		weldproc_drv.so \
+		mqtt_mapping_drv.so
 CDA_DRIVERS=	lebedev_subharmonic_drv.so liu_key_drv.so liu_doorilks_drv.so
 
 MONO_C_FILES=	$(VDEV_DRIVERS) $(CDA_DRIVERS)

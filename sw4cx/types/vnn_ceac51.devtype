@@ -45,6 +45,8 @@ devtype vnn_ceac51 w50i,r50i {
 	c_ilk_out_prot3	74
 	c_ilk_imax	75
 
+	vdev_condition	97
 	cur_polarity	98
-	ist_state	99
+	vdev_state	99
+	ist_state	vdev_state
 }
