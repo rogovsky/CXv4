@@ -30,6 +30,13 @@ dev v3hd16_0      candac16@sktcankoz ~ L_MAGSYS,57  spd=-1333330  # -50A
 dev v3ha40_1      canadc40@sktcankoz ~ L_MAGSYS,54  adc_timecode=4 gain=0
 dev v3hd16_1      candac16@sktcankoz ~ L_MAGSYS,55  spd=-1333330  # -50A
 
+# Magsys -- new IST-based
+dev icd_QL12   cdac20@sktcankoz ~ L_MAGSYS,45  spd=-800000 tac=10
+dev icd_QL13   cdac20@sktcankoz ~ L_MAGSYS,44  spd=-800000 tac=10
+dev icd_QL14   cdac20@sktcankoz ~ L_MAGSYS,43  spd=-800000 tac=10
+dev icd_QLB3n4 cdac20@sktcankoz ~ L_MAGSYS,42  spd=-800000 tac=10
+dev icd_QLB2n5 cdac20@sktcankoz ~ L_MAGSYS,41  spd=-800000 tac=10
+
 # Magcor
 dev rst1_a40_0 canadc40@sktcankoz ~ L_RST1,31  adc_timecode=4 gain=0 end=31
 dev rst1_c16_0 candac16@sktcankoz ~ L_RST1,30 
@@ -84,12 +91,12 @@ MAGX_OLD_VCH300_DEV_LINE(QL6n7,   ovch300_c16_0.out3,  ovch300_c16_0.out_rate3, 
 MAGX_OLD_VCH300_DEV_LINE(QL8n9,   ovch300_c16_0.out4,  ovch300_c16_0.out_rate4,  0.026666, ovch300_a40_0.adc13, 0.026666) #!!!FLOAT: 8.0/300         8.0/300
 MAGX_OLD_VCH300_DEV_LINE(QL10,    ovch300_c16_0.out5,  ovch300_c16_0.out_rate5,  0.026666, ovch300_a40_0.adc32, 0.026666) #!!!FLOAT: 8.0/300         8.0/300
 MAGX_OLD_VCH300_DEV_LINE(QL11,    ovch300_c16_0.out6,  ovch300_c16_0.out_rate6,  0.026666, ovch300_a40_0.adc35, 0.026666) #!!!FLOAT: 8.0/300         8.0/300
-MAGX_OLD_VCH300_DEV_LINE(QL12,    ovch300_c16_1.out8,  ovch300_c16_1.out_rate8,  0.079721, ovch300_a40_1.adc30, 0.076960) #!!!FLOAT: 1.0/12.92*1.030 1.0/12.47/1.042
-MAGX_OLD_VCH300_DEV_LINE(QL13,    ovch300_c16_1.out9,  ovch300_c16_1.out_rate9,  0.079784, ovch300_a40_1.adc28, 0.076985) #!!!FLOAT: 1.0/12.96*1.034 1.0/12.49/1.040
-MAGX_OLD_VCH300_DEV_LINE(QL14,    ovch300_c16_1.out10, ovch300_c16_1.out_rate10, 0.080170, ovch300_a40_1.adc26, 0.077295) #!!!FLOAT: 1.0/12.96*1.039 1.0/12.50/1.035
+MAGX_OLD_VCH300_DEV_LINE(old_QL12,    ovch300_c16_1.out8,  ovch300_c16_1.out_rate8,  0.079721, ovch300_a40_1.adc30, 0.076960) #!!!FLOAT: 1.0/12.92*1.030 1.0/12.47/1.042
+MAGX_OLD_VCH300_DEV_LINE(old_QL13,    ovch300_c16_1.out9,  ovch300_c16_1.out_rate9,  0.079784, ovch300_a40_1.adc28, 0.076985) #!!!FLOAT: 1.0/12.96*1.034 1.0/12.49/1.040
+MAGX_OLD_VCH300_DEV_LINE(old_QL14,    ovch300_c16_1.out10, ovch300_c16_1.out_rate10, 0.080170, ovch300_a40_1.adc26, 0.077295) #!!!FLOAT: 1.0/12.96*1.039 1.0/12.50/1.035
 MAGX_OLD_VCH300_DEV_LINE(QLB1,    ovch300_c16_1.out5,  ovch300_c16_1.out_rate5,  0.026666, ovch300_a40_1.adc32, 0.026666) #!!!FLOAT: 8.0/300         8.0/300
-MAGX_OLD_VCH300_DEV_LINE(QLB3n4,  ovch300_c16_1.out6,  ovch300_c16_1.out_rate6,  0.026666, ovch300_a40_1.adc35, 0.026666) #!!!FLOAT: 8.0/300         8.0/300
-MAGX_OLD_VCH300_DEV_LINE(QLB2n5,  ovch300_c16_1.out7,  ovch300_c16_1.out_rate7,  0.026666, ovch300_a40_1.adc38, 0.026666) #!!!FLOAT: 8.0/300         8.0/300
+MAGX_OLD_VCH300_DEV_LINE(old_QLB3n4,  ovch300_c16_1.out6,  ovch300_c16_1.out_rate6,  0.026666, ovch300_a40_1.adc35, 0.026666) #!!!FLOAT: 8.0/300         8.0/300
+MAGX_OLD_VCH300_DEV_LINE(old_QLB2n5,  ovch300_c16_1.out7,  ovch300_c16_1.out_rate7,  0.026666, ovch300_a40_1.adc38, 0.026666) #!!!FLOAT: 8.0/300         8.0/300
 MAGX_OLD_VCH300_DEV_LINE(Cor1,    ovch300_c16_1.out4,  ovch300_c16_1.out_rate4,  0.026666, ovch300_a40_1.adc13, 0.026666) #!!!FLOAT: 8.0/300         8.0/300
 MAGX_OLD_VCH300_DEV_LINE(Cor2n3,  ovch300_c16_0.out7,  ovch300_c16_0.out_rate7,  0.026666, ovch300_a40_0.adc38, 0.026666) #!!!FLOAT: 8.0/300         8.0/300
 
@@ -114,6 +121,12 @@ MAGX_V3H_A40D16_DEV(QL28, v3h1, 4, 0.0266666) #!!!FLOAT: 8./300
 MAGX_V3H_A40D16_DEV(QL29, v3h1, 5, 0.0266666) #!!!FLOAT: 8./300
 MAGX_V3H_A40D16_DEV(QL30, v3h1, 6, 0.0266666) #!!!FLOAT: 8./300
 MAGX_V3H_A40D16_DEV(QL31, v3h1, 7, 0.0266666) #!!!FLOAT: 8./300
+
+MAGX_VNN_CEAC51_DEV(QL12,   icd_QL12,   0.01, 1) #!!!FLOAT: ???1./250
+MAGX_VNN_CEAC51_DEV(QL13,   icd_QL13,   0.01, 1) #!!!FLOAT: ???1./250
+MAGX_VNN_CEAC51_DEV(QL14,   icd_QL14,   0.01, 1) #!!!FLOAT: ???1./250
+MAGX_VNN_CEAC51_DEV(QLB3n4, icd_QLB3n4, 0.01, 1) #!!!FLOAT: ???1./250
+MAGX_VNN_CEAC51_DEV(QLB2n5, icd_QLB2n5, 0.01, 1) #!!!FLOAT: ???1./250
 
 # Magcor
 MAGX_COR4016_DEV(rst1_a40_0, rst1_c16_0, rst1,
@@ -175,10 +188,10 @@ cpoint Spectr.switch_off spectr_switch_off_dev.0
 ###cpoint Spectr._devstate  Spectr1._devstate
 ###MAGX_WALKER_SUBDEV(Spectr, 1)
 
-MAGX_VNN_CEAC51_DEV(ql15,     icd_ql15,    0.01, 1) #!!!FLOAT: 1./250 //!!!-1!!!
-MAGX_VNN_CEAC51_DEV(qltr3,    icd_qltr3,   0.01, 1) #!!!FLOAT: 1./250 //!!!-1!!!
-MAGX_VNN_CEAC51_DEV(qltr2,    icd_qltr2,   0.01, 1) #!!!FLOAT: 1./250 //!!!-1!!!
-MAGX_VNN_CEAC51_DEV(qltr1,    icd_qltr1,   0.01, 1) #!!!FLOAT: 1./250 //!!!-1!!!
+MAGX_VNN_CEAC51_DEV(ql15,     icd_ql15,    0.01, 1) #!!!FLOAT: ???1./250 //!!!-1!!!
+MAGX_VNN_CEAC51_DEV(qltr3,    icd_qltr3,   0.01, 1) #!!!FLOAT: ???1./250 //!!!-1!!!
+MAGX_VNN_CEAC51_DEV(qltr2,    icd_qltr2,   0.01, 1) #!!!FLOAT: ???1./250 //!!!-1!!!
+MAGX_VNN_CEAC51_DEV(qltr1,    icd_qltr1,   0.01, 1) #!!!FLOAT: ???1./250 //!!!-1!!!
 
 # Magcor aux crate 2/cac208
 cpoint fedcor.opora fedcor.adc12 r:0.33223 #!!!FLOAT: 1.0/3.01

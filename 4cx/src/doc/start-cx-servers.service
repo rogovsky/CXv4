@@ -1,0 +1,12 @@
+[Unit]
+Description=CXv4 servers automatic start service
+After=multi-user.target
+
+[Service]
+Type=oneshot
+User=oper
+ExecStart=/bin/sh -c ${HOME}/4pult/bin/start-all-servers
+KillMode=none
+
+[Install]
+WantedBy=multi-user.target

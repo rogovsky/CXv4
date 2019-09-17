@@ -28,7 +28,7 @@ do
     fi
 done < ${SRVPARAMS_FILE}
 
-echo PARAMS: $PARAMS
+echo "starting cxsd#$N PARAMS: $PARAMS"
 
 cd $PULT
-./sbin/cxsd -c configs/csxd.conf -f configs/devlist-$THISHOST-$N.lst $PARAMS :$N
+./sbin/cxsd -c configs/cxsd.conf -f configs/devlist-$THISHOST-$N.lst $PARAMS :$N

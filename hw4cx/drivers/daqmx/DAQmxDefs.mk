@@ -1,0 +1,9 @@
+DAQMX_INCLUDE_DIR=	/tmp
+
+ifneq "z$(DAQMX_INCLUDE_DIR)z" "zz"
+  DAQMX_INCLUDES=	-I$(DAQMX_INCLUDE_DIR)
+endif
+
+ifneq "$(wildcard $(DAQMX_INCLUDE_DIR)/NIDAQmx.h)" ""
+  MAY_BUILD_DAQMX_DRIVERS=YES
+endif

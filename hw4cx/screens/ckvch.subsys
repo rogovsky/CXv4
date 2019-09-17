@@ -1,0 +1,68 @@
+wintitle main "CKVCh test panel"
+winname  main ckvch
+winclass main CKVCh
+winopts  main ""
+
+grouping main ckvch "" lrtb "" content:6 {
+
+    container - "" grid nodecor ncols:2 content:2 {
+        disp   hw_ver    HW    text   "withlabel" dpyfmt:"%-2.0f" r:hw_ver
+        disp   sw_ver    SW    text   "withlabel" dpyfmt:"%-2.0f" r:sw_ver
+    }
+
+    disp   kind ""     selector "align=center"    r:config_bits \
+            items:"-0-\t1x 8->1\t2x 4->1\t2x 4->1" \
+            layinfo:newline
+
+    knob   bits "Code" text     "withlabel,noincdec" \
+            dpyfmt:%2.0f alwdrange:0-15           r:out_4bits \
+            layinfo:newline
+
+    container 4x2_1 "4x 2->1" grid "nocoltitles,norowtitles" \
+            nattl:1 content:5 {
+
+        disp - " " onoff "color=green,victim=:4x2_1" \
+                r:"_all_code;
+                   push 0; push 1; push 0;
+                   getchan config_bits; sub 1; case;
+                   ret;"
+
+        selector out1 "Out 1" selector "" r:out1 \
+                items:"In 1\tIn 2"
+        selector out2 "Out 2" selector "" r:out2 \
+                items:"In 3\tIn 4"
+        selector out3 "Out 3" selector "" r:out3 \
+                items:"In 5\tIn 6"
+        selector out4 "Out 4" selector "" r:out4 \
+                items:"In 7\tIn 8"
+    } layinfo:newline
+
+    container 1x8_1 "1x 8->1" grid "nocoltitles,norowtitles" \
+            nattl:1 content:2 {
+
+        disp - " " onoff "color=green,victim=:1x8_1" \
+                r:"_all_code;
+                   push 0; push 1; push 0;
+                   getchan config_bits; sub 2; case;
+                   ret;"
+
+        selector out1 "Out 1" selector "" r:out1 \
+                items:"In 1\tIn 2\tIn 3\tIn 4\tIn 5\tIn 6\tIn 7\tIn 8"
+    } layinfo:newline
+
+    container 2x4_1 "2x 4->1" grid "nocoltitles,norowtitles" \
+            nattl:1 content:3 {
+
+        disp - " " onoff "color=green,victim=:2x4_1" \
+                r:"_all_code;
+                   push 0; push 1; push 0;
+                   getchan config_bits; sub 3; case;
+                   ret;"
+
+        selector out1 "Out 1" selector "" r:out1 \
+                items:"In 1\tIn 2\tIn 3\tIn 4"
+        selector out2 "Out 2" selector "" r:out2 \
+                items:"In 5\tIn 6\tIn 7\tIn 8"
+    } layinfo:newline
+
+}

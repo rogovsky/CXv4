@@ -16,6 +16,10 @@
 
 #include "console_cda_util.h"
 
+#ifdef BUILTINS_DECLARATION_H_FILE
+  #include BUILTINS_DECLARATION_H_FILE
+#endif /* BUILTINS_DECLARATION_H_FILE */
+
 
 //////////////////////////////////////////////////////////////////////
 
@@ -81,6 +85,7 @@ static int            print_fresh_ages = 0;
 static int            print_rds        = 0;
 static int            print_strings    = 0;
 static int            print_hwinfos    = 0;
+static int            print_unescaped  = 0;
 static int            print_srvlist    = 0;
 static int            print_writes     = 0;
 static int            print_unserved   = 0;
@@ -267,6 +272,7 @@ static void ProcessDatarefEvent(int            uniq,
                              (print_name      ? UTIL_PRINT_NAME      : 0) |
                              (print_parens    ? UTIL_PRINT_PARENS    : 0) |
                              (print_quotes    ? UTIL_PRINT_QUOTES    : 0) |
+                             (print_unescaped ? UTIL_PRINT_UNESCAPED : 0) |
                              (option_relative ? UTIL_PRINT_RELATIVE  : 0) |
                              (print_timestamp ? UTIL_PRINT_TIMESTAMP : 0) |
                              (print_rflags    ? UTIL_PRINT_RFLAGS    : 0) |
@@ -310,6 +316,7 @@ static void ProcessDatarefEvent(int            uniq,
                          (print_name      ? UTIL_PRINT_NAME      : 0) |
                          (print_parens    ? UTIL_PRINT_PARENS    : 0) |
                          (print_quotes    ? UTIL_PRINT_QUOTES    : 0) |
+                         (print_unescaped ? UTIL_PRINT_UNESCAPED : 0) |
                          (option_relative ? UTIL_PRINT_RELATIVE  : 0) |
                          (print_timestamp ? UTIL_PRINT_TIMESTAMP : 0) |
                          (print_rflags    ? UTIL_PRINT_RFLAGS    : 0) |
@@ -432,7 +439,7 @@ static void ProcessDatarefEvent(int            uniq,
         }
         else if (range_specified)
         {
-            fprintf(outfile, "# %s quant(%s)=[",
+            fprintf(outfile, "# %s range(%s)=[",
                     print_time?strcurtime():"", src_p);
 
             for (minmax = 0;  minmax <= 1;  minmax++)
@@ -658,6 +665,10 @@ int main(int argc, char *argv[])
 
     set_signal(SIGPIPE, SIG_IGN);
 
+#ifdef BUILTINS_REGISTRATION_CODE
+    BUILTINS_REGISTRATION_CODE
+#endif /* BUILTINS_REGISTRATION_CODE */
+
     while ((c = getopt(argc, argv, "1b:d:D:f:hmo:rT:w")) != EOF)
         switch (c)
         {
@@ -691,6 +702,7 @@ int main(int argc, char *argv[])
                         case 'n': print_name       = val2set; break;
                         case 'o': print_parens     = val2set; break;
                         case 'q': print_quotes     = val2set; break;
+                        case 'e': print_unescaped  = val2set; break;
                         case 't': print_timestamp  = val2set; break;
                         case 'f': print_rflags     = val2set; break;
                         case 'F': print_fresh_ages = val2set; break;
@@ -775,6 +787,7 @@ int main(int argc, char *argv[])
                " n  print channel Name\n"
                " o  print parens around vector values (default=yes; \"-D-o\" for no)\n"
                " q  print Quotes around text values (default=yes; \"-D-q\" for no)\n"
+               " e  prunt unEscaped strings (instead of \\xNN etc.)\n"
                " t  print Timestamps\n"
                " f  print rFlags\n"
                " s  print list of Servers\n"
@@ -794,7 +807,7 @@ int main(int argc, char *argv[])
                " @+:              following integer dtype is unsigned (add CXDTYPE_USGN_MASK)\n"
                " @T[MAX_NELEMS]:  dtype and optional maximum nelems; T is one of:\n"
                "                   b  INT8  (Byte)\n"
-               "                   h  INT16 (Short)\n"
+               "                   h  INT16 (sHort)\n"
                "                   i  INT32 (Int)\n"
                "                   q  INT64 (Quad)\n"
                "                   s  SINGLE\n"

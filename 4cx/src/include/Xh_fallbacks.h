@@ -198,17 +198,17 @@
 
 #define XH_FILE_FALLBACKS \
     "*.pathMode:"                              "PATH_MODE_RELATIVE", \
-    "*.loadModeDialog.dialogTitle:"            "Загрузить режим",  \
-    "*.saveModeDialog.dialogTitle:"            "Сохранить режим",  \
-    "*.loadDataDialog.dialogTitle:"            "Загрузить данные", \
-    "*.saveDataDialog.dialogTitle:"            "Сохранить данные", \
-    "*.filterLabelString:"                     "Фильтр",           \
-    "*.dirTextLabelString:"                    "Директория",       \
-    "*.dirListLabelString:"                    "Директории",       \
-    "*.fileListLabelString:"                   "Файлы",            \
-    "*.selectionLabelString:"                  "Имя",              \
-    "*.cancelLabelString:"                     "Отмена",           \
-    "*.applyLabelString:"                      "Фильтровать",      \
+    "*.loadModeDialog.dialogTitle:"            "Load mode",        \
+    "*.saveModeDialog.dialogTitle:"            "Save mode",        \
+    "*.loadDataDialog.dialogTitle:"            "Load data",        \
+    "*.saveDataDialog.dialogTitle:"            "Save data",        \
+    "*.filterLabelString:"                     "Filter",           \
+    "*.dirTextLabelString:"                    "Directory",        \
+    "*.dirListLabelString:"                    "Directories",      \
+    "*.fileListLabelString:"                   "Files",            \
+    "*.selectionLabelString:"                  "Name",             \
+    "*.cancelLabelString:"                     "Cancel",           \
+    "*.applyLabelString:"                      "Filter",           \
     "*.showFiles.labelString:"                 "..."
 
 #define XH_STANDARD_FALLBACKS \

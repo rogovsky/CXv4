@@ -19,6 +19,7 @@ extern "C"
 #include "sysdeps/os_cygwin.h"
 #include "sysdeps/os_interix.h"
 #include "sysdeps/os_openbsd.h"
+#include "sysdeps/os_darwin.h"
 
 
 /* For some strange reason these GNU variables aren't defined in any .h

@@ -453,7 +453,7 @@ static void VarChgCB(varinfo_t     *vi,
                              1, &(hi->dataref),
                              &(vi->addr), &(vi->dtype), &(vi->current_nelems),
                              &(vi->rflags), &(vi->timestamp),
-                             1);
+                             CDA_DAT_P_IS_UPDATE);
 
     me->being_processed--;
     if (me->being_processed == 0  &&  me->being_destroyed)
@@ -514,7 +514,7 @@ static int  cda_d_dircn_new_chan(cda_dataref_t ref, const char *name,
                              1, &(hi->dataref),
                              &(vi->addr), &(vi->dtype), &(vi->current_nelems),
                              &(vi->rflags), &(vi->timestamp),
-                             1);
+                             CDA_DAT_P_IS_UPDATE);
 
     cda_dat_p_set_hwr  (ref, hwr);
     cda_dat_p_set_ready(ref, 1);

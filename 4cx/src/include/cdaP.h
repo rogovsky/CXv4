@@ -48,6 +48,12 @@ enum
 
 enum
 {
+    CDA_DAT_P_IS_CURVAL = 0,
+    CDA_DAT_P_IS_UPDATE = 1,
+};
+
+enum
+{
     CDA_DAT_P_FLAG_NONE                       = 0,
     CDA_DAT_P_FLAG_CHAN_TYPE_CHANGE_SUPPORTED = 1 << 0,
 };
@@ -60,13 +66,13 @@ enum
 //////////////////////////////////////////////////////////////////////
 
 #define CDA_DAT_P_MODREC_SUFFIX     _dat_p_rec
-#define CDA_DAT_P_MODREC_SUFFIX_STR __CX_STRINGIZE(CDA_DAT_P_MODREC_SUFFIX_STR)
+#define CDA_DAT_P_MODREC_SUFFIX_STR __CX_STRINGIZE(CDA_DAT_P_MODREC_SUFFIX)
 
 enum
 {
     CDA_DAT_P_MODREC_MAGIC = 0xCDA0DA1A,
 
-    CDA_DAT_P_MODREC_VERSION_MAJOR = 1,
+    CDA_DAT_P_MODREC_VERSION_MAJOR = 2,
     CDA_DAT_P_MODREC_VERSION_MINOR = 0,
     CDA_DAT_P_MODREC_VERSION = CX_ENCODE_VERSION(CDA_DAT_P_MODREC_VERSION_MAJOR,
                                                  CDA_DAT_P_MODREC_VERSION_MINOR)
@@ -158,13 +164,13 @@ int cda_deregister_dat_plugin(cda_dat_p_rec_t *metric);
 //////////////////////////////////////////////////////////////////////
 
 #define CDA_FLA_P_MODREC_SUFFIX     _fla_p_rec
-#define CDA_FLA_P_MODREC_SUFFIX_STR __CX_STRINGIZE(CDA_FLA_P_MODREC_SUFFIX_STR)
+#define CDA_FLA_P_MODREC_SUFFIX_STR __CX_STRINGIZE(CDA_FLA_P_MODREC_SUFFIX)
 
 enum
 {
     CDA_FLA_P_MODREC_MAGIC = 0xCDA0F01A,
 
-    CDA_FLA_P_MODREC_VERSION_MAJOR = 1,
+    CDA_FLA_P_MODREC_VERSION_MAJOR = 2,
     CDA_FLA_P_MODREC_VERSION_MINOR = 0,
     CDA_FLA_P_MODREC_VERSION = CX_ENCODE_VERSION(CDA_FLA_P_MODREC_VERSION_MAJOR,
                                                  CDA_FLA_P_MODREC_VERSION_MINOR)

@@ -8,6 +8,5 @@ LIST_FILE=$PULT/configs/cx-servers-$THISHOST.conf
 
 for N in `sed -e 's/#.*//' <$LIST_FILE`
 do
-echo $N
-	[ -z "${N//[0-9]}" ]  &&  $PULT/bin/run-cx-server :N
+	[ -z "${N//[0-9]}" ]  &&  $PULT/bin/run-cx-server :$N
 done

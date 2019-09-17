@@ -89,6 +89,7 @@ do
             WAS_dat_plugin=Y
             ;;
         'motif_knobset')
+            WAS_motif_knobset=Y
             ;;
         *)
             echo "$0: unknown mod_type \"$MOD_TYPE\"" >&2
@@ -112,6 +113,7 @@ echo ""
 [ -n "$WAS_cxsd_drvlyr"   ]  &&  echo "#include \"cxsd_driver.h\""
 [ -n "$WAS_cxsd_extlib"   ]  &&  echo "#include \"cxsd_extension.h\""
 [ -n "$WAS_dat_plugin"    ]  &&  echo "#include \"cdaP.h\""
+[ -n "$WAS_motif_knobset" ]  &&  echo "//#include \"\""
 
 echo ""
 echo "//////////////////////////////////////////////////////////////////////"

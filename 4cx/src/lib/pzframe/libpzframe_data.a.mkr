@@ -1,1 +1,0 @@
-libpzframe_data.a: libpzframe_data.a(pzframe_data.o fastadc_data.o vcamimg_data.o wirebpm_data.o)

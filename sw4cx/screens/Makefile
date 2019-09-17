@@ -12,7 +12,7 @@ CLIENTS=	rfsyn_eng v5rfsyn v5ie v5kls v5cnv \
 		gid25x4 v4gid25s v4k500mag \
 		vepp34info vepp5info \
 		v5ringcurmon4v4 \
-		baachi verona weldcc
+		baachi verona weldcc xweldcc
 AUX_SCREEN_FILES=	subsys_magx_macros.m4 gid25_subsys_macros.m4
 
 EXPORTSFILES3=	weld_mes_up_mv2mka.lst

@@ -1,0 +1,3 @@
+include(`pxi6363.devtype')
+
+dev a pxi6363 ~ - PXI1Slot4

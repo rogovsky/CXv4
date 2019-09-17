@@ -1,0 +1,11 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=CX-starter
+Comment=CX-starter
+#Exec=/home/user/bin/cstart
+Exec=cstart
+Icon=/home/user/4pult/include/pixmaps/cx-starter.xpm
+StartupNotify=false
+Categories=Application;
+Terminal=false
+Type=Application

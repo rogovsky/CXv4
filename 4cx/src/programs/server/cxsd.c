@@ -197,9 +197,10 @@ static  CxsdDb db;
 
 static void ReadHWConfig(const char *argv0)
 {
-    CxsdHwSetSimulate(option_simulate);
+    CxsdHwSetSimulate     (option_simulate);
+    CxsdHwSetCacheRFW     (option_cacherfw);
     CxsdHwSetDefDrvLogMask(option_defdrvlog_mask);
-    CxsdSetDrvLyrPath(config_drivers_path);
+    CxsdSetDrvLyrPath     (config_drivers_path);
     db = CxsdDbLoadDb(argv0, "file", option_dbref);
     if (db == NULL)
     {

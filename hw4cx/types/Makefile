@@ -1,6 +1,6 @@
 TYPES_LIST=	cac208 ceac124 cdac20 candac16 canadc40 \
 		slio24_reg \
-		cgvi8 cpks8 curvv vsdc2 caniva canipp \
+		cgvi8 cpks8 ckvch curvv vsdc2 caniva canipp \
 		senkov_vip senkov_ebc weld02 \
 		tvac320 panov_ubs \
 		smc8 \
@@ -29,7 +29,9 @@ TYPES_LIST=	cac208 ceac124 cdac20 candac16 canadc40 \
 		kshd485 \
 		triadatv_um \
 		\
-		vadc16 vdac20
+		vadc16 vdac20 \
+		\
+		pxi6363
 TYPES_FILES=	$(foreach T, $(TYPES_LIST), $T.devtype)
 
 EXPORTSFILES=	$(TYPES_FILES)

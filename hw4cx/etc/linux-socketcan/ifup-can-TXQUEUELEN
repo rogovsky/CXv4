@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+# /etc/sysconfig/network-scripts/ifup-can
+#
+# A script to bring up CAN-bus interfaces 
+#
+# ifcfg-can* parameters:
+#     TYPE=CAN   indicate interface as CAN-bus
+#     BAUDRATE   interface speed; usually 125000, 250000, 500000, 1000000
+#     RESTART_MS interval (in ms) to auto-restart interface after bus problems
+#     TXQUEUELEN TX queue size (in packets)
+#
+
+. /etc/init.d/functions
+
+cd /etc/sysconfig/network-scripts
+. ./network-functions
+
+[ -f ../network ] && . ../network
+
+CONFIG=${1}
+
+need_config ${CONFIG}
+
+source_config
+
+# load the module associated with that device
+# /sbin/modprobe ${REALDEVICE}
+# and check if device is really present
+is_available ${REALDEVICE} ||
+{
+      echo $"Device ${DEVICE} does not seem to be present, delaying initialization."
+      exit 1
+}
+
+# Set baud rate; this is in fact a mandatory parameter
+if [ -n "${BAUDRATE}" ]; then
+    ip link set ${DEVICE} type can bitrate "${BAUDRATE}"
+fi
+
+# Set restart-after-bus-{off,passive} interval
+if [ -n "${RESTART_MS}" ]; then
+    ip link set ${DEVICE} type can restart-ms "${RESTART_MS}"
+fi
+
+if [ -n "${TXQUEUELEN}" ]; then
+    ip link set ${DEVICE} txqueuelen "${TXQUEUELEN}"
+fi
+
+/sbin/ip link set dev ${DEVICE} up
+
+exit 0

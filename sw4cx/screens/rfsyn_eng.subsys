@@ -137,22 +137,23 @@ grouping main RFSYN_ENG_grouping "RFSyn: engineering screen" lrtb "vertical" \
         }
     }
 
-    container acc "Acceleration" grid coltitles:"A\tB, ns\tT, ns\t-\tStarts" \
+    container acc "Linac RF" grid coltitles:"A\tB, ns\tT, ns\t-\tStarts" \
             ncols:5 content:eval(4*25) {
         ONE_D16(_11, `"D16 #11"', lrf_d16_11, klss,     "Klystrons",  rf,       "RF",        rf_adc,   "RF ADC",    synchr3,  "Synchr.3")
-        ONE_D16(_2,  `"D16 #2"',  lrf_d16_2,  kls1,     "Kls 1",      kls2,     "Kls 2",     kls3,     "Kls 3",     kls4,     "Kls 4")
+        ONE_D16(_2,  `"D16 #2"',  lrf_d16_2,  kls1,     "Mod 1",      kls2,     "Mod 2",     kls3,     "Mod 3",     kls4,     "Mod 4")
         ONE_D16(_12, `"D16 #12"', lrf_d16_12, rf_k2,    "RF K2",      phase_k2, "Phase K2",  rf_k3,    "RF K3",     phase_k3, "Phase K3")
         ONE_D16(_14, `"D16 #14"', lrf_d16_14, rf_k1,    "RF K1",      phase_k1, "Phase K1",  rf_k4,    "RF K4",     phase_k4, "Phase K4")
     }
 
-    container rad "Rad.mode" grid coltitles:"A\tB, ns\tT, ns\t-\tStarts" \
-            ncols:5 content:eval(6*25) {
-        ONE_D16(_18, `"D16 #18"', lbm_d16_18, kicker,   "Kicker",     r_18_2,   "reserve",   gun_dly,  "Gun delay", synchr1,  "Synchr.1")
-        ONE_D16(_6,  `"D16 #6"',  lbm_d16_6,  gun_diag, "Gun diag",   r_6_2,    "reserve",   adc_trg,  "Targ ADC",  magc_s,   "Mag Conc")
+    container rad "Linac beam" grid coltitles:"A\tB, ns\tT, ns\t-\tStarts" \
+            ncols:5 content:eval(7*25) {
+        ONE_D16(_18, `"D16 #18"', lbm_d16_18, kicker,   "Inject",     r_18_2,   "reserve",   beam,     "Beam",      synchr1,  "Synchr.1")
+        ONE_D16(_6,  `"D16 #6"',  lbm_d16_6,  gun_diag, "Gun&diag",   r_6_2,    "reserve",   adc_trg,  "ADC conc.", magc_s,   "Mag conc.")
         ONE_D16(_10, `"D16 #10"', lbm_d16_10, bunk_sr,  "(bunk SR)",  ipp,      "IPP",       f2856,    "Phs 2856",  h2_pick,  "H2 pick")
         ONE_D16(_8,  `"D16 #8"',  lbm_d16_8,  gun_hv,   "Gun HV",     gun_grid, "Gun grid",  gun_200,  "Gun A200",  synchr2,  "Synchr.2")
         ONE_D16(_16, `"D16 #16"', lbm_d16_16, h1_esens, "H1 esens",   h1_phcam, "H1 camrs",  h2_esens, "H2 esens",  h2_phcam, "H2 camrs")
         ONE_D16(_5,  `"D16 #5"',  xfr_d16_5,  hbz1,     "hbz1",       hbz2,     "hbz2",      hbz3,     "hbz3",      h2_phcam, "hbz4")
+        ONE_D16(_7,  `"D16x#7"',  xfr_d16_7,  rs7_0,    "rs0",        rs7_1,    "rs1",       rs7_2,    "rs2",       BLM,      "blm")
     } layinfo:newline
 
     container trs "Transfer" grid coltitles:"A\tB, ns\tT, ns\t-\tStarts" \

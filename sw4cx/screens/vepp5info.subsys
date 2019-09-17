@@ -1,5 +1,5 @@
 sysname       vepp5info
-defserver     cxout:1
+defserver     cxout.inp.nsk.su:1
 wintitle main "VEPP-5 info"
 winname  main vepp5info
 winclass main VEPP5Info

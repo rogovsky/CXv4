@@ -334,7 +334,7 @@ static inline void *safe_realloc(void *ptr, size_t size)
         if (i >= 0) return i;                                          \
                                                                        \
         /* None found -- okay, let's grow the list... */               \
-        new_list = safe_realloc(obj_pfx fieldname_pfx##_list,          \
+        new_list = (slot_type *)safe_realloc(obj_pfx fieldname_pfx##_list,          \
                                 sizeof(slot_type)                      \
                                 *                                      \
                                 (obj_pfx fieldname_pfx##_list_allocd + \
@@ -430,7 +430,7 @@ static inline void *safe_realloc(void *ptr, size_t size)
         if (i >= 0) return i;                                          \
                                                                        \
         /* None found -- okay, let's grow the list... */               \
-        new_list = safe_realloc(obj_pfx fieldname_pfx##_list,          \
+        new_list = (slot_type *)safe_realloc(obj_pfx fieldname_pfx##_list,          \
                                 sizeof(slot_type *)                    \
                                 *                                      \
                                 (obj_pfx fieldname_pfx##_list_allocd + \

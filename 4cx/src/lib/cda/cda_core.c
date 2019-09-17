@@ -764,7 +764,7 @@ cda_context_t  cda_new_context(int                   uniq,   void *privptr1,
               defpfx, scheme, sizeof(scheme),
               &target);
     /* ...and check if this scheme is supported */
-    pdt = cda_get_dat_p_rec_by_scheme(scheme);
+    pdt = cda_get_dat_p_rec_by_scheme(argv0, scheme);
     if (pdt == NULL)
     {
         cda_set_err("unknown scheme \"%s\"", scheme);
@@ -1110,7 +1110,7 @@ cda_dataref_t  cda_add_chan   (cda_context_t         cid,
               nameptr, scheme, sizeof(scheme),
               &target);
     /* ...and check if this scheme is supported */
-    pdt = cda_get_dat_p_rec_by_scheme(scheme);
+    pdt = cda_get_dat_p_rec_by_scheme(ci->argv0, scheme);
     if (pdt == NULL)
     {
         cda_set_err("unknown scheme \"%s\"", scheme);
@@ -1546,6 +1546,7 @@ cda_dataref_t  cda_add_formula(cda_context_t         cid,
   char             scheme[20];
   char            *nlp;
   int              scheme_len;
+  int              x;
   cda_fla_p_rec_t *pfl;
   int              new_fla_r;
 
@@ -1575,12 +1576,12 @@ cda_dataref_t  cda_add_formula(cda_context_t         cid,
         {
             if (scheme_len > sizeof(scheme) - 1)
                 scheme_len = sizeof(scheme) - 1;
-            memcpy(scheme, spec + 2, scheme_len);
+            for (x = 0;  x < scheme_len;  x++) scheme[x] = tolower(spec[2 + x]);
             scheme[scheme_len] = '\0';
         }
     }
     /*  */
-    pfl = cda_get_fla_p_rec_by_scheme(scheme);
+    pfl = cda_get_fla_p_rec_by_scheme(ci->argv0, scheme);
     if (pfl == NULL)
     {
         cda_set_err("unknown scheme \"%s\"", scheme);
@@ -2214,11 +2215,17 @@ void *cda_dat_p_get_server         (cda_dataref_t    source_ref,
 int                 cda_add_server_conn  (cda_context_t  cid,
                                           const char    *srvref)
 {
+  ctxinfo_t       *ci = AccessCtxSlot(cid);
+
   char             scheme[20];
   const char      *target;
   cda_dat_p_rec_t *pdt;
 
   cda_srvconn_t    sid;
+
+    cda_clear_err();
+
+    if (CheckCid(cid) != 0) return -1;
 
     /*!!! Shouldn't we use context-supplied defpfx (for default scheme)? */
     /* First, split spec into scheme and target... */
@@ -2226,7 +2233,7 @@ int                 cda_add_server_conn  (cda_context_t  cid,
               srvref, scheme, sizeof(scheme),
               &target);
     /* ...and check if this scheme is supported */
-    pdt = cda_get_dat_p_rec_by_scheme(scheme);
+    pdt = cda_get_dat_p_rec_by_scheme(ci->argv0, scheme);
     if (pdt == NULL)
     {
         cda_set_err("unknown scheme \"%s\"", scheme);
@@ -2579,16 +2586,16 @@ void  cda_dat_p_update_dataset     (cda_srvconn_t  sid,
                 // Store datum, converting from double
                 switch (ri->current_dtype)
                 {
-                    case CXDTYPE_INT32:      *((  int32*)dst) = v; break;
-                    case CXDTYPE_UINT32:     *(( uint32*)dst) = v; break;
-                    case CXDTYPE_INT16:      *((  int16*)dst) = v; break;
-                    case CXDTYPE_UINT16:     *(( uint16*)dst) = v; break;
-                    case CXDTYPE_DOUBLE:     *((float64*)dst) = v; break;
-                    case CXDTYPE_SINGLE:     *((float32*)dst) = v; break;
-                    case CXDTYPE_INT64:      *((  int64*)dst) = v; break;
-                    case CXDTYPE_UINT64:     *(( uint64*)dst) = v; break;
-                    case CXDTYPE_INT8:       *((  int8 *)dst) = v; break;
-                    default:                 *(( uint8 *)dst) = v; break;
+                    case CXDTYPE_INT32:      *((  int32*)dst) = round(v); break;
+                    case CXDTYPE_UINT32:     *(( uint32*)dst) = round(v); break;
+                    case CXDTYPE_INT16:      *((  int16*)dst) = round(v); break;
+                    case CXDTYPE_UINT16:     *(( uint16*)dst) = round(v); break;
+                    case CXDTYPE_DOUBLE:     *((float64*)dst) =       v;  break;
+                    case CXDTYPE_SINGLE:     *((float32*)dst) =       v;  break;
+                    case CXDTYPE_INT64:      *((  int64*)dst) = round(v); break;
+                    case CXDTYPE_UINT64:     *(( uint64*)dst) = round(v); break;
+                    case CXDTYPE_INT8:       *((  int8 *)dst) = round(v); break;
+                    default:                 *(( uint8 *)dst) = round(v); break;
                 }
                 dst += size;
 
@@ -3471,7 +3478,7 @@ static int DoStoreWithConv(refinfo_t *ri,
   int        n;
   double    *rdp;
 
-////    fprintf(stderr, "\t%s(what_to_do=%d) flags=%d\n", __FUNCTION__, what_to_do, ri->snd_flags);
+////fprintf(stderr, "\t%s(what_to_do=%d dtype=%d/%d) flags=%d\n", __FUNCTION__, what_to_do, dtype, ri->dtype, ri->snd_flags);
 
     // 1. Select the branch and prepare parameters accordingly
     if      (what_to_do == DO_STORE_JUST_STORE)
@@ -3583,6 +3590,7 @@ static int DoStoreWithConv(refinfo_t *ri,
                     case CXDTYPE_INT8:   v = *((  int8 *)src);     break;
                     default:             v = *(( uint8 *)src);     break;
                 }
+////fprintf(stderr, "\tv=%30.25f %a", v, v);
                 /* 2. Perform conversion */
                 if ((ri->snd_flags & DO_RD_CONV) != 0)
                 {
@@ -3597,19 +3605,20 @@ static int DoStoreWithConv(refinfo_t *ri,
                         n--;
                     }
                 }
+////fprintf(stderr, "->%30.25f %a\n", v, v);
                 /* 3. Store datum, converting from double */
                 switch (dst_dtype)
                 {
-                    case CXDTYPE_INT32:      *((  int32*)dst) = v; break;
-                    case CXDTYPE_UINT32:     *(( uint32*)dst) = v; break;
-                    case CXDTYPE_INT16:      *((  int16*)dst) = v; break;
-                    case CXDTYPE_UINT16:     *(( uint16*)dst) = v; break;
-                    case CXDTYPE_DOUBLE:     *((float64*)dst) = v; break;
-                    case CXDTYPE_SINGLE:     *((float32*)dst) = v; break;
-                    case CXDTYPE_INT64:      *((  int64*)dst) = v; break;
-                    case CXDTYPE_UINT64:     *(( uint64*)dst) = v; break;
-                    case CXDTYPE_INT8:       *((  int8 *)dst) = v; break;
-                    default:                 *(( uint8 *)dst) = v; break;
+                    case CXDTYPE_INT32:      *((  int32*)dst) = round(v); break;
+                    case CXDTYPE_UINT32:     *(( uint32*)dst) = round(v); break;
+                    case CXDTYPE_INT16:      *((  int16*)dst) = round(v); break;
+                    case CXDTYPE_UINT16:     *(( uint16*)dst) = round(v); break;
+                    case CXDTYPE_DOUBLE:     *((float64*)dst) =       v;  break;
+                    case CXDTYPE_SINGLE:     *((float32*)dst) =       v;  break;
+                    case CXDTYPE_INT64:      *((  int64*)dst) = round(v); break;
+                    case CXDTYPE_UINT64:     *(( uint64*)dst) = round(v); break;
+                    case CXDTYPE_INT8:       *((  int8 *)dst) = round(v); break;
+                    default:                 *(( uint8 *)dst) = round(v); break;
                 }
             }
         }
@@ -4040,16 +4049,16 @@ int cda_get_ref_ival(cda_dataref_t ref,
         /* Note: here we suppose that scalar values ALWAYS
            go from valbuf (because of guard "ri->nelems != 1" above).
            If this changes someday, data should be obtained via pointer. */
-        if      (ri->current_dtype == CXDTYPE_DOUBLE) v = ri->valbuf.f64;
-        else if (ri->current_dtype == CXDTYPE_SINGLE) v = ri->valbuf.f32;
-        else if (ri->current_dtype == CXDTYPE_INT32)  v = ri->valbuf.i32;
-        else if (ri->current_dtype == CXDTYPE_UINT32) v = ri->valbuf.u32;
-        else if (ri->current_dtype == CXDTYPE_INT16)  v = ri->valbuf.i16;
-        else if (ri->current_dtype == CXDTYPE_UINT16) v = ri->valbuf.u16;
-        else if (ri->current_dtype == CXDTYPE_INT64)  v = ri->valbuf.i64;
-        else if (ri->current_dtype == CXDTYPE_UINT64) v = ri->valbuf.u64;
-        else if (ri->current_dtype == CXDTYPE_INT8)   v = ri->valbuf.i8;
-        else if (ri->current_dtype == CXDTYPE_UINT8)  v = ri->valbuf.u8;
+        if      (ri->current_dtype == CXDTYPE_DOUBLE) v = round(ri->valbuf.f64);
+        else if (ri->current_dtype == CXDTYPE_SINGLE) v = round(ri->valbuf.f32);
+        else if (ri->current_dtype == CXDTYPE_INT32)  v =       ri->valbuf.i32;
+        else if (ri->current_dtype == CXDTYPE_UINT32) v =       ri->valbuf.u32;
+        else if (ri->current_dtype == CXDTYPE_INT16)  v =       ri->valbuf.i16;
+        else if (ri->current_dtype == CXDTYPE_UINT16) v =       ri->valbuf.u16;
+        else if (ri->current_dtype == CXDTYPE_INT64)  v =       ri->valbuf.i64;
+        else if (ri->current_dtype == CXDTYPE_UINT64) v =       ri->valbuf.u64;
+        else if (ri->current_dtype == CXDTYPE_INT8)   v =       ri->valbuf.i8;
+        else if (ri->current_dtype == CXDTYPE_UINT8)  v =       ri->valbuf.u8;
         else
         {
             errno = EINVAL;

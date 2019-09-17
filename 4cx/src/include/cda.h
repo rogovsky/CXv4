@@ -312,6 +312,10 @@ int cda_stop_formula(cda_dataref_t ref);
 
 //////////////////////////////////////////////////////////////////////
 
+void cda_allow_plugins_loading(int allow);
+
+//////////////////////////////////////////////////////////////////////
+
 const char *cda_strserverstatus_short(cda_serverstatus_t status);
 
 /* Error descriptions */

@@ -217,9 +217,11 @@ static psp_paramdescr_t text2drvopts[] =
 };
 
 
-static size_t FillInternalChanProps(int gchan,
-                                    int rw, cxdtype_t dtype, int nelems,
-                                    int devid, int stage, size_t current_val_bufsize)
+static void FillInternalChanProps(int gchan,
+                                  int rw, cxdtype_t dtype, int nelems,
+                                  int devid, int stage, 
+                                  size_t *current_val_bufsize_p,
+                                  size_t *next_wr_val_bufsize_p)
 {
   cxsd_hw_chan_t    *chn_p;
   size_t             usize;                // Size of data-units
@@ -227,9 +229,13 @@ static size_t FillInternalChanProps(int gchan,
 
     usize  = sizeof_cxdtype(dtype);
     csize  = usize * nelems;
-    /* ...alignment */
-    current_val_bufsize = (current_val_bufsize + usize-1)
-                          & (~(usize - 1));
+    /* ...alignment: add padding to make buffers aligned suitably for THIS type */
+    *current_val_bufsize_p     = (*current_val_bufsize_p + usize-1)
+                                 & (~(usize - 1));
+    if (rw)
+        *next_wr_val_bufsize_p = (*next_wr_val_bufsize_p + usize-1)
+                                 & (~(usize - 1));
+
     if (stage)
     {
         chn_p = cxsd_hw_channels + gchan;
@@ -250,10 +256,14 @@ static size_t FillInternalChanProps(int gchan,
         chn_p->timestamp.sec  = INITIAL_TIMESTAMP_SECS;
         chn_p->timestamp.nsec = 0;
         chn_p->fresh_age      = (cx_time_t){0,0}; /*Infinite*/
-        chn_p->current_val    = cxsd_hw_current_val_buf + current_val_bufsize;
+        chn_p->current_val    = cxsd_hw_current_val_buf + *current_val_bufsize_p;
         chn_p->current_nelems = 1;
+        if (rw)
+            chn_p->next_wr_val = cxsd_hw_next_wr_val_buf + *next_wr_val_bufsize_p;
     }
-    return current_val_bufsize + csize;
+    *current_val_bufsize_p     += csize;
+    if (rw)
+        *next_wr_val_bufsize_p += csize;
 }
 static int chan_evproc_remover(cxsd_hw_chan_cbrec_t *p, void *privptr)
 {
@@ -383,7 +393,7 @@ int  CxsdHwSetDb   (CxsdDb db)
                         next_wr_val_bufsize += csize * grp_p->count;
                     nchans += grp_p->count;
                 }
-                /* On stage 1 terate individual channels */
+                /* On stage 1 iterate individual channels */
                 else
                     for (x = 0,  chn_p = cxsd_hw_channels + nchans;
                          x < grp_p->count;
@@ -432,21 +442,25 @@ int  CxsdHwSetDb   (CxsdDb db)
 
             /* Special _-channels (_logmask, _devstate, _devstate_description) */
             /* 0. _logmask */
-            current_val_bufsize = FillInternalChanProps(nchans + CXSD_DB_CHAN_LOGMASK_OFS,
-                                                        1, CXDTYPE_INT32, 1,
-                                                        devid, stage, current_val_bufsize);
+            FillInternalChanProps(nchans + CXSD_DB_CHAN_LOGMASK_OFS,
+                                  1, CXDTYPE_INT32, 1,
+                                  devid, stage,
+                                  &current_val_bufsize, &next_wr_val_bufsize);
             /* 1. _reserved_1 */
-            current_val_bufsize = FillInternalChanProps(nchans + CXSD_DB_CHAN_RESERVED_1_OFS,
-                                                        0, CXDTYPE_INT32, 1,
-                                                        devid, stage, current_val_bufsize);
+            FillInternalChanProps(nchans + CXSD_DB_CHAN_RESERVED_1_OFS,
+                                  0, CXDTYPE_INT32, 1,
+                                  devid, stage,
+                                  &current_val_bufsize, &next_wr_val_bufsize);
             /* 2. _devstate */
-            current_val_bufsize = FillInternalChanProps(nchans + CXSD_DB_CHAN_DEVSTATE_OFS,
-                                                        1, CXDTYPE_INT32, 1,
-                                                        devid, stage, current_val_bufsize);
+            FillInternalChanProps(nchans + CXSD_DB_CHAN_DEVSTATE_OFS,
+                                  1, CXDTYPE_INT32, 1,
+                                  devid, stage,
+                                  &current_val_bufsize, &next_wr_val_bufsize);
             /* 3. _devstate_description */
-            current_val_bufsize = FillInternalChanProps(nchans + CXSD_DB_CHAN_DEVSTATE_DESCRIPTION_OFS,
-                                                        0, CXDTYPE_TEXT, _DEVSTATE_DESCRIPTION_MAX_NELEMS,
-                                                        devid, stage, current_val_bufsize);
+            FillInternalChanProps(nchans + CXSD_DB_CHAN_DEVSTATE_DESCRIPTION_OFS,
+                                  0, CXDTYPE_TEXT, _DEVSTATE_DESCRIPTION_MAX_NELEMS,
+                                  devid, stage,
+                                  &current_val_bufsize, &next_wr_val_bufsize);
             /* count them */
             nchans += CXSD_DB_AUX_CHANCOUNT;
             if (stage)
@@ -1574,21 +1588,23 @@ static void StoreForSending(cxsd_gchnid_t gcid,
                 default:/*   UINT8*/ fv64 = *(( uint8 *)src);     break;
             }
             src += ssiz;
+////fprintf(stderr, "\tfv64: %8.3f %30.25f", fv64, fv64);
 
             // Store datum, converting from float64 (double)
             switch (chn_p->dtype)
             {
-                case CXDTYPE_INT32:       *((  int32*)dst) = fv64; break;
-                case CXDTYPE_UINT32:      *(( uint32*)dst) = fv64; break;
-                case CXDTYPE_INT16:       *((  int16*)dst) = fv64; break;
-                case CXDTYPE_UINT16:      *(( uint16*)dst) = fv64; break;
-                case CXDTYPE_DOUBLE:      *((float64*)dst) = fv64; break;
-                case CXDTYPE_SINGLE:      *((float32*)dst) = fv64; break;
-                case CXDTYPE_INT64:       *((  int64*)dst) = fv64; break;
-                case CXDTYPE_UINT64:      *(( uint64*)dst) = fv64; break;
-                case CXDTYPE_INT8:        *((  int8 *)dst) = fv64; break;
-                default:/*   UINT8*/      *((  int8 *)dst) = fv64; break;
+                case CXDTYPE_INT32:       *((  int32*)dst) = round(fv64); break;
+                case CXDTYPE_UINT32:      *(( uint32*)dst) = round(fv64); break;
+                case CXDTYPE_INT16:       *((  int16*)dst) = round(fv64); break;
+                case CXDTYPE_UINT16:      *(( uint16*)dst) = round(fv64); break;
+                case CXDTYPE_DOUBLE:      *((float64*)dst) =       fv64;  break;
+                case CXDTYPE_SINGLE:      *((float32*)dst) =       fv64;  break;
+                case CXDTYPE_INT64:       *((  int64*)dst) = round(fv64); break;
+                case CXDTYPE_UINT64:      *(( uint64*)dst) = round(fv64); break;
+                case CXDTYPE_INT8:        *((  int8 *)dst) = round(fv64); break;
+                default:/*   UINT8*/      *((  int8 *)dst) = round(fv64); break;
             }
+////if (chn_p->dtype == CXDTYPE_INT32) fprintf(stderr, " i32=%d\n", *((  int32*)dst)); else fprintf(stderr, "\n");
             dst += size;
 
             nels--;
@@ -1611,6 +1627,8 @@ static void is_internal_rw_p(int devid, void *devptr __attribute__((unused)),
   int              chn;  // channel
   int32            ival;
 
+  CxsdHwChanEvCallInfo_t  call_info;
+
     /* Notes:
            1. No checks for devid and other parameters,
               because this is called from SendChanRequest() only,
@@ -1625,7 +1643,7 @@ static void is_internal_rw_p(int devid, void *devptr __attribute__((unused)),
               taken to point to int32 because appropriate conversion
               should have been performed previously in the calling sequence.
     */
-////fprintf(stderr, "%s[%d] count=%d\n", __FUNCTION__, devid, count);
+////fprintf(stderr, "%s[%d] count=%d; [0:%d]:%d:%d\n", __FUNCTION__, devid, count, addrs[0], dtypes==NULL?-1:dtypes[0], values==NULL?-12345:*((int32*)(values[0])));
 if (action != DRVA_WRITE  &&  action != DRVA_INTERNAL_WR)
 {
     fprintf(stderr, "%s[%d],count=%d,addrs[0]=%d: action=%d, !=DRVA_WRITE\n", __FUNCTION__, devid, count, addrs[0], action);
@@ -1635,16 +1653,16 @@ if (action != DRVA_WRITE  &&  action != DRVA_INTERNAL_WR)
     for (n = 0;  n < count;  n++)
     {
         // Obtain channel number in "CXSD_DB_CHAN_nnn_OFS" nomenclature
-        chn = addrs[n] - cxsd_hw_devices[devid].count;
+        chn = addrs[n] - dev_p->count;
         if      (chn == CXSD_DB_CHAN_LOGMASK_OFS)
         {
-            ival = *((int32*)(values[chn]));
+            ival = *((int32*)(values[n]));
             dev_p->logmask = ival;
             report_logmask(devid);
         }
         else if (chn == CXSD_DB_CHAN_DEVSTATE_OFS)
         {
-            ival = *((int32*)(values[chn]));
+            ival = *((int32*)(values[n]));
 ////fprintf(stderr, "\t:=%d\n", ival);
             if      (ival <  0)
             {
@@ -1663,6 +1681,18 @@ if (action != DRVA_WRITE  &&  action != DRVA_INTERNAL_WR)
                 // "Switch on": initialize if offline
                 if (dev_p->state == DEVSTATE_OFFLINE)
                     InitDevice(devid);
+                else
+                /* A dirty hack: when action is a "no-op" (switching on
+                   an already non-OFFLINE device), we do NOT perform a 
+                   true "write"-with-Return, but just raise an UPDATE event
+                   for _devstate channel. */
+                {
+                    call_info.reason = CXSD_HW_CHAN_R_UPDATE;
+                    call_info.evmask = 1 << call_info.reason;
+                    CxsdHwCallChanEvprocs(dev_p->first + addrs[n], &call_info);
+                    // Hack part 2: drop "write request in progress" flag
+                    cxsd_hw_channels[dev_p->first + addrs[n]].wr_req = 0;
+                }
             }
         }
     }
@@ -1760,6 +1790,7 @@ static int  ConsiderRequest(int            requester,
   cxsd_hw_chan_t *chn_p = cxsd_hw_channels + gcid;
 
 //fprintf(stderr, " %s(%d)\n", __FUNCTION__, gcid);
+//if (gcid == 105) fprintf(stderr, "\t105: action=%d MustCacheRFW=%d\n", action, MustCacheRFW);
 
     /* Is it a readonly channel? */
     if (chn_p->rw == 0)
@@ -1802,7 +1833,7 @@ static int  ConsiderRequest(int            requester,
         }
         else
         {
-            if (may_act  &&  f_act == DRVA_WRITE)
+            if (may_act  &&  (f_act == DRVA_WRITE  ||  f_act == DRVA_INTERNAL_WR))
             {
                 StoreForSending(gcid,
                                 dtypes+offset, nelems+offset, values+offset,
@@ -1907,6 +1938,7 @@ if (action == DRVA_WRITE  &&  gcids[0] == 103)
                                 0, DRVA_IGNORE, ignore_upd_cycle);
         //n++;
 
+////if (action == DRVA_WRITE) fprintf(stderr, "DoIO:W[%d->%d] dt=%d gdt=%d\n", n, gcids[n], dtypes[n], cxsd_hw_channels[gcids[n]].dtype);
 //fprintf(stderr, "  f_act(%d)=%d\n", gcids[first], f_act);
         /* Find out how many channels can be packed */
         while (n < count
@@ -2628,16 +2660,16 @@ void ReturnDataSet    (int devid,
                 switch (chn_p->dtype)
 #endif
                 {
-                    case CXDTYPE_INT32:       *((  int32*)dst) = fv64; break;
-                    case CXDTYPE_UINT32:      *(( uint32*)dst) = fv64; break;
-                    case CXDTYPE_INT16:       *((  int16*)dst) = fv64; break;
-                    case CXDTYPE_UINT16:      *(( uint16*)dst) = fv64; break;
-                    case CXDTYPE_DOUBLE:      *((float64*)dst) = fv64; break;
-                    case CXDTYPE_SINGLE:      *((float32*)dst) = fv64; break;
-                    case CXDTYPE_INT64:       *((  int64*)dst) = fv64; break;
-                    case CXDTYPE_UINT64:      *(( uint64*)dst) = fv64; break;
-                    case CXDTYPE_INT8:        *((  int8 *)dst) = fv64; break;
-                    default:/*   UINT8*/      *((  int8 *)dst) = fv64; break;
+                    case CXDTYPE_INT32:       *((  int32*)dst) = round(fv64); break;
+                    case CXDTYPE_UINT32:      *(( uint32*)dst) = round(fv64); break;
+                    case CXDTYPE_INT16:       *((  int16*)dst) = round(fv64); break;
+                    case CXDTYPE_UINT16:      *(( uint16*)dst) = round(fv64); break;
+                    case CXDTYPE_DOUBLE:      *((float64*)dst) =       fv64;  break;
+                    case CXDTYPE_SINGLE:      *((float32*)dst) =       fv64;  break;
+                    case CXDTYPE_INT64:       *((  int64*)dst) = round(fv64); break;
+                    case CXDTYPE_UINT64:      *(( uint64*)dst) = round(fv64); break;
+                    case CXDTYPE_INT8:        *((  int8 *)dst) = round(fv64); break;
+                    default:/*   UINT8*/      *((  int8 *)dst) = round(fv64); break;
                 }
                 dst += size;
 

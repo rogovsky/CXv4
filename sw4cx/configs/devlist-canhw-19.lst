@@ -51,7 +51,7 @@ dev lrf_d16_2	frolov_d16/remdrv	~ 2  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=
 dev syn_ie4	frolov_ie4/remdrv	~ 4  b:v5-syn   f_in=0.31249728e6 kclk=1          fclk_sel=Fin start_sel=Y1       mode=Cont
 dev xfr_d16_5	frolov_d16/remdrv	~ 5  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 dev lbm_d16_6	frolov_d16/remdrv	~ 6  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
-#				  	  7
+dev xfr_d16_7	frolov_d16/remdrv	~ 7  b:v5-syn	f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 dev lbm_d16_8	frolov_d16/remdrv	~ 8  b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
 #				  	  9
 dev lbm_d16_10	frolov_d16/remdrv	~ 10 b:v5-syn   f_in=21.8748098e6 kclk=1 kstart=1 fclk_sel=Fin start_sel=START    mode=Cont
@@ -202,6 +202,7 @@ ONE_IE4_CLINE(3, ic.syn.BProbe)
 ONE_D16_LINES(lrf_d16_2,  ic.syn., mod1,      1e3, mod2,       1e3, mod3,   1e3, mod4,  1e3)
 ONE_D16_LINES(xfr_d16_5,  ic.syn.xfer.,test1, 1e3, test2,      1e3, test3,  1e3, test4, 1e3)
 ONE_D16_LINES(lbm_d16_6,  ic.syn., gun_diag,  1e3, reserve6_2, 1e3, FC_ADC, 1e3, FC,    1e3)
+ONE_D16_LINES(xfr_d16_7,  ic.syn.xfer.,rs7_0, 1e3, rs7_1,      1e3, rs7_2,  1e3, blm,   1e3)
 ONE_D16_LINES(lbm_d16_8,  ic.syn., gunHV,        , gunGrid,       , ADC200,    , syn2,     )
 ONE_D16_LINES(lbm_d16_10, ic.syn., linBPM,       , linIPP,        , PhMeas,    , ringBPM,  )
 ONE_D16_LINES(lrf_d16_11, ic.syn., mods,      1e3, RF,         1e3, RF_ADC, 1e3, syn3,  1e3)

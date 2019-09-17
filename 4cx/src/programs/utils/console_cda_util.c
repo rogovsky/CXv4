@@ -15,11 +15,13 @@
 #include "console_cda_util.h"   
 
 
-static void PrintChar(FILE *fp, char32 c32)
+static void PrintChar(FILE *fp, char32 c32, int unescaped)
 {
     if      ((c32 & 0x000000FF) == c32)
     {
-        if      (c32 == '\\')
+        if      (unescaped)
+            fprintf(fp, "%c", c32);
+        else if (c32 == '\\')
             fprintf(fp, "\\\\");
         else if (c32 == '\'')
             fprintf(fp, "\\'");
@@ -119,7 +121,7 @@ void PrintDatarefData(FILE *fp, util_refrec_t *urp, int parts)
         {
             cda_get_ref_data(urp->ref, n*size, size, &val);
             c32 = (dtype == CXDTYPE_TEXT)? val.c8 : val.c32;
-            PrintChar(fp, c32);
+            PrintChar(fp, c32, (parts & UTIL_PRINT_UNESCAPED) != 0);
         }
         if (parts & UTIL_PRINT_QUOTES) fprintf(fp, "\"");
     }
