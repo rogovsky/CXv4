@@ -10,6 +10,12 @@
                    `define(`$1', decr($1))_fordown(`$1', `$2', `$3', `$4')')')
 #---------------------------------------------------------------------
 
+define(`GID25_C100_OPR',
+       `"_all_code;
+         getchan $3; cmp_if_eq 0; ret 0;
+         getchan $1; cmp_if_eq 0; ret 0;
+         getchan $1; getchan $2; div; sub 1; abs; mul 100; ret"')
+
 # GID25_MAIN_LINE(id_prefix, r_prefix, 1st_knob_label)
 # Note: r_prefix, if specified, MUST contain a trailing '.' separator
 define(`GID25_MAIN_LINE', `
@@ -29,7 +35,9 @@ define(`GID25_MAIN_LINE', `
 # Note: r_prefix, if specified, MUST contain a trailing '.' separator
 define(`GID25_K500_LINE', `
     knob $1Uset     "$3" text  "" "" %7.2f   r:$2Uset
-    disp $1Umes     ""   text  "" "" %7.2f   r:$2Umes_raw
+    disp $1Umes     ""   text  "" "" %7.2f   r:$2Umes_raw \
+            normrange:0-10 yelwrange:0-20 \
+            c:GID25_C100_OPR($2Uset, $2Umes_raw, $2onoff)
     disp $1Uuvh     ""   text  "" "" %7.2f   r:$2Uuvh_raw
     disp $1Imes     ""   text  "" "" %7.2f   r:$2Imes
     knob $1onoff    "" choicebs              r:$2onoff \

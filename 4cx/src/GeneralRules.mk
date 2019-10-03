@@ -114,6 +114,10 @@ ifeq "$(GCC)" ""
   GCC=		gcc
 endif
 GCCCMD=		$(GCC) $(GCCFLAGS)
+ifeq "$(GXX)" ""
+  GXX=		g++
+endif
+GXXCMD=		$(GXX) $(GXXFLAGS)
 
 # GCC version, required for dependency generation (damn!!!)
 ISNEWGCC:=	$(shell echo "\#if __GNUC__*1000+__GNUC_MINOR__>2095zYESz\#elsezNOz\#endif" | tr 'z' '\n' | $(GCCCMD) -E - | grep -v '^[^A-Z]' | grep -v '^$$')
@@ -123,20 +127,38 @@ GCCHASWNMFI:=	$(shell echo "\#if __GNUC__*1000+__GNUC_MINOR__>=4000zYESz\#elsezN
 # ---- Compiler ------------------------------------------------------
 CC=		$(GCCCMD)
 ACT_CFLAGS=	$(strip $(CFLAGS) $(RQD_CFLAGS) $(TOP_CFLAGS) $(DIR_CFLAGS) $(SHD_CFLAGS) $(ARCH_CFLAGS) $(PRJ_CFLAGS) $(LOCAL_CFLAGS) $(SPECIFIC_CFLAGS))
-
 CFLAGS=		$(OPTIMIZATION) $(AUXWARNS) -W -Wall $(WARNINGS) $(CC_DEBUG_FLAG) $(CC_PROFILE_FLAG)
 RQD_CFLAGS=
+
+CXX=		$(GXXCMD)
+ACT_CXXFLAGS=	$(strip $(CXXFLAGS) $(RQD_CXXFLAGS)  \
+		$(TOP_CFLAGS)      $(TOP_CXXFLAGS)   \
+		$(DIR_CFLAGS)      $(DIR_CXXFLAGS)   \
+		$(SHD_CFLAGS)      $(SHD_CXXFLAGS)   \
+		$(ARCH_CFLAGS)     $(ARCH_CXXFLAGS)  \
+		$(PRJ_CFLAGS)      $(PRJ_CXXFLAGS)   \
+		$(LOCAL_CFLAGS)    $(LOCAL_CXXFLAGS) \
+		$(SPECIFIC_CFLAGS) $(SPECIFIC_CXXFLAGS))
+CXXFLAGS=      	$(OPTIMIZATION) $(CXXAUXWARNS) -W -Wall $(CXXWARNINGS) $(CC_DEBUG_FLAG) $(CC_PROFILE_FLAG)
+RQD_CXXFLAGS=
+
 
 OPTIMIZATION=	-O2
 
 WARNINGS=	
 WARNINGS=	-Wstrict-prototypes -Wmissing-prototypes -Wcast-qual -Wshadow
+CXXWARNINGS=	                                         -Wcast-qual -Wshadow
 ifeq "$(GCCHASWNMFI)" "YES"
   WARNINGS+=	-Wno-missing-field-initializers
+  CXXWARNINGS+=	-Wno-missing-field-initializers
 endif
 AUXWARNS=
 ifeq "$(AUXWARNS)" "all"
-  override AUXWARNS = -Wpointer-arith -Wbad-function-cast \
+  override AUXWARNS   = -Wpointer-arith -Wbad-function-cast \
+			-Wcast-align -Wwrite-strings \
+                        -Wmissing-declarations \
+                        -Winline -Wpadded
+  override CXXAUXWARNS= -Wpointer-arith                     \
 			-Wcast-align -Wwrite-strings \
                         -Wmissing-declarations \
                         -Winline -Wpadded
@@ -230,6 +252,9 @@ FILES4crit-clean=	$(FILES4maintainer-clean) $(CRITCLEANFILES)
 _C_O_LINE=	$(CC) -o $@ $<   $(ACT_CPPFLAGS) -c $(ACT_CFLAGS)
 %.o: %.c
 		$(_C_O_LINE)
+_CXX_O_LINE=	$(CXX) -o $@ $<   $(ACT_CPPFLAGS) -c $(ACT_CXXFLAGS)
+%.o: %.cpp
+		$(_CXX_O_LINE)
 
 # Linkage of dynamically loaded (shared) objects
 %.so: %.o
@@ -241,12 +266,16 @@ _C_O_LINE=	$(CC) -o $@ $<   $(ACT_CPPFLAGS) -c $(ACT_CFLAGS)
 		sed   's/$*.o *:/$*.o $@:/' <$*.dep >$@
 
 ifeq "$(ISNEWGCC)" "YES"
-%.dep: %.c
-		$(CC)   -MM $(ACT_CPPFLAGS) $< -MF$@ >/dev/null
+    _C_DEP_LINE= $(CC)   -MM $(ACT_CPPFLAGS) $< -MF$@ >/dev/null
+  _CXX_DEP_LINE=$(CXX)   -MM $(ACT_CPPFLAGS) $< -MF$@ >/dev/null
 else
-%.dep: %.c
-		$(CC)   -MM $(ACT_CPPFLAGS) $< -o $@
+    _C_DEP_LINE= $(CC)   -MM $(ACT_CPPFLAGS) $< -o $@
+  _CXX_DEP_LINE=$(CXX)   -MM $(ACT_CPPFLAGS) $< -o $@
 endif
+%.dep: %.c
+		$(_C_DEP_LINE)
+%.dep: %.cpp
+		$(_CXX_DEP_LINE)
 
 # ???Dealing with components
 _MKR_LINE=	echo "$*: $($*_COMPONENTS) $($*_LIBDEPS)" >$@

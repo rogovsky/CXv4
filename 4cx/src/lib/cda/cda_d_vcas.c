@@ -797,7 +797,7 @@ static void ProcessInData(cda_d_vcas_privrec_t *me,
 
         cda_dat_p_update_dataset(me->sid, 1, &(hi->dataref),
                                  &value_p, &(hi->dtype), &nelems,
-                                 &rflags, timestamp_p, 1);
+                                 &rflags, timestamp_p, CDA_DAT_P_IS_UPDATE);
     }
 
     return;

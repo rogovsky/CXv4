@@ -63,6 +63,6 @@ ifelse(eval($2 >= 2), `0', `', `
 ')
 
 ONE_KLS(1, 0, 45500, t_quant=100)
-ONE_KLS(2, 1, 43500, t_quant=100)
+ONE_KLS(2, 1, 44500, t_quant=100)
 ONE_KLS(3, 2, 44500, t_quant=100)
 ONE_KLS(4, 0, 45900, t_quant=100)

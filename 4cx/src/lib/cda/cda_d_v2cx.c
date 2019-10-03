@@ -352,6 +352,8 @@ static int  cda_d_v2cx_new_chan(cda_dataref_t ref, const char *name,
         goto ALLOC_ERROR; \
     else me->name = new_##name
 
+    bzero(&strs, sizeof(strs));
+
     phys_r = 1.0;
     phys_d = 0.0;
 
@@ -547,7 +549,6 @@ static int  cda_d_v2cx_new_chan(cda_dataref_t ref, const char *name,
     }
 
     /*  */
-    bzero(&strs, sizeof(strs));
     chan_n = channame2chan_n(channame, channamelen);
     if (chan_n < 0)
     {
@@ -862,7 +863,7 @@ static void DecodeData (cda_d_v2cx_privrec_t *me)
                                  nelems,
                                  rflags,
                                  timess,
-                                 1);
+                                 CDA_DAT_P_IS_UPDATE);
     }
 }
 
@@ -978,7 +979,7 @@ static void NewDataProc(cda_d_v2cx_privrec_t *me)
                                   me->nelems,
                                   me->physrflags,
                                   me->timestamps,
-                                  1);
+                                  CDA_DAT_P_IS_UPDATE);
     cda_dat_p_update_server_cycle(me->sid);
 
     RequestData(me);

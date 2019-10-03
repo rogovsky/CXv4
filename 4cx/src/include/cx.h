@@ -28,7 +28,7 @@ typedef int32  cxid_t;
 
 typedef cxid_t chanaddr_t;
 typedef uint32 rflags_t;
-typedef uint8  cxdtype_t;
+typedef uint32 cxdtype_t;
 
 typedef int32  cx_ival_t;
 typedef int64  cx_lval_t;

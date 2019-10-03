@@ -1,0 +1,29 @@
+devtype pxi6363 w30i,w20d,r30i,r20d,r100d,r16d10000,r84d,w100d,w4d20000,w96d,r100i,w100i,r100i {
+	adc_mode	0
+	out_mode	1
+
+	stop		11
+	numpts		13
+	starts_sel	14
+	timing_sel	15
+
+	osc_rate	32
+
+	cur_numpts	61
+
+	marker		79
+
+	all_rangemin	80
+	all_rangemax	81
+	xs_per_point	82
+
+	adc<0-15>	100
+	adc_osc<0-15>	200
+	line<0-15>	200
+	out<0-3>	300
+	out_tab<0-3>	400
+
+	outrb<0-47>	500
+	inprb<0-47>	600
+	diodir<0-47>	700
+}

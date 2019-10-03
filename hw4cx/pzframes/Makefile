@@ -1,6 +1,7 @@
 FASTADCS=	adc200me adc812me \
 		adc200 adc502 adc333 adc4 c061621 f4226 \
 		vsdc2_1 vsdc2_2 \
+		pxi6363 \
 		adc4x250 #adc1000
 VCAMIMGS=	ottcam
 WIREBPMS=	u0632
@@ -23,6 +24,7 @@ c061621_COMPONENTS=	$(call DEVNNN_FILES_F,c061621)
 f4226_COMPONENTS=	$(call DEVNNN_FILES_F,f4226)
 vsdc2_2_COMPONENTS=	$(call DEVNNN_FILES_F,vsdc2_2)
 vsdc2_1_COMPONENTS=	$(call DEVNNN_FILES_F,vsdc2_1)
+pxi6363_COMPONENTS=	$(call DEVNNN_FILES_F,pxi6363)
 adc4x250_COMPONENTS=	$(call DEVNNN_FILES_F,adc4x250)
 adc1000_COMPONENTS=	$(call DEVNNN_FILES_F,adc1000)
 # CCDs
@@ -124,6 +126,7 @@ EXPORTSDIR=	bin
 
 #!!!because of "v2cx::"; RHEL6: SPECIFIC_LIBS sufficient, RHEL7: DIR_LIBS
 DIR_LIBS=	$(MOTIF_LIBS) $(LIBDL)
+DIR_LDFLAGS=	-Wl,-export-dynamic # for dynamic loading of dat-plugins
 ifneq "$(strip $(EXES) $(MONO_C_FILES))" ""
   $(EXES) $(MONO_C_FILES):$(LOCAL_LIBDEPS) \
 			$(LIBCHL) \

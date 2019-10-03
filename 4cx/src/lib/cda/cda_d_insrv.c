@@ -417,7 +417,7 @@ static void insrv_fd_p(int uniq, void *privptr1,
                                      &(chn_p->current_nelems),
                                      &(chn_p->rflags),
                                      &(chn_p->timestamp),
-                                     1);
+                                     CDA_DAT_P_IS_UPDATE);
         }
     
  END_PROCESSED:
@@ -515,7 +515,7 @@ static int  cda_d_insrv_new_chan(cda_dataref_t ref, const char *name,
                                   chn_p->fresh_age.nsec == 0  &&
                                   chn_p->timestamp.sec  != CX_TIME_SEC_NEVER_READ)
 #endif
-                                                   ? 1 : 0);
+                                                   ? CDA_DAT_P_IS_UPDATE : CDA_DAT_P_IS_CURVAL);
 
     return CDA_DAT_P_OPERATING;
 }

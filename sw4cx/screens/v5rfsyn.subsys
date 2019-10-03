@@ -72,8 +72,8 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
                  ret;"
 
         SYN_LINE(, "Linac",            ms,  3, linBeam)
-        SYN_LINE(, " -Inj-Ext e-",     mks, 5, inject)
-        SYN_LINE(, " -Inj-Ext e+",     mks, 5, bps700)
+        SYN_LINE(, " -Inject",         mks, 5, inject)
+        SYN_LINE(, " -rsrv_bps700",    mks, 5, bps700)
         SYN_LINE(, " -Beam delay",     mks, 5, beam)
         SYN_LINE(, "  --Gun&Diag",     mks, 5, gun_diag)
         SYN_LINE(, "   ---Gun HV",     ns,  2, gunHV)
@@ -91,7 +91,7 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
     } layinfo:newline
 
     container xfr      "Transfer"     grid "nocoltitles" \
-            base:"ic.syn.xfer" nattl:1 ncols:2 content:eval(1 + 2*12) {
+            base:"ic.syn.xfer" nattl:1 ncols:2 content:eval(1 + 2*13) {
 
         selector dest "->" selector r:.ic.extractor.clockSrc \
                 items:"#Toff\tVEPP-2000\tVEPP-3\tTest\t\n???"
@@ -108,6 +108,7 @@ grouping main V5RFSYN_grouping "VEPP5 RFSyn, Injection/Extraction" lrtb "vertica
         SYN_LINE(, "hbz 2",        mks, 5, test2)
         SYN_LINE(, "hbz 3",        mks, 5, test3)
         SYN_LINE(, "hbz 4",        mks, 5, test4)
+        SYN_LINE(, "BLM",          mks, 5, blm)
     } layinfo:newline
 
     container cameras  "CCD etc."     grid "nocoltitles" \

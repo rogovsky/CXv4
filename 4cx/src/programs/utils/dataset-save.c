@@ -15,6 +15,10 @@
 
 #include "console_cda_util.h"
 
+#ifdef BUILTINS_DECLARATION_H_FILE
+  #include BUILTINS_DECLARATION_H_FILE
+#endif /* BUILTINS_DECLARATION_H_FILE */
+
 
 //////////////////////////////////////////////////////////////////////
 
@@ -295,6 +299,10 @@ int main(int argc, char *argv[])
 
     set_signal(SIGPIPE, SIG_IGN);
 
+#ifdef BUILTINS_REGISTRATION_CODE
+    BUILTINS_REGISTRATION_CODE
+#endif /* BUILTINS_REGISTRATION_CODE */
+
     while ((c = getopt(argc, argv, "1b:C:d:f:ho:rT:")) != EOF)
         switch (c)
         {
@@ -342,10 +350,13 @@ int main(int argc, char *argv[])
     if (option_help)
     {
         printf("Usage: %s [OPTIONS] CHANNEL {CHANNEL...}\n"
+               "\n"
+               "(for full CHANNEL syntax see 'cdaclient -hh')\n"
+               "\n"
                "Options:\n"
                "  -1          -- do NOT expand {} and <> in channel names\n"
                "  -b BASEREF\n"
-               "  -f FILENAME -- read list of channels from FILENAME (one per line)\n"
+               "  -f FILENAME -- read list of CHANNELs from FILENAME (one per line)\n"
                "  -o OUTFILE  -- send output to OUTFILE\n"
                "  -r          -- print relative channel names\n"
                "  -T DURATION -- how many seconds to run (time limit)\n"

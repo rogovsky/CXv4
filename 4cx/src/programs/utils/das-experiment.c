@@ -16,6 +16,10 @@
 
 #include "console_cda_util.h"
 
+#ifdef BUILTINS_DECLARATION_H_FILE
+  #include BUILTINS_DECLARATION_H_FILE
+#endif /* BUILTINS_DECLARATION_H_FILE */
+
 
 //////////////////////////////////////////////////////////////////////
 
@@ -296,6 +300,10 @@ int main(int argc, char *argv[])
 
     set_signal(SIGPIPE, SIG_IGN);
 
+#ifdef BUILTINS_REGISTRATION_CODE
+    BUILTINS_REGISTRATION_CODE
+#endif /* BUILTINS_REGISTRATION_CODE */
+
     while ((c = getopt(argc, argv, "1b:d:f:hHp:o:rt:T:")) != EOF)
         switch (c)
         {
@@ -353,6 +361,7 @@ int main(int argc, char *argv[])
         printf("Usage: %s [OPTIONS] CHANNEL {CHANNEL...}\n"
                "\n"
                "CHANNEL may have '+' prefix, meaning it works as trigger\n"
+               "        (for full CHANNEL syntax see 'cdaclient -hh')\n"
                "\n"
                "Options:\n"
                "  -1          -- do NOT expand {} and <> in channel names\n"

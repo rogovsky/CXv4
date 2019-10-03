@@ -39,6 +39,7 @@ static void *dlopen_checker(const char *name,
   char             plen = strlen(path);
   ldrinfo_t       *li   = privptr;
   int              flags;
+  const char      *dbg;
 
     check_snprintf(buf, sizeof(buf), "%s%s%s%s%s",
                    path,
@@ -48,7 +49,9 @@ static void *dlopen_checker(const char *name,
     dlerror();  // Clear existing error
     handle = dlopen(buf, flags);
     li->errstr = dlerror();
-    ////fprintf(stderr, "dlopen(\"%s\"): %p; %s\n", buf, handle, li->errstr);
+    if ((dbg = getenv("CXLDR_DEBUG")) != NULL  &&
+        (*dbg == '1'  ||  *dbg == 'y'  ||  *dbg == 'Y'))
+        fprintf(stderr, "%s: dlopen(\"%s\"): %p; %s\n", __FUNCTION__, buf, handle, li->errstr);
     return handle;
 }
 #endif /* MAY_USE_DLOPEN */

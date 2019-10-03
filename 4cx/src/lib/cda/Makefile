@@ -19,7 +19,7 @@ ARLIBS=		libcda.a libcda_d_insrv.a
 libcda.a_COMPONENTS=	cda_core.o cda_err.o \
 			cda_plugmgr.o \
 			cda_d_cx.o cda_d_dircn.o cda_d_local.o \
-			cda_d_vcas.o cda_d_epics.o \
+			cda_d_vcas.o \
 			cda_f_fla.o
 ifeq "$(NOV2CX)" ""
   libcda.a_COMPONENTS+=	cda_d_v2cx.o v2subsysaccess.o

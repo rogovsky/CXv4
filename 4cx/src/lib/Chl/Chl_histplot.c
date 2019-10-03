@@ -109,9 +109,21 @@ static void CreateHistPlotDialog(XhWindow  win, DataSubsys subsys, dlgrec_t *rec
 
 void _ChlToHistPlot_m(DataKnob k)
 {
-  XhWindow       win = XhWindowOf(k->w);
-  chl_privrec_t *privrec = _ChlPrivOf(win);
-  dlgrec_t      *rec = ThisDialog(win);
+  XhWindow    win;
+  dlgrec_t   *rec;
+
+  DataKnob    src_of_w;
+
+  chl_privrec_t *privrec;
+
+    for (src_of_w = k;
+         src_of_w != NULL  &&  src_of_w->w == NULL;
+         src_of_w = src_of_w->uplink) ;
+    if (src_of_w == NULL  ||  src_of_w->w == NULL) return;
+
+    win = XhWindowOf(src_of_w->w);
+    rec = ThisDialog(win);
+    privrec = _ChlPrivOf(win);
 
     if (CdrAddHistory(k, privrec->subsys->def_histring_len) != 0) return;
     MotifKnobs_AddToHistplot(&(rec->mkhp), k);

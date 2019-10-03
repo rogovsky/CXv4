@@ -41,12 +41,18 @@ typedef struct
 
 //////////////////////////////////////////////////////////////////////
 
-static void send_wrpwr_cmd(privrec_t *me)
+static void send_wrpwr_cmds(privrec_t *me)
 {
-    me->lvmt->q_enq_ons_v(me->handle, SQ_ALWAYS, 2,
-                          DESC_WRITE_PWR,
-                          (me->ptregs.cur_val &~ me->ptregs.req_msk) |
-                          (me->ptregs.req_val &  me->ptregs.req_msk));
+    if (me->lvmt->q_enqueue_v(me->handle, SQ_REPLACE_NOTFIRST,
+                              SQ_TRIES_ONS, 0,
+                              NULL, NULL,
+                              1, 2,
+                              DESC_WRITE_PWR,
+                              (me->ptregs.cur_val &~ me->ptregs.req_msk) |
+                              (me->ptregs.req_val &  me->ptregs.req_msk)
+                             ) == SQ_NOTFOUND)
+        me->lvmt->q_enq_v(me->handle, SQ_ALWAYS, 1,
+                          DESC_READ_PWR_TTL);
     me->ptregs.pend    = 0;
 }
 
@@ -133,10 +139,7 @@ static void curvv_in (int devid, void *devptr,
             /* Do we have a pending write request? */
             if (me->ptregs.pend != 0)
             {
-                /*!!! should use if(enq(REPLACE_NOTFIRST)==NOTFOUND) enq(ALWAYS) */
-                send_wrpwr_cmd(me);
-                me->lvmt->q_enq_v(me->handle, SQ_IF_ABSENT, 1,
-                                  DESC_READ_PWR_TTL);
+                send_wrpwr_cmds(me);
             }
             
             /* And return requested data */
@@ -242,10 +245,7 @@ static void curvv_rw_p(int devid, void *devptr,
             /* May we perform write right now? */
             if (me->ptregs.rcvd)
             {
-                /*!!! should use if(enq(REPLACE_NOTFIRST)==NOTFOUND) enq(ALWAYS) */
-                send_wrpwr_cmd(me);
-                me->lvmt->q_enq_v(me->handle, SQ_IF_ABSENT, 1,
-                                  DESC_READ_PWR_TTL);
+                send_wrpwr_cmds(me);
             }
             /* No, we should request read first... */
             else

@@ -1,0 +1,11 @@
+#!/usr/bin/env xdg-open
+
+[Desktop Entry]
+Version=1.0
+Type=Application
+Terminal=false
+Icon[en_US]=/export/romeo/oper/pult/include/pixmaps/cx-starter.xpm
+Name[en_US]=CX-starter
+Exec=/export/romeo/oper/bin/start
+Name=CX-starter
+Icon=/export/romeo/oper/pult/include/pixmaps/cx-starter.xpm

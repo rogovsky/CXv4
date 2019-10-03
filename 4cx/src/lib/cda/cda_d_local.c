@@ -531,7 +531,7 @@ static void local_fd_p(int uniq, void *privptr1,
                                      1, &(hi->dataref),
                                      &(vi->addr), &(vi->dtype), &(vi->current_nelems),
                                      &(vi->rflags), &(vi->timestamp),
-                                     1);
+                                     CDA_DAT_P_IS_UPDATE);
         }
     
  END_PROCESSED:
@@ -594,7 +594,7 @@ static int  cda_d_local_new_chan(cda_dataref_t ref, const char *name,
                              1, &(hi->dataref),
                              &(vi->addr), &(vi->dtype), &(vi->current_nelems),
                              &(vi->rflags), &(vi->timestamp),
-                             1);
+                             CDA_DAT_P_IS_UPDATE);
 
     cda_dat_p_set_hwr  (ref, hwr);
     cda_dat_p_set_ready(ref, 1);

@@ -16,7 +16,7 @@ static int  CxsdModuleChecker_cm(const char *name, void *symptr, void *privptr)
         logline(LOGF_MODULES, 0,
                 "%s (%s).magicnumber=0x%x, mismatch with 0x%x",
                 desc->kindname, name, mr->magicnumber, desc->magicnumber);
-        errno = -1;
+        errno = -1; /* errno=-1 means "Do-nothing, error is already logged" for DoLoadModule() */
         return -1;
     }
     if (!CX_VERSION_IS_COMPATIBLE(mr->version, desc->version))
@@ -32,7 +32,7 @@ static int  CxsdModuleChecker_cm(const char *name, void *symptr, void *privptr)
                 CX_MINOR_OF(desc->version),
                 CX_PATCH_OF(desc->version),
                 CX_SNAP_OF (desc->version));
-        errno = -1;
+        errno = -1; /* errno=-1 means "Do-nothing, error is already logged" for DoLoadModule() */
         return -1;
     }
     

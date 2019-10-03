@@ -21,12 +21,12 @@ else
   MOTIF_LIBS_DIR=/usr/X11R6/lib
 endif
 
-stand:		$(LIBCDA_D_INSRV) $(LIBCXSD_PLUGINS) $(LIBCXSD)
-stand:		SPECIFIC_LDFLAGS=-Wl,-export-dynamic
+stand:		$(LIBCDA_D_INSRV) $(LIBCXSD_PLUGINS) $(LIBCXSD) # Note: this line should be BEFORE common "$(CHL_EXES): ...", because order of libraries does matter (here specified libs depend on libuseful+libmisc)
 
 DIR_LIBS=	-L$(MOTIF_LIBS_DIR) \
 		-lm -lXm -lXpm -lXt -lSM -lICE -lXext -lXmu -lX11 \
 		$(LIBDL)
+DIR_LDFLAGS=	-Wl,-export-dynamic # for dynamic loading of dat-plugins
 $(CHL_EXES):	$(LIBCHL) \
 		$(LIBKNOBSCORE) $(LIBMOTIFKNOBS) $(LIBMOTIFKNOBS_CDA) \
 		$(LIBCDR) $(LIBDATATREE) \

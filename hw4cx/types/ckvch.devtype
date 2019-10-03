@@ -1,0 +1,12 @@
+devtype ckvch w10i,r10i {
+	out1		0
+	out2		1
+	out3		2
+	out4		3
+	out_4bits	4
+
+	num_outs	16
+	config_bits	17
+	hw_ver		18
+	sw_ver		19
+}

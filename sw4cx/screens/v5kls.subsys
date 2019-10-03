@@ -29,9 +29,9 @@ define(`ONE_KLS', `
 #        }
 #        ')
         container ":" "~~" subwin "resizable,compact,noclsbtn" \
-                tip:"ADC200" subwintitle:"Klystron $1 ADC200" content:1 {
+                tip:"ADC200" subwintitle:"Klystron $1 HV,PreAmpRF ADC200" content:1 {
             container ":" "" canvas "nodecor" content:1 {
-                pzframe adc0 "" adc200 "" .k$1_osc \
+                pzframe adc0 "" adc200 "descrA=HV,descrB=pa_RF" .k$1_osc \
                         layinfo:"left=0,right=0,top=0,bottom=0"
             }
         }

@@ -547,14 +547,14 @@ static void DrawAxis (MotifKnobs_histplot_t *hp, int do_clear)
                 if (is_logarithmic)
                     v = exp(
                             RESCALE_VALUE(i,
-                                          0,            v_tick_segs,
-                                          log(mindisp), log(maxdisp))
+                                          0,       v_tick_segs,
+                                          mindisp, maxdisp)
                            );
                                           
                 else
                     v =     RESCALE_VALUE(i,
-                                          0,            v_tick_segs,
-                                          mindisp,      maxdisp);
+                                          0,       v_tick_segs,
+                                          mindisp, maxdisp);
 
                 p = snprintf_dbl_trim(buf, sizeof(buf), k->u.k.dpyfmt, v, 1);
                 frsize = sizeof(buf)-1 - (p - buf) - strlen(p);

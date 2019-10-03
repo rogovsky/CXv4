@@ -873,7 +873,7 @@ static void ProcessInData     (int devid, privrec_t *me,
   uint32              *ne_ptr;
   uint32              *rf_ptr;
   uint32              *ts_ptr;
-  uint8               *dt_ptr;
+  uint32              *dt_ptr;
   int                  data_ofs;
   uint8               *data_ptr;
   size_t               unitsize;
@@ -969,17 +969,17 @@ static void ProcessInData     (int devid, privrec_t *me,
             rf_ptr = pkt->data + count * 2;
             data_ofs = (sizeof(*ad_ptr) + sizeof(*ne_ptr) + sizeof(*rf_ptr))
                 * count;
-            if (me->r2l_i32(pkt->var.group.first) != 0)
+            if (me->r2l_i32(pkt->var.group.first) != 0) /* "first" is used as boolean, signifying presence(=1)/absence(=0) of timestamps */
             {
                 ts_ptr = rf_ptr + count;
                 dt_ptr = (void *)(ts_ptr + count * 3);
-                data_ofs += sizeof(*ts_ptr) * 3 * count + count;
+                data_ofs += sizeof(*ts_ptr) * 4 * count; // "4" -- ts.nsec, ts.sec.lo32, ts.sec.hi32, dtype
             }
             else
             {
                 ts_ptr = NULL;
                 dt_ptr = (void *)(rf_ptr + count);
-                data_ofs += count;
+                data_ofs += sizeof(*dt_ptr) * count;
             }
             data_ofs = REMDRV_PROTO_SIZE_CEIL(data_ofs);
             data_ptr = ((uint8*)(pkt->data)) + data_ofs;
@@ -1197,6 +1197,7 @@ static void remdrv_rw_p(int devid, void *devptr,
   int                  seglen;
   int32                ad2snd[SEGLEN_MAX];
   int32                ne2snd[SEGLEN_MAX];
+  uint32               dt2snd[SEGLEN_MAX];
   int                  stage;
   int                  x;
   size_t               valuestotal;
@@ -1230,10 +1231,8 @@ static void remdrv_rw_p(int devid, void *devptr,
                     size =
                         sizeof(hdr)
                         +
-                        (sizeof(ad2snd[0]) + sizeof(ne2snd[0]))
-                        * seglen
-                        +
-                        seglen /* dtypes */;
+                        (sizeof(ad2snd[0]) + sizeof(ne2snd[0] + sizeof(dt2snd[0])))
+                        * seglen;
                     padsize = REMDRV_PROTO_SIZE_CEIL(size) - size;
 
                     bzero(&hdr, sizeof(hdr));
@@ -1244,7 +1243,7 @@ static void remdrv_rw_p(int devid, void *devptr,
                     if (fdio_send(me->iohandle, &hdr,   sizeof(hdr))                < 0  ||
                         fdio_send(me->iohandle, ad2snd, seglen * sizeof(ad2snd[0])) < 0  ||
                         fdio_send(me->iohandle, ne2snd, seglen * sizeof(ne2snd[0])) < 0  ||
-                        fdio_send(me->iohandle, dtypes, seglen)                     < 0)
+                        fdio_send(me->iohandle, dt2snd, seglen * sizeof(dt2snd[0])) < 0)
                         goto FAILURE;
                     if (padsize    != 0     &&
                         fdio_send(me->iohandle, zeroes, padsize) < 0)
@@ -1322,6 +1321,7 @@ static void remdrv_rw_p(int devid, void *devptr,
                     {
                         ad2snd[x] = me->l2r_i32(addrs [x]);
                         ne2snd[x] = me->l2r_i32(nelems[x]);
+                        dt2snd[x] = me->l2r_i32(dtypes[x]);
                     }
                 }
             }

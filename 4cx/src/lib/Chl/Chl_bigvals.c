@@ -260,10 +260,20 @@ static void CreateBigValsDialog(XhWindow  win, DataSubsys subsys, dlgrec_t *rec)
 
 void _ChlShowBigVal_m(DataKnob k)
 {
-  XhWindow    win = XhWindowOf(k->w);
-  dlgrec_t   *rec = ThisDialog(win);
+  XhWindow    win;
+  dlgrec_t   *rec;
+
+  DataKnob    src_of_w;
 
   int         row;
+
+    for (src_of_w = k;
+         src_of_w != NULL  &&  src_of_w->w == NULL;
+         src_of_w = src_of_w->uplink) ;
+    if (src_of_w == NULL  ||  src_of_w->w == NULL) return;
+
+    win = XhWindowOf(src_of_w->w);
+    rec = ThisDialog(win);
 
     /* Check if this knob is alreany in a list */
     for (row = 0;

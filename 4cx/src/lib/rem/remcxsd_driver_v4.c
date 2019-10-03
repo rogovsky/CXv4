@@ -136,8 +136,9 @@ void ReturnDataSet    (int devid,
   int                  seglen;
   int32                ad2snd[SEGLEN_MAX];
   int32                ne2snd[SEGLEN_MAX];
-  int32                rf2snd[SEGLEN_MAX];
+  uint32               rf2snd[SEGLEN_MAX];
   uint32               ts2snd[SEGLEN_MAX*3];
+  uint32               dt2snd[SEGLEN_MAX];
   int                  stage;
   int                  x;
   size_t               valuestotal = 0;  // Only to prevent "may be used uninitialized"
@@ -181,7 +182,8 @@ void ReturnDataSet    (int devid,
                     (timestamps == NULL? 0 : sizeof(ts2snd[0]) * 3)
                     * seglen
                     +
-                    seglen /* dtypes */;
+                    sizeof(dt2snd[0])
+                    * seglen /* dtypes */;
                 padsize = REMDRV_PROTO_SIZE_CEIL(size) - size;
 
                 bzero(&hdr, sizeof(hdr));
@@ -199,7 +201,7 @@ void ReturnDataSet    (int devid,
                      /* Note: we don't use zeroes[] but send an extra int32 from ts2snd[], since ts2snd[]'s size is multiple of 8 */
                     fdio_send(dev->fhandle, ts2snd, seglen * sizeof(ts2snd[0]) * 3) < 0)
                     goto TERMINATE;
-                if (fdio_send(dev->fhandle, dtypes, seglen)  < 0)
+                if (fdio_send(dev->fhandle, dt2snd, seglen * sizeof(dt2snd[0])) < 0)
                     goto TERMINATE;
                 if (padsize    != 0     &&
                     fdio_send(dev->fhandle, zeroes, padsize) < 0)
@@ -217,6 +219,7 @@ void ReturnDataSet    (int devid,
                     ts2snd[x * 3 + 1] = timestamps[x].sec /*!!! lo32()!!! */;
                     ts2snd[x * 3 + 2] = 0; /*!!! hi32() !!! */
                 }
+                dt2snd[x] = dtypes[x];
 
                 size    = sizeof_cxdtype(dtypes[x]) * nelems[x];
                 padsize = REMDRV_PROTO_SIZE_CEIL(size) - size;
@@ -701,11 +704,9 @@ void ProcessPacket(int devid, void *devptr,
             // !!! Check inpktsize
             if (dev->metric->do_rw == NULL) return;
 
-            /* ADDRS(int32),NELEMS(int32),DTYPES(uint8),[padding-to-8],values */
-            values_ofs  = REMDRV_PROTO_SIZE_CEIL((count * 2 /*ADDRS,NELEMS*/)
-                                                 * sizeof(int32)
-                                                 +
-                                                 count /*DTYPES*/);
+            /* ADDRS(int32),NELEMS(int32),DTYPES(uint32),[padding-to-8],values */
+            values_ofs  = REMDRV_PROTO_SIZE_CEIL((count * 3 /*ADDRS,NELEMS,DTYPES*/)
+                                                 * sizeof(int32));
             nelems_base =           hdr->data + count;
             dtypes_base =   (void*)(hdr->data + count * 2);
             values_ptr  = ((uint8*)(hdr->data)) + values_ofs;

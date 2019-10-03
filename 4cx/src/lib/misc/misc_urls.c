@@ -11,6 +11,7 @@ int split_url(const char  *def_scheme, const char *sep_str,
 {
   const char *p;
   size_t      sl;
+  int         x;
     
     if (def_scheme == NULL) def_scheme = "";
     if (url        == NULL) url        = "";
@@ -26,7 +27,7 @@ int split_url(const char  *def_scheme, const char *sep_str,
         sl = p - url;
         if (sl > scheme_buf_size - 1)
             sl = scheme_buf_size - 1;
-        memcpy(scheme_buf, url, p - url);
+        for (x = 0;  x < sl;  x++) scheme_buf[x] = tolower(url[x]);
         scheme_buf[sl] = '\0';
         *loc_p = p + strlen(sep_str);
     }

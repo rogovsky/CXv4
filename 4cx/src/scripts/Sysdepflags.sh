@@ -50,6 +50,9 @@ then
 elif (echo $UNAME | grep -i "freebsd" >/dev/null)
 then
     OS="FREEBSD"
+elif (echo $UNAME | grep -i "darwin" >/dev/null)
+then
+    OS="DARWIN"
 elif (echo $UNAME | grep -i "irix"    >/dev/null)
 then
     OS="IRIX"

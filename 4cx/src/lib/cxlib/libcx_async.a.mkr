@@ -1,1 +1,0 @@
-libcx_async.a: libcx_async.a(cxlib_client.o cxlib_utils.o cxlib_async.o)

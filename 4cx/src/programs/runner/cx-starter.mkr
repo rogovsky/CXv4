@@ -1,1 +1,0 @@
-cx-starter: cx-starter.o cx-starter_msg.o cx-starter_cfg.o cx-starter_con.o cx-starter_Cdr.o cx-starter_x11.o cx-starter_gui.o 

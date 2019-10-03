@@ -23,6 +23,7 @@ enum
     UTIL_PRINT_QUOTES    = 1 << 7,
     UTIL_PRINT_TIMESTAMP = 1 << 8,
     UTIL_PRINT_RFLAGS    = 1 << 9,
+    UTIL_PRINT_UNESCAPED = 1 << 10,
     UTIL_PRINT_NEWLINE   = 1 << 20,
 };
 
