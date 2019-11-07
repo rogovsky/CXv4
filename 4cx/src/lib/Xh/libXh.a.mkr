@@ -1,0 +1,1 @@
+libXh.a: libXh.a(Xh_app.o Xh_globals.o Xh_utils.o Xh_colors.o Xh_grid.o Xh_balloon.o Xh_hilite.o Xh_window.o Xh_toolbar.o Xh_statusline.o Xh_viewport.o Xh_plot.o Xh_monoimg.o Xh_fdlg.o Xh_stddlg.o)
