@@ -27,5 +27,12 @@ pult
 liuclient
 pzframeclient
 
+# epics executables
+epics_cdaclient
+epics_das-experiment
+epics_dataset-save
+
+
+
 # somesing else
 DEADJOE
