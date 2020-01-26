@@ -511,6 +511,7 @@ int   FastadcGuiRealize    (fastadc_gui_t *gui, Widget parent,
     if (gui->g.look.nocontrols) options  = XH_PLOT_CPANEL_ABSENT;
     if (gui->look.nofold)       options |= XH_PLOT_NO_CPANEL_FOLD_MASK;
     if (gui->look.noscrollbar)  options |= XH_PLOT_NO_SCROLLBAR_MASK;
+    if (gui->look.wide)         options |= XH_PLOT_WIDE_MASK;
 
     gui->plot       = XhCreatePlot(parent, 
                                    XH_PLOT_Y_OF_X, 
@@ -595,6 +596,11 @@ static psp_paramdescr_t  fastadc_gui_text2look[] =
 
     PSP_P_FLAG   ("black",        fastadc_gui_look_t, black,        1, 0),
     PSP_P_FLAG   ("white",        fastadc_gui_look_t, black,        0, 1),
+
+    PSP_P_FLAG   ("thin",         fastadc_gui_look_t, wide,         0, 1),
+    PSP_P_FLAG   ("thick",        fastadc_gui_look_t, wide,         1, 0),
+    PSP_P_FLAG   ("wide",         fastadc_gui_look_t, wide,         1, 0),
+    PSP_P_FLAG   ("bold",         fastadc_gui_look_t, wide,         1, 0),
 
     PSP_P_END()
 };

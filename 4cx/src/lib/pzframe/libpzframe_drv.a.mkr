@@ -1,1 +1,0 @@
-libpzframe_drv.a: libpzframe_drv.a(pzframe_drv.o)

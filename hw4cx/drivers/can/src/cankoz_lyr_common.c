@@ -549,6 +549,7 @@ static void  cankoz_disconnect(int devid)
 {
   int           l;
   int           d;
+  int           other_d;
   kozdevinfo_t *dp;
   int           was_found = 0;
 
@@ -566,8 +567,8 @@ static void  cankoz_disconnect(int devid)
                 dp->devid = DEVID_NOT_IN_DRIVER;
 
                 /* Check if some other devices are active on this line */
-                for (d = 0;  d < countof(lines[l].devs);  d++)
-                    if (lines[l].devs[d].devid > 0)
+                for (other_d = 0;  other_d < countof(lines[l].devs);  other_d++)
+                    if (lines[l].devs[other_d].devid != DEVID_NOT_IN_DRIVER)
                         goto NEXT_KID;
 
                 /* ...or was last "client" of this line? */

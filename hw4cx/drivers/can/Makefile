@@ -6,10 +6,16 @@ include		$(PRJDIR)/PrjRules.mk
 
 SUBDIRS=        local marathon-2.4 udpcan
 
-ifeq ":$(OS):$(CPU_X86_COMPAT):" ":LINUX:YES:"
-  MAY_BUILD_C4LCANGW=YES
+# Value derived from ppc860-linux/x_rules.mk
+PPC860_CANARY=$(PRJDIR)/../x-compile/ppc860-linux/tools/bin/ppc-linux-gcc
+ifneq ":$(OS):$(CPU_X86_COMPAT):" ":LINUX:YES:"
+  DUMMY:=	$(warning WARNING: skipping build of c4l-cangw/canserver because platform isn't LINUX-X86)
 else
-  $(warning WARNING: Platform isn't LINUX-X86, so skipping build of c4l-cangw/canserver)
+  ifeq "$(wildcard $(PPC860_CANARY))" ""
+    DUMMY:=	$(warning WARNING: skipping build of c4l-cangw/canserver because of missing $(PPC860_CANARY))
+  else
+    MAY_BUILD_C4LCANGW=YES
+  endif
 endif
 
 OS_GE_2_6_25:=	$(shell uname -r|awk 'BEGIN {FS="[-.]"}{print 2006024-($$1*1000000+$$2*1000+$$3)}'|sed 's/^-.*/YES/')

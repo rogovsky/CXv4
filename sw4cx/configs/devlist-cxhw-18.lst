@@ -23,6 +23,26 @@ dev adc200_blm2 adc200/remdrv ~ 12 b:ppc-blm:8002
 dev  v0308_blm1  v0308/remdrv ~ 2  b:ppc-blm:8002
 dev  v0308_blm2  v0308/remdrv ~ 5  b:ppc-blm:8002
 
+# 1:name_base 2:base_dev 3:N(0,1)
+define(`ONE_BLM_PS', `
+    cpoint $1 {
+        Uset		$2.volts$3
+        reset		$2.reset$3
+        switch_on	$2.sw_on$3
+        switch_off	$2.sw_off$3
+        rate		$2.rate$3
+        is_on		$2.is_on$3
+        ilk_ovl_u	$2.ovl_u$3
+        ilk_ovl_i	$2.ovl_i$3
+        polarity	$2.plrty$3
+        Uset_cur	$2.cur$3
+    }
+')
+ONE_BLM_PS(blm_1_1, v0308_blm1, 0)
+ONE_BLM_PS(blm_1_2, v0308_blm1, 1)
+ONE_BLM_PS(blm_2_1, v0308_blm2, 0)
+ONE_BLM_PS(blm_2_2, v0308_blm2, 1)
+
 # Kickers
 dev adc200_kkr1 adc200/remdrv ~ 17 b:ppc-blm:8002
 dev adc200_kkr2 adc200/remdrv ~ 19 b:ppc-blm:8002

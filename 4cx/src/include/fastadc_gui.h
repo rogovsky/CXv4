@@ -83,6 +83,7 @@ typedef struct
     int     width;
     int     height;
     int     black;
+    int     wide;
     int     noscrollbar;
     int     nofold;
 } fastadc_gui_look_t;

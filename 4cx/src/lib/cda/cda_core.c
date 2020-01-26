@@ -4100,6 +4100,31 @@ int cda_rd_convert  (cda_dataref_t ref, double raw, double *result_p)
     return 0;
 }
 
+int cda_r_convert   (cda_dataref_t ref, double raw, double *result_p)
+{
+  refinfo_t     *ri = AccessRefSlot(ref);
+
+  double        v  = raw;
+  int           n;
+  double       *rdp;
+
+    if (CheckRef(ref) != 0) return -1;
+
+    n   = ri->phys_count;
+    rdp = ri->alc_phys_rds;
+    if (rdp == NULL) rdp = ri->imm_phys_rds;
+    while (n > 0)
+    {
+        v = v / rdp[0];
+        rdp += 2;
+        n--;
+    }
+
+    if (result_p != NULL) *result_p = v;
+
+    return 0;
+}
+
 int cda_snd_ref_data(cda_dataref_t ref,
                      cxdtype_t dtype, int nelems,
                      void *data)

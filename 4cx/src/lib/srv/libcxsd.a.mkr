@@ -1,1 +1,0 @@
-libcxsd.a: libcxsd.a(cxsd_logger.o cxsd_modmgr.o cxsd_driver.o cxsd_db.o cxsd_db_plugmgr.o cxsd_hw.o)

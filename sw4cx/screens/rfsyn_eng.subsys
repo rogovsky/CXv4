@@ -1,14 +1,3 @@
-     define(`forloop',
-            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
-     define(`_forloop',
-            `$4`'ifelse($1, `$3', ,
-                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
-     define(`fordown',
-            `pushdef(`$1', `$2')_fordown(`$1', `$2', `$3', `$4')popdef(`$1')')
-     define(`_fordown',
-            `$4`'ifelse($1, `$3', ,
-                   `define(`$1', decr($1))_fordown(`$1', `$2', `$3', `$4')')')
-#---------------------------------------------------------------------
 
 # 1:id 2:label 3:dev 4:N_in_dev
 define(`D16_LINE', `
@@ -101,18 +90,6 @@ define(`IE_PRESET_PANEL', `
     }
 ')
 
-# 1:bitN 2:name
-define(`IE4_DIAG_BIT', `
-    disp b$1 "eval($1+1)" led r:"_all_code; getchan diag_$2; div eval(1<<$1); trunc; mod 2; ret;"
-')
-
-# 1:numbits 2:name
-define(`IE4_DIAG_LINE', `
-    disp $1 $1 text - - %4.0f r:diag_$1
-    container "" "" grid noshadow,notitle,norowtitles content:$2 {
-        fordown(`N', $2, 0, `IE4_DIAG_BIT($1, N)')
-    }
-')
 
 grouping main RFSYN_ENG_grouping "RFSyn: engineering screen" lrtb "vertical" \
         content:5 {
@@ -122,14 +99,13 @@ grouping main RFSYN_ENG_grouping "RFSyn: engineering screen" lrtb "vertical" \
 
         container "-diag" "?" subwin subwintitle:"IE4 diagnostics" content:1 {
             container "" "" grid noshadow,notitle,nocoltitles content:7 {
-                button -get "\rRead!" button r:do_diag
                 disp rf  Rf  text - - %4.0f r:diag_Rf
-#                IE4_DIAG_LINE(2,Rf)
                 disp rm  Rm  text - - %4.0f r:diag_Rm
-                disp rkm RKm text - - %4.0f r:diag_RKn
+                disp rkm RKm text - - %4.0f r:diag_RKm
                 disp rkp RKp text - - %4.0f r:diag_RKp
                 disp rkd RKd text - - %4.0f r:diag_RKd
                 disp rs  Rs  text - - %4.0f r:diag_Rs
+                button read '\rRead!' button r:do_diag
             }
         }
 

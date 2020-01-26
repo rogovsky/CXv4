@@ -112,6 +112,31 @@ static GC AllocXhGC(Widget w, int idx, const char *fontspec)
     return XtGetGC(w, mask, &vals);
 }
 
+static GC AllocThGC(Widget w, int idx, const char *fontspec)
+{
+  XtGCMask   mask;  
+  XGCValues  vals;
+    
+    mask = GCForeground | GCLineWidth;
+    vals.foreground = XhGetColor(idx);
+    vals.line_width = 2;
+
+    if (fontspec != NULL  &&  fontspec[0] != '\0')
+    {
+        last_finfo = XLoadQueryFont(XtDisplay(w), fontspec);
+        if (last_finfo == NULL)
+        {
+            fprintf(stderr, "Unable to load font \"%s\"; using \"fixed\"\n", fontspec);
+            last_finfo = XLoadQueryFont(XtDisplay(w), "fixed");
+        }
+        vals.font = last_finfo->fid;
+
+        mask |= GCFont;
+    }
+
+    return XtGetGC(w, mask, &vals);
+}
+
 static GC AllocDashGC(Widget w, int idx, int dash_length)
 {
   XtGCMask   mask;  
@@ -641,9 +666,13 @@ XhPlot    XhCreatePlot(Widget parent, int type, int maxplots,
     /* Create GCs */
     for (nl = 0;  nl < plot->maxplots;  nl++)
     {
-        plot->plots[nl].lineGC = AllocXhGC  (parent, cofs + XH_COLOR_GRAPH_LINE1 + (nl % XH_NUM_DISTINCT_LINE_COLORS), 
+        plot->plots[nl].lineGC = (((options & XH_PLOT_WIDE_MASK) == 0)? 
+                                  AllocXhGC : AllocThGC)
+                                            (parent, cofs + XH_COLOR_GRAPH_LINE1 + (nl % XH_NUM_DISTINCT_LINE_COLORS), 
                                                                                    XH_TINY_FIXED_FONT);   plot->plots[nl].finfo = last_finfo;
-        plot->plots[nl].goodGC = AllocXhGC  (parent, cofs + XH_COLOR_GRAPH_PREV,   NULL);
+        plot->plots[nl].goodGC = (((options & XH_PLOT_WIDE_MASK) == 0)? 
+                                  AllocXhGC : AllocThGC)
+                                            (parent, cofs + XH_COLOR_GRAPH_PREV,   NULL);
         plot->plots[nl].magn   = 1;
         plot->plots[nl].plrt   = +1;
     }

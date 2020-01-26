@@ -1,1 +1,0 @@
-libvdev.a: libvdev.a(vdev.o)

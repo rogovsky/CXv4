@@ -1,13 +1,69 @@
 #include "cxsd_driver.h"
+#include "advdac.h"
 
 #include "drv_i/v0308_drv_i.h"
 
 
+/*=== V0308 (VVI) specifics ========================================*/
+
+enum
+{
+    MAX_ALWD_VAL = 0xFFF,
+    MIN_ALWD_VAL = 0,
+    THE_QUANT    = 0, // ???
+};
+
+enum
+{
+    HEARTBEAT_FREQ  = 10,
+    HEARTBEAT_USECS = 1000000 / HEARTBEAT_FREQ,
+};
+
+enum
+{
+    DEVSPEC_CHAN_OUT_n_base      = V0308_CHAN_VOLTS_base,
+    DEVSPEC_CHAN_OUT_RATE_n_base = V0308_CHAN_RATE_base,
+    DEVSPEC_CHAN_OUT_CUR_n_base  = V0308_CHAN_CUR_base,
+    DEVSPEC_CHAN_OUT_IMM_n_base  = V0308_CHAN_IMM_base,
+    DEVSPEC_CHAN_OUT_TAC_n_base  = -1,
+};
+
+static inline int32 val_to_daccode_to_val(int32 val)
+{
+    return val;
+}
+
+//////////////////////////////////////////////////////////////////////
+
 typedef struct
 {
     int  N;
-} v0308_privrec_t;
+    int  devid;
 
+    int              num_isc;
+
+    int              val_cache[2];
+    rflags_t         rfl_cache[2];
+    advdac_out_ch_t  out      [2];
+} v0308_privrec_t;
+typedef v0308_privrec_t privrec_t;
+
+//////////////////////////////////////////////////////////////////////
+static void SendWrRq(privrec_t *me, int l, int32 val);
+static void SendRdRq(privrec_t *me, int l);
+#include "advdac_slowmo_kinetic_meat.h"
+//////////////////////////////////////////////////////////////////////
+
+static void v0308_hbt(int devid, void *devptr,
+                      sl_tid_t tid  __attribute__((unused)),
+                      void *privptr __attribute__((unused)))
+{
+  v0308_privrec_t *me = (v0308_privrec_t*)devptr;
+
+    sl_enq_tout_after(devid, devptr, HEARTBEAT_USECS, v0308_hbt, NULL);
+
+    if (me->num_isc > 0) HandleSlowmoHbt(me);
+}
 
 static int v0308_init_d(int devid, void *devptr,
                         int businfocount, int *businfo,
@@ -15,9 +71,38 @@ static int v0308_init_d(int devid, void *devptr,
 {
   v0308_privrec_t *me = (v0308_privrec_t*)devptr;
   
-    me->N = businfo[0];
+    me->N     = businfo[0];
+    me->devid = devid;
+
+    me->out[0].max = me->out[1].max = 3000;
+    me->out[0].spd = me->out[1].spd = 20;
+
+    sl_enq_tout_after(devid, devptr, HEARTBEAT_USECS, v0308_hbt, NULL);
+
+    SetChanReturnType(devid, V0308_CHAN_CUR_base, 2, IS_AUTOUPDATED_TRUSTED);
 
     return DEVSTATE_OPERATING;
+}
+
+static void SendWrRq(privrec_t *me, int l, int32 val)
+{
+  int              c;
+
+    if (val < 0)     val = 0;
+    if (val > 0xFFF) val = 0xFFF;
+    c = val;
+    DO_NAF(CAMAC_REF, me->N, l, 16, &c);
+}
+
+static void SendRdRq(privrec_t *me, int l)
+{
+  int              c;
+  int32            value;
+  rflags_t         rflags;
+
+    rflags  = status2rflags(DO_NAF(CAMAC_REF, me->N, l, 0, &c));
+    value   = c & 0xFFF;
+    HandleSlowmoREADDAC_in(me, l, value, rflags);
 }
 
 static void v0308_rw_p(int devid, void *devptr,
@@ -56,16 +141,22 @@ static void v0308_rw_p(int devid, void *devptr,
         switch (chn &~ 1)
         {
             case V0308_CHAN_VOLTS_base:
-                if (action == DRVA_WRITE)
-                {
-                    if (value < 0)     value = 0;
-                    if (value > 0xFFF) value = 0xFFF;
-                    c = value;
-                    rflags |= status2rflags(DO_NAF(CAMAC_REF, me->N, A, 16, &c));
-                }
-                rflags |= status2rflags(DO_NAF(CAMAC_REF, me->N, A, 0, &c));
+                HandleSlowmoOUT_rw     (me, chn, action, action == DRVA_WRITE? value : 0);
+                goto NEXT_CHANNEL;
+
+            case V0308_CHAN_RATE_base:
+                HandleSlowmoOUT_RATE_rw(me, chn, action, action == DRVA_WRITE? value : 0);
+                goto NEXT_CHANNEL;
+
+            case V0308_CHAN_IMM_base:
+                HandleSlowmoOUT_IMM_rw (me, chn, action, action == DRVA_WRITE? value : 0);
+                goto NEXT_CHANNEL;
+
+            case V0308_CHAN_CUR_base:
+                rflags  = status2rflags(DO_NAF(CAMAC_REF, me->N, A, 0, &c));
                 value   = c & 0xFFF;
-                break;
+                ReturnInt32Datum(devid, chn, value, rflags);
+                goto NEXT_CHANNEL;
 
             case V0308_CHAN_RESET_base:
                 if (action == DRVA_WRITE  &&  value == CX_VALUE_COMMAND)

@@ -1,1 +1,0 @@
-libcxsd_plugins.a: libcxsd_plugins.a(cxsd_db_via_ppf4td.o cxsd_db_file_ldr.o cxsd_fe_cx.o)

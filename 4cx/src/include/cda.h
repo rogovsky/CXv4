@@ -296,6 +296,7 @@ int cda_get_ref_ival(cda_dataref_t ref,
                      CxAnyVal_t *curraw_p, cxdtype_t *curraw_dtype_p,
                      rflags_t   *rflags_p, cx_time_t *timestamp_p);
 int cda_rd_convert  (cda_dataref_t ref, double raw, double *result_p);
+int cda_r_convert   (cda_dataref_t ref, double raw, double *result_p);
 
 int cda_snd_ref_data(cda_dataref_t ref,
                      cxdtype_t dtype, int nelems,

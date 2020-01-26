@@ -63,9 +63,9 @@ static int rp2rn(refrec_t *rp)
 
 static const char    *global_argv0;
 
+static int            option_binary    = 0;
 static char          *option_baseref   = NULL;
 static char          *option_defpfx    = NULL;
-static int            option_binary    = 0;
 static const char    *option_bin_name  = NULL;
 static int            option_cont_bin  = 0;
 static int            option_help      = 0;
@@ -109,6 +109,7 @@ static void PerformWrite(refrec_t *rp)
   int            r;
 
 ////    fprintf(stderr, "W\n");
+fprintf(stderr, "num2wr=%d\n", rp->ur.num2wr);
     buf = rp->ur.databuf;
     if (buf == NULL) buf = &(rp->ur.val2wr);
     if ((r = cda_snd_ref_data(rp->ur.ref, rp->ur.dtype, rp->ur.num2wr, buf)) >= 0)
@@ -299,7 +300,7 @@ static void ProcessFdioEvent(int uniq, void *unsdptr,
 
   size_t         buf2_size_rqd;
 
-fprintf(stderr, "\treason=%d <%s>\n", reason, fdio_strreason(reason));
+////fprintf(stderr, "\treason=%d <%s>\n", reason, fdio_strreason(reason));
     /* 0. Check reason */
     if (reason != FDIO_R_DATA)
     {
@@ -378,7 +379,7 @@ fprintf(stderr, "\treason=%d <%s>\n", reason, fdio_strreason(reason));
         }
 
         // Activate the channel
-fprintf(stderr, "spec=<%s>\n", rp->ur.spec);
+////fprintf(stderr, "spec=<%s>\n", rp->ur.spec);
         rp->ur.ref = cda_add_chan(the_cid,
                                   option_baseref,
                                   rp->ur.spec, rp->ur.options|CDA_DATAREF_OPT_PRIVATE, rp->ur.dtype, rp->ur.n_items,

@@ -73,6 +73,8 @@ int     CxsdDbDestroy(CxsdDb db)
     if (db->liolist != NULL)
         free(db->liolist);
 
+    safe_free(db->dcprs);
+
     safe_free(db->cpnts);
 
     if (db->clvls_list != NULL)
@@ -88,7 +90,7 @@ int     CxsdDbDestroy(CxsdDb db)
             safe_free(db->nsps_list[n]);
         free(db->nsps_list);
     }
-    
+
     safe_free(db->strbuf);
 
 
@@ -412,6 +414,44 @@ int     CxsdDbNspSrch(CxsdDb db, CxsdDbDcNsp_t  *nsp,   const char *name)
     }
 
     return -1;
+}
+
+
+// Is a copy from CxsdDbAddCpnt() with trivial replacements ("cpnt"->"dcpr")
+int     CxsdDbAddDcPr(CxsdDb db, CxsdDbDcPrInfo_t dcpr_data)
+{
+  int               retval;
+  CxsdDbDcPrInfo_t *new_dcprs;
+
+  enum {ALLOC_INC = 100};
+
+    if (db->is_readonly)
+    {
+        errno = EROFS;
+        return -1;
+    }
+
+    /* Grow if there's no free slot atop of used cells */
+    if (db->dcprs_used >= db->dcprs_allocd)
+    {
+        /* Grow... */
+        new_dcprs = safe_realloc(db->dcprs,
+                                 sizeof(*new_dcprs) * (db->dcprs_allocd + ALLOC_INC));
+        if (new_dcprs == NULL) return -1;
+        bzero(new_dcprs + db->dcprs_allocd, sizeof(*new_dcprs) * ALLOC_INC);
+        /* ...and record it */
+        db->dcprs         = new_dcprs;
+        db->dcprs_allocd += ALLOC_INC;
+
+        /* Grow from 0?  Add an empty one for id=0 */
+        if (db->dcprs_used == 0) db->dcprs_used++;
+    }
+
+    /* Record */
+    retval = db->dcprs_used;
+    db->dcprs[db->dcprs_used++] = dcpr_data;
+
+    return retval;
 }
 
 

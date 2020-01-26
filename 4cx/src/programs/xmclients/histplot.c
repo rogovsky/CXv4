@@ -94,8 +94,19 @@ typedef struct
     double  cyclesize_secs;
     int     histring_len;
 
+    int     mode;
     int     horz_ctls;
 } globopts_t;
+
+// A copy from MotifKnobs_histplot_noop.c
+static psp_lkp_t mode_lkp[] =
+{
+    {"line", MOTIFKNOBS_HISTPLOT_MODE_LINE},
+    {"wide", MOTIFKNOBS_HISTPLOT_MODE_WIDE},
+    {"dots", MOTIFKNOBS_HISTPLOT_MODE_DOTS},
+    {"blot", MOTIFKNOBS_HISTPLOT_MODE_BLOT},
+    {NULL, 0}
+};
 
 typedef struct
 {
@@ -108,6 +119,8 @@ static psp_paramdescr_t text2globopts[] =
 {
     PSP_P_INT    ("width",       globopts_t, plot_width,  DEF_PLOT_W, 50, 5000),
     PSP_P_INT    ("height",      globopts_t, plot_height, DEF_PLOT_H, 50, 5000),
+
+    PSP_P_LOOKUP ("mode",        globopts_t, mode,        -1, mode_lkp),
 
     PSP_P_MSTRING("defserver",   globopts_t, defserver,   NULL,       100),
     PSP_P_MSTRING("baseref",     globopts_t, baseref,     NULL,       100),
@@ -762,6 +775,7 @@ int main(int argc, char *argv[])
                        "  height=NNN      -- plot area height in pixels (default=%d)\n"
                        "  hist_period=NNN -- plotting period in seconds (default=%.1f)\n"
                        "  hist_len=NNNNN  -- history length in points (default=%d)\n"
+                       "  mode=TYPE       -- plot mode (line, wide, dots, blot; default=line)\n"
                        "\n"
                        "CHANNELS_TO_PLOT format: [%DPYFMT:]{CHAN_PARAM:}REFERENCE\n"
                        "\n"
@@ -832,6 +846,7 @@ int main(int argc, char *argv[])
     attachright (mkhp.form, NULL, 0);
     attachtop   (mkhp.form, NULL, 0);
     attachbottom(mkhp.form, NULL, 0);
+    if (globopts.mode >= 0) MotifKnobs_SetHistplotMode(&mkhp, globopts.mode);
     for (row = 0;  row < grp->u.c.count;  row++)
         ActivatePlotRow(row);
 

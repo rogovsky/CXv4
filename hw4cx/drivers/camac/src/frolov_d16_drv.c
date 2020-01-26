@@ -255,6 +255,7 @@ static void frolov_d16_rw_p(int devid, void *devptr,
   int                   c_rs;
   int                   v_kclk;
   int                   c_Ai;
+  int                   c_A2;
   int                   c_Bi;
   double                v_fclk;
   double                quant;
@@ -352,13 +353,22 @@ static void frolov_d16_rw_p(int devid, void *devptr,
                         //        is still used for B
                         c_Ai = round(dval / quant);  if (c_Ai > 65535) c_Ai = 65535;
                         v_R  = dval - c_Ai * quant;  if (v_R  < 0)     v_R  = 0;
-#else
+#elif 0
                         // ? c_Ai = remquo(dval, quant, &v_R) ?  No, too underspecified to rely upon.
                         c_Ai = dval / quant;         if (c_Ai > 65535) c_Ai = 65535;
                         v_R  = fmod(dval, quant) /*+ 0.125*/;
+#else
+                        c_Ai = dval / quant;         if (c_Ai > 65535) c_Ai = 65535;
+                        v_R  = dval - c_Ai * quant;  if (v_R  < 0)     v_R  = 0;
+                        c_A2 = (dval + 0.1) / quant; if (c_A2 > 65535) c_A2 = 65535;
+                        if (c_A2 > c_Ai)
+                        {
+                            c_Ai = c_A2;
+                            v_R  = 0;
+                        }
 #endif
 ////fprintf(stderr, "dval=%8.3f c_Ai=%d v_R=%8.3f\n", dval, c_Ai, v_R);
-                        c_Bi = v_R * 4; /* =/0.25 */ if (c_Bi > 255)   c_Bi = 255;
+                        c_Bi = round(v_R * 4); /* =/0.25 */ if (c_Bi > 255)   c_Bi = 255;
 
                         rflags |= x2rflags(DO_NAF(CAMAC_REF, me->N, A_A+l, 16, &c_Ai));
                         rflags |= x2rflags(DO_NAF(CAMAC_REF, me->N, A_B+l, 16, &c_Bi));

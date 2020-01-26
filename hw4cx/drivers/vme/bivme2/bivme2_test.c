@@ -515,6 +515,7 @@ static void PerformIO (const char *argv0, int iohandle, const char *spec)
                   PAS_COUNT | PAS_VALUE | PAS_VALARR);
     //PrintAddr(": ", &addr);
     ////for (x=0;x<sizeof(buf)/sizeof(buf[0]);x++)buf[x]=0;
+    errno = 0;
     r = do_io(iohandle, &addr, dev.addr_size);
     if (r < 0)
     {
