@@ -377,6 +377,10 @@ static void ProcessFdioEvent(int uniq, void *unsdptr,
                     /*!!! In fact, never used */
                     break;
 
+                case CXT4_MUSTER:
+                    CallNotifier(cp, CAR_MUSTER, NULL);
+                    break;
+
                 case CXT4_END_OF_CYCLE:
                     //cxlib_report(cp, "EOC");
                     CallNotifier(cp, CAR_CYCLE, NULL);
@@ -1658,7 +1662,7 @@ static void async_CXT4_DATA_IO    (v4conn_t *cp, CxV4Header *rcvd, size_t rcvdsi
                 break;
 
             case CXC_CVT_TO_RPY(CXC_RANGE):
-                if (rpy->ByteSize != sizeof(*rnge)) continue;
+                if (rpy->ByteSize < sizeof(*rnge)) continue;
                 rnge = (void*)rpy;
                 rni.hwid        = rnge->hwid;
                 rni.param1      = rpy->param1;

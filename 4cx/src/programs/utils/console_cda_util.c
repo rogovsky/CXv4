@@ -15,6 +15,20 @@
 #include "console_cda_util.h"   
 
 
+static int EC_USR_ERR_is_fatal = 1;
+
+void console_cda_util_EC_USR_ERR_mode(int is_fatal)
+{
+    EC_USR_ERR_is_fatal = is_fatal;
+}
+
+#define RAISE_EC_USR_ERR()                         \
+    do {                                           \
+        if (EC_USR_ERR_is_fatal) exit(EC_USR_ERR); \
+        else return -1;}                           \
+    while (0)
+
+
 static void PrintChar(FILE *fp, char32 c32, int unescaped)
 {
     if      ((c32 & 0x000000FF) == c32)
@@ -283,13 +297,13 @@ int  ParseDatarefSpec(const char    *argv0,
             {
                 fprintf(stderr, "%s %s: data-type expected after '@' in \"%s\"\n",
                         strcurtime(), argv0, spec);
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
             else
             {
                 fprintf(stderr, "%s %s: invalid channel-data-type after '@' in \"%s\"\n",
                         strcurtime(), argv0, spec);
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
             // Optional COUNT
             cp++;
@@ -300,7 +314,7 @@ int  ParseDatarefSpec(const char    *argv0,
                 {
                     fprintf(stderr, "%s %s: invalid channel-n_items after '@%c' in \"%s\"\n",
                             strcurtime(), argv0, ut_char, spec);
-                    exit(EC_USR_ERR);
+                    RAISE_EC_USR_ERR();
                 }
                 cp = endptr;
             }
@@ -309,7 +323,7 @@ int  ParseDatarefSpec(const char    *argv0,
             {
                 fprintf(stderr, "%s %s: ':' expected after '@%c[N]' in \"%s\"\n",
                         strcurtime(), argv0, ut_char, spec);
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
             else
                 cp++;
@@ -321,14 +335,14 @@ int  ParseDatarefSpec(const char    *argv0,
             {
                 fprintf(stderr, "%s %s: ':' expected after %%DPYFMT spec in \"%s\"\n",
                         strcurtime(), argv0, spec);
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
             slen = cl_p - cp;
             if (slen > sizeof(buf) - 1)
             {
                 fprintf(stderr, "%s %s: %%DPYFMT spec too long in \"%s\"\n",
                         strcurtime(), argv0, spec);
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
             memcpy(buf, cp, slen);
             buf[slen] = '\0';
@@ -349,7 +363,7 @@ int  ParseDatarefSpec(const char    *argv0,
             {
                 fprintf(stderr, "%s %s: invalid %%DPYFMT spec in \"%s\": %s\n",
                         strcurtime(), argv0, spec, printffmt_lasterr());
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
             if (reprof_cxdtype(dtype) == CXDTYPE_REPR_FLOAT)
                 CreateDoubleFormat(dpyfmt, sizeof(dpyfmt), 20, 10,
@@ -371,7 +385,7 @@ int  ParseDatarefSpec(const char    *argv0,
             {
                 fprintf(stderr, "%s %s: ')' expected after (knobname... spec in \"%s\"\n",
                         strcurtime(), argv0, spec);
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
 
             cp = cl_p + 1;
@@ -462,7 +476,7 @@ static int ParseOneChar (const char    *argv0,
         {
             fprintf(stderr, "%s %s: unexpected end of line parsing %s value\n",
                     strcurtime(), argv0, urp->spec);
-            exit(EC_USR_ERR);
+            RAISE_EC_USR_ERR();
         }
 
         ch = *cp++;
@@ -483,7 +497,7 @@ static int ParseOneChar (const char    *argv0,
             {
                 fprintf(stderr, "%s %s: 2 hex-digits expected after \\x (\\xXX) in %s value\n",
                         strcurtime(), argv0, urp->spec);
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
             c32 =
                 (hexdigit2num(cp[0]) <<  4) |
@@ -499,7 +513,7 @@ static int ParseOneChar (const char    *argv0,
             {
                 fprintf(stderr, "%s %s: 4 hex-digits expected after \\u (\\uXXXX) in %s value\n",
                         strcurtime(), argv0, urp->spec);
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
             c32 =
                 (hexdigit2num(cp[0]) << 12) |
@@ -521,7 +535,7 @@ static int ParseOneChar (const char    *argv0,
             {
                 fprintf(stderr, "%s %s: 8 hex-digits expected after \\U (\\UXXXXXXXX) in %s value\n",
                         strcurtime(), argv0, urp->spec);
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
             c32 =
                 (hexdigit2num(cp[0]) << 28) |
@@ -551,7 +565,7 @@ static int ParseOneChar (const char    *argv0,
         {
             fprintf(stderr, "%s %s: character \\U%08x is out of char8 range in %s value\n",
                     strcurtime(), argv0, c32, urp->spec);
-            exit(EC_USR_ERR);
+            RAISE_EC_USR_ERR();
         }
         val_p->c8 = c32;
     }
@@ -581,7 +595,7 @@ static int ParseOneDatum(const char    *argv0,
         {
             fprintf(stderr, "%s %s: syntax error in %s int-value\n",
                     strcurtime(), argv0, urp->spec);
-            exit(EC_USR_ERR);
+            RAISE_EC_USR_ERR();
         }
         cp = endptr;
 
@@ -602,7 +616,7 @@ static int ParseOneDatum(const char    *argv0,
         {
             fprintf(stderr, "%s %s: syntax error in %s float-value\n",
                     strcurtime(), argv0, urp->spec);
-            exit(EC_USR_ERR);
+            RAISE_EC_USR_ERR();
         }
         cp = endptr;
     }
@@ -611,6 +625,27 @@ static int ParseOneDatum(const char    *argv0,
     return 0;
 }
 
+/* An important notice regarding ParseDatarefVal() operation:
+
+   1. Any SINGLE datum (either a char or numeric)
+      is ALWAYS parsed into urp->val2wr.
+
+      For vectors, it is later copied to urp->databuf[],
+      but initially parsing is always performed into val2wr,
+      regardless of databuf[] presence.
+
+   2. Vectors (n_items != 1) ALWAYS use databuf, even
+      if "sizeof_cxdtype(dtype) * n_items < sizeof(val2wr)".
+
+   Thus, ParseDatarefVal() behaviour differs from cda_core's,
+   where
+   1) imm_val2snd is used if sndbuf==NULL, but
+      is never used when sndbuf!=NULL.
+   2) imm_val2snd is used as a sizeof(CxAnyVal_t)-sized byte buffer,
+      regardless of the number of elements
+      (i.e., both a 1x float64 (8 bytes) and 16x uint8 (16 bytes)
+      will fit into imm_val2snd).
+ */
 int  ParseDatarefVal (const char    *argv0,
                       const char    *start,
                       char         **endptr_p,
@@ -628,6 +663,8 @@ int  ParseDatarefVal (const char    *argv0,
     cp = start;
     if (*cp == '\0') goto DO_RET;
 
+    urp->num2wr = 0;
+
     count_exp = -1;
     /* An optional [COUNT] prefix */
     if (*cp == '[')
@@ -639,7 +676,7 @@ int  ParseDatarefVal (const char    *argv0,
             fprintf(stderr,
                     "%s %s: invalid [NUMBER] in %s value\n",
                     strcurtime(), argv0, urp->spec);
-            exit(EC_USR_ERR);
+            RAISE_EC_USR_ERR();
         }
         cp = endptr;
         if ((urp->n_items == 1  &&  count_exp != 1)  ||
@@ -648,14 +685,14 @@ int  ParseDatarefVal (const char    *argv0,
             fprintf(stderr,
                     "%s %s: count [%d] is invalid (n_items=%d) for %s value\n",
                     strcurtime(), argv0, count_exp, urp->n_items, urp->spec);
-            exit(EC_USR_ERR);
+            RAISE_EC_USR_ERR();
         }
         if (*cp != ']')
         {
             fprintf(stderr,
                     "%s %s: closing ']' expected in %s value\n",
                     strcurtime(), argv0, urp->spec);
-            exit(EC_USR_ERR);
+            RAISE_EC_USR_ERR();
         }
         cp++;
     }
@@ -684,7 +721,7 @@ int  ParseDatarefVal (const char    *argv0,
             /* Do NOT alloc space for:
                    0 elements (no use)
                    1 element (use urp->val2wr) */
-            if (count_exp != 0  &&  count_exp != 1)
+            if (count_exp != 0  &&  count_exp != 1  &&  urp->databuf == NULL)
             {
                 urp->databuf_allocd =
                     sizeof_cxdtype(urp->dtype)
@@ -725,7 +762,7 @@ int  ParseDatarefVal (const char    *argv0,
                 fprintf(stderr,
                         "%s %s: closing quote (%c) expected in %s value\n",
                         strcurtime(), argv0, qc, urp->spec);
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
             cp++;
         }
@@ -749,7 +786,7 @@ int  ParseDatarefVal (const char    *argv0,
         else
         {
             usize = sizeof_cxdtype(urp->dtype);
-            if (urp->n_items > 0)
+            if (urp->n_items > 0  &&  urp->databuf == NULL)
             {
                 urp->databuf = malloc(urp->n_items * usize);
                 if (urp->databuf == NULL)
@@ -771,7 +808,7 @@ int  ParseDatarefVal (const char    *argv0,
                 {
                     fprintf(stderr, "%s %s: too many elements in %s value (>%d)\n",
                             strcurtime(), argv0, urp->spec, urp->n_items);
-                    exit(EC_USR_ERR);
+                    RAISE_EC_USR_ERR();
                 }
                 /* ...store in allocated mem */
                 memcpy((uint8*)(urp->databuf) + urp->num2wr * usize, 
@@ -794,7 +831,7 @@ int  ParseDatarefVal (const char    *argv0,
                 fprintf(stderr,
                         "%s %s: closing bracket \"%c\" expected in %s value\n",
                         strcurtime(), argv0, qc, urp->spec);
-                exit(EC_USR_ERR);
+                RAISE_EC_USR_ERR();
             }
             cp++;
         }

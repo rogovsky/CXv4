@@ -76,6 +76,7 @@ enum
     CXT4_EINTERNAL      = 29 * 0x01010101,
     CXT4_PING           = 30 * 0x01010101,  /* "Request" */
     CXT4_PONG           = 31 * 0x01010101,  /* "Reply" */
+    CXT4_MUSTER         = 32 * 0x01010101,
 
     /* Regular error codes */
     CXT4_err            = 1000,
@@ -250,6 +251,7 @@ typedef struct
     int32      range_dtype;
     uint8      range_min[8]; // !!! sizeof(CxAnyVal_t)
     uint8      range_max[8]; // !!! sizeof(CxAnyVal_t)
+    uint8      _padding_[8]; // For sizeof(CxV4RangeChunk) to be a multiple of 16
 } CxV4RangeChunk;
 
 typedef struct

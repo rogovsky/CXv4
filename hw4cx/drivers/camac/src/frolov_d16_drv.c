@@ -193,6 +193,10 @@ static int frolov_d16_init_d(int devid, void *devptr,
     if (me->F_IN_NS < MIN_F_IN_NS) me->F_IN_NS = MIN_F_IN_NS;
     if (me->F_IN_NS > MAX_F_IN_NS) me->F_IN_NS = MAX_F_IN_NS;
 
+    /* Note: WAS_START *must* be just "YES", not "TRUSTED";
+             otherwise newly-connected clients will immediately
+             receive NEWVAL instead of CURVAL, which will force
+             them to think "an event has occured!" */
     SetChanReturnType(devid, FROLOV_D16_CHAN_WAS_START, 1, IS_AUTOUPDATED_YES);
     if (me->lam_mode != LAM_MODE_D16P)
         ReturnInt32Datum(devid, FROLOV_D16_CHAN_WAS_START, 0, CXRF_UNSUPPORTED);

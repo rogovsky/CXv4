@@ -150,7 +150,13 @@ static int frolov_ie4_init_d(int devid, void *devptr,
     if (me->F_IN_NS < MIN_F_IN_NS) me->F_IN_NS = MIN_F_IN_NS;
     if (me->F_IN_NS > MAX_F_IN_NS) me->F_IN_NS = MAX_F_IN_NS;
                                 
-    SetChanReturnType(devid, FROLOV_IE4_CHAN_LAM_SIG, 1, IS_AUTOUPDATED_YES);
+    /* Note: LAM_SIG *must* be just "YES", not "TRUSTED";
+             otherwise newly-connected clients will immediately
+             receive NEWVAL instead of CURVAL, which will force
+             them to think "an event has occured!" */
+    SetChanReturnType(devid, FROLOV_IE4_CHAN_LAM_SIG, 1,   IS_AUTOUPDATED_YES);
+    SetChanReturnType(devid, FROLOV_IE4_CHAN_DIAG_n_base,
+                             FROLOV_IE4_CHAN_DIAG_n_count, IS_AUTOUPDATED_TRUSTED);
 
     if ((errstr = WATCH_FOR_LAM(devid, devptr, me->N, LAM_CB)) != NULL)
     {
@@ -203,6 +209,23 @@ static void frolov_ie4_rw_p(int devid, void *devptr,
   void                 *vp;
   static cxdtype_t      dtype_f64 = CXDTYPE_DOUBLE;
   static int            n_1       = 1;
+
+  int                   ndc;
+
+  static struct
+  {
+      int A;
+      int F;
+      int chan;
+  } diag_map[] =
+  {
+      {1, 1, FROLOV_IE4_CHAN_DIAG_Rf},
+      {2, 1, FROLOV_IE4_CHAN_DIAG_Rm},
+      {4, 0, FROLOV_IE4_CHAN_DIAG_RKm},
+      {5, 0, FROLOV_IE4_CHAN_DIAG_RKp},
+      {6, 0, FROLOV_IE4_CHAN_DIAG_RKd},
+      {3, 1, FROLOV_IE4_CHAN_DIAG_Rs},
+  };
 
     for (n = 0;  n < count;  n++)
     {
@@ -456,6 +479,19 @@ static void frolov_ie4_rw_p(int devid, void *devptr,
                 value = 0;
                 break;
 
+            case FROLOV_IE4_CHAN_DO_DIAG:
+                if (action == DRVA_WRITE  &&  value == CX_VALUE_COMMAND)
+                {
+                    for (ndc = 0;  ndc < countof(diag_map);  ndc++)
+                    {
+                        rflags = x2rflags(DO_NAF(CAMAC_REF, me->N, diag_map[ndc].A, diag_map[ndc].F, &c));
+                        ReturnInt32Datum(devid, diag_map[ndc].chan, c, rflags);
+                    }
+                }
+                rflags = 0;
+                value = 0;
+                break;
+
             case FROLOV_IE4_CHAN_IE_BUM:
                 rflags  = x2rflags(DO_NAF(CAMAC_REF, me->N, A_IEBUM, 1,  &c));
                 value = c;
@@ -468,6 +504,11 @@ static void frolov_ie4_rw_p(int devid, void *devptr,
 
             case FROLOV_IE4_CHAN_LAM_SIG:
                 /* Just ignore this request: it is returned from LAM_CB() */
+                goto NEXT_CHANNEL;
+
+            case FROLOV_IE4_CHAN_DIAG_n_base ...
+                 FROLOV_IE4_CHAN_DIAG_n_base + FROLOV_IE4_CHAN_DIAG_n_count - 1:
+                /* Just ignore this request: are returned upon DO_DIAG */
                 goto NEXT_CHANNEL;
 
             default:

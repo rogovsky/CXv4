@@ -1,3 +1,14 @@
+     define(`forloop',
+            `pushdef(`$1', `$2')_forloop(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_forloop',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', incr($1))_forloop(`$1', `$2', `$3', `$4')')')
+     define(`fordown',
+            `pushdef(`$1', `$2')_fordown(`$1', `$2', `$3', `$4')popdef(`$1')')
+     define(`_fordown',
+            `$4`'ifelse($1, `$3', ,
+                   `define(`$1', decr($1))_fordown(`$1', `$2', `$3', `$4')')')
+#---------------------------------------------------------------------
 
 # 1:id 2:label 3:dev 4:N_in_dev
 define(`D16_LINE', `
@@ -90,12 +101,37 @@ define(`IE_PRESET_PANEL', `
     }
 ')
 
+# 1:bitN 2:name
+define(`IE4_DIAG_BIT', `
+    disp b$1 "eval($1+1)" led r:"_all_code; getchan diag_$2; div eval(1<<$1); trunc; mod 2; ret;"
+')
+
+# 1:numbits 2:name
+define(`IE4_DIAG_LINE', `
+    disp $1 $1 text - - %4.0f r:diag_$1
+    container "" "" grid noshadow,notitle,norowtitles content:$2 {
+        fordown(`N', $2, 0, `IE4_DIAG_BIT($1, N)')
+    }
+')
 
 grouping main RFSYN_ENG_grouping "RFSyn: engineering screen" lrtb "vertical" \
         content:5 {
 
     container syn "Starts" grid "nocoltitles,norowtitles" \
-        base:syn_ie4 nattl:6 content:eval(6 + 3) {
+            base:syn_ie4 nattl:7 content:eval(7 + 3) {
+
+        container "-diag" "?" subwin subwintitle:"IE4 diagnostics" content:1 {
+            container "" "" grid noshadow,notitle,nocoltitles content:7 {
+                button -get "\rRead!" button r:do_diag
+                disp rf  Rf  text - - %4.0f r:diag_Rf
+#                IE4_DIAG_LINE(2,Rf)
+                disp rm  Rm  text - - %4.0f r:diag_Rm
+                disp rkm RKm text - - %4.0f r:diag_RKn
+                disp rkp RKp text - - %4.0f r:diag_RKp
+                disp rkd RKd text - - %4.0f r:diag_RKd
+                disp rs  Rs  text - - %4.0f r:diag_Rs
+            }
+        }
 
         noop   -     "BUM"   hlabel
         knob   reBUM "BUM"   text - - "%4.0f" r:re_bum
@@ -152,7 +188,8 @@ grouping main RFSYN_ENG_grouping "RFSyn: engineering screen" lrtb "vertical" \
         ONE_D16(_10, `"D16 #10"', lbm_d16_10, bunk_sr,  "(bunk SR)",  ipp,      "IPP",       f2856,    "Phs 2856",  h2_pick,  "H2 pick")
         ONE_D16(_8,  `"D16 #8"',  lbm_d16_8,  gun_hv,   "Gun HV",     gun_grid, "Gun grid",  gun_200,  "Gun A200",  synchr2,  "Synchr.2")
         ONE_D16(_16, `"D16 #16"', lbm_d16_16, h1_esens, "H1 esens",   h1_phcam, "H1 camrs",  h2_esens, "H2 esens",  h2_phcam, "H2 camrs")
-        ONE_D16(_5,  `"D16 #5"',  xfr_d16_5,  hbz1,     "hbz1",       hbz2,     "hbz2",      hbz3,     "hbz3",      h2_phcam, "hbz4")
+        ONE_D16(_5,  `"D16 #5"',  xfr_d16_5,  hbz1,     "hbz1",       hbz2,     "hbz2",      hbz3,     "hbz3",      h2_phcam, "hbz4",
+                `button frol_tyk "Tyk!" button r:xfr_d16_5.do_shot')
         ONE_D16(_7,  `"D16x#7"',  xfr_d16_7,  rs7_0,    "rs0",        rs7_1,    "rs1",       rs7_2,    "rs2",       BLM,      "blm")
     } layinfo:newline
 

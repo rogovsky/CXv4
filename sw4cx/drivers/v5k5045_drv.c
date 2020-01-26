@@ -567,6 +567,8 @@ static void v5k5045_rw_p(int devid, void *devptr,
                  {
                      SndCVal(me, PKS_SET, val);
                  }
+                 else if (val < me->cur[PKS_SET_CUR].v.i32)
+                     SndCVal(me, PKS_SET, val);
              }
              if (me->out_val_set)
                  ReturnInt32Datum(devid, chn, me->out_val, me->out_val_rflags);

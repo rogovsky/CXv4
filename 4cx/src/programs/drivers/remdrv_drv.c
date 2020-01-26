@@ -863,6 +863,7 @@ static void ProcessInData     (int devid, privrec_t *me,
   enum                {SEGLEN_MAX = 100};
   int                  seglen;
   int                  ad2ret[SEGLEN_MAX];
+  cxdtype_t            dt2ret[SEGLEN_MAX];
   int                  ne2ret[SEGLEN_MAX];
   void                *vp2ret[SEGLEN_MAX];
   rflags_t             rf2ret[SEGLEN_MAX];
@@ -993,6 +994,7 @@ static void ProcessInData     (int devid, privrec_t *me,
                 me->memcpy_r2l_i32(rf_ptr, rf_ptr, count);
                 if (ts_ptr != NULL)
                     me->memcpy_r2l_i32(ts_ptr, ts_ptr, count * 3);
+                me->memcpy_r2l_i32(dt_ptr, dt_ptr, count);
             }
 
             while (count > 0)
@@ -1004,6 +1006,7 @@ static void ProcessInData     (int devid, privrec_t *me,
                 for (x = 0;  x < seglen;  x++)
                 {
                     ad2ret[x] = ad_ptr[x];
+                    dt2ret[x] = dt_ptr[x];
                     ne2ret[x] = ne_ptr[x];
                     rf2ret[x] = rf_ptr[x];
                     /*!!! Check parameters (at least, data size...) */
@@ -1028,7 +1031,7 @@ static void ProcessInData     (int devid, privrec_t *me,
                     data_ptr += REMDRV_PROTO_SIZE_CEIL(unitsize * ne2ret[x]);
                 }
                 ReturnDataSet(devid, seglen,
-                              ad2ret, dt_ptr, ne2ret,
+                              ad2ret, dt2ret, ne2ret,
                               vp2ret, rf2ret, ts_ptr != NULL? ts2ret : NULL);
 
                 ad_ptr += seglen;
