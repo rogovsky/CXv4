@@ -110,7 +110,10 @@ typedef struct
     Tango::DeviceProxy *dev;
 
     dpx_id_t       next;    // Link to next dpx of sid
-    dpx_id_t       prev;    // Link to previious dpx of sid
+    dpx_id_t       prev;    // Link to previous dpx of sid
+
+    dpx_id_t       nx2r;    // Link to NeXt dpx in to-Reconnect list
+    dpx_id_t       pr2r;    // Link to PRevious dpx in to-Reconnect list
 
     struct _cda_d_tango_privrec_t_struct *me; // Backreference to a containing server
 } dpxinfo_t; // "dpx" -- DeviceProXy
@@ -150,6 +153,9 @@ static int            dpxs_list_allocd;
 
 static hwrinfo_t     *hwrs_list;
 static int            hwrs_list_allocd;
+
+static dpx_id_t       frs_2rcn = -1;
+static dpx_id_t       lst_2rcn = -1;
 
 //--------------------------------------------------------------------
 
@@ -196,9 +202,9 @@ static void AddDpxToSrv  (cda_d_tango_privrec_t *me, dpx_id_t dpx)
 
 static void DelDpxFromSrv(cda_d_tango_privrec_t *me, dpx_id_t dpx)
 {
-  dpxinfo_t     *di   = AccessDpxSlot(dpx);
-  cda_hwcnref_t  prev = di->prev;
-  cda_hwcnref_t  next = di->next;
+  dpxinfo_t *di   = AccessDpxSlot(dpx);
+  dpx_id_t   prev = di->prev;
+  dpx_id_t   next = di->next;
 
     if (prev < 0) me->frs_dpx = next; else AccessDpxSlot(prev)->next = next;
     if (next < 0) me->lst_dpx = prev; else AccessDpxSlot(next)->prev = prev;
@@ -206,6 +212,32 @@ static void DelDpxFromSrv(cda_d_tango_privrec_t *me, dpx_id_t dpx)
     di->prev = di->next = -1;
 
     di->me = NULL;
+}
+
+static void AddDpxToRcn  (dpx_id_t dpx)
+{
+  dpxinfo_t     *di   = AccessDpxSlot(dpx);
+
+    di->pr2r = lst_2rcn;
+    di->nx2r = -1;
+
+    if (lst_2rcn >= 0)
+        AccessDpxSlot(lst_2rcn)->nx2r = dpx;
+    else
+        frs_2rcn                      = dpx;
+    lst_2rcn = dpx;
+}
+
+static void DelDpxFromRcn(dpx_id_t dpx)
+{
+  dpxinfo_t *di   = AccessDpxSlot(dpx);
+  dpx_id_t   pr2r = di->pr2r;
+  dpx_id_t   nx2r = di->nx2r;
+
+    if (pr2r < 0) frs_2rcn = nx2r; else AccessDpxSlot(pr2r)->nx2r = nx2r;
+    if (nx2r < 0) lst_2rcn = pr2r; else AccessDpxSlot(nx2r)->pr2r = pr2r;
+
+    di->pr2r = di->nx2r = -1;
 }
 
 //--------------------------------------------------------------------
@@ -340,6 +372,86 @@ static int determine_name_type(const char *name,
     for (vp = srvrspec;  *vp != '\0';  vp++) *vp = tolower(*vp);
 
     return srv_len != 0;
+}
+
+static int  create_dpx_dev(dpx_id_t dpx, dpxinfo_t *di, int is_suffering)
+{
+#if DO_CATCH
+    try
+    {
+#endif
+        di->dev = new Tango::DeviceProxy(di->dev_name);
+#if DO_CATCH
+    }
+    catch (CORBA::Exception &e)
+    {
+        if (cda_d_tango_debug)
+            report_exception("new Tango::DeviceProxy()", e);
+        errno = EIO;
+    }
+    catch (...)
+    {
+        if (cda_d_tango_debug)
+            fprintf(stderr, "%s: DeviceProxy creation raised an exception; dev=%d\n", __FUNCTION__, di->dev);
+        errno = EIO;
+    }
+#endif
+
+    if (di->dev != NULL)
+    {
+        if (is_suffering)
+            cda_dat_p_report(di->me->sid, "DeviceProxy(\"%s\") created",
+                             di->dev_name);
+        return 0;
+    }
+    else
+    {
+        if (!is_suffering)
+            cda_dat_p_report(di->me->sid, "failed to create DeviceProxy(\"%s\")",
+                             di->dev_name);
+        return +1;
+    }
+}
+
+static int create_hwr_subscription(cda_hwcnref_t hwr)
+{
+  hwrinfo_t             *hi = AccessHwrSlot(hwr);
+  dpxinfo_t             *di = AccessDpxSlot(hi->dpx);;
+
+#if DO_CATCH
+    try
+    {
+#endif
+#if USE_PUSH_MODEL
+        hi->subscr_event_id = di->dev->subscribe_event(hi->chn_name,
+                                                       Tango::CHANGE_EVENT,
+                                                       hi->cb,
+                                                       1);
+#else
+        hi->subscr_event_id = di->dev->subscribe_event(hi->chn_name,
+                                                       Tango::CHANGE_EVENT,
+                                                       Tango::ALL_EVENTS,
+                                                       1);
+#endif
+#if DO_CATCH
+    }
+    catch (CORBA::Exception &e)
+    {
+        if (cda_d_tango_debug)
+            report_exception("subscribe_event()", e);
+        return -1;
+    }
+    catch (...)
+    {
+        if (cda_d_tango_debug)
+            fprintf(stderr, "%s(%s|%s): subscribe_event raised an exception\n", __FUNCTION__, di->dev_name, hi->chn_name);
+        return -1;
+    }
+#endif
+
+    /*!!! Here should request initial read */
+
+    return 0;
 }
 
 static int  cda_d_tango_new_chan(cda_dataref_t ref, const char *name,
@@ -507,37 +619,16 @@ fprintf(stderr, "\tdup_name=<%s> sl3+1=<%s>\n", dup_name, sl3+1);
         // Fill data
         di->next     = -1;
         di->prev     = -1;
+        di->nx2r     = -1;
+        di->pr2r     = -1;
         di->dev_name = dev_name;
         dev_name = NULL; // Protect the value from free()ing
 
-#if DO_CATCH
-        try
-        {
-#endif
-            di->dev = new Tango::DeviceProxy(di->dev_name);
-#if DO_CATCH
-        }
-        catch (CORBA::Exception &e)
-        {
-            if (cda_d_tango_debug)
-                report_exception("new Tango::DeviceProxy()", e);
-            errno = EIO;
-        }
-        catch (...)
-        {
-            if (cda_d_tango_debug)
-                fprintf(stderr, "%s: DeviceProxy creation raised an exception; dev=%d\n", __FUNCTION__, di->dev);
-            errno = EIO;
-        }
-#endif
-fprintf(stderr, "new dev=%p\n", di->dev);
-        if (di->dev == NULL)
-        {
-            RlsDpxSlot(dpx);
-            return CDA_DAT_P_ERROR;
-        }
-
         AddDpxToSrv(me, dpx);
+
+        create_dpx_dev(dpx, di, 0);
+        if (di->dev == NULL)
+            AddDpxToRcn(dpx);
     }
     else
     {
@@ -566,46 +657,22 @@ fprintf(stderr, "new dev=%p\n", di->dev);
         RlsHwrSlot(hwr);
         return CDA_DAT_P_ERROR;
     }
-#if DO_CATCH
-    try
+    // Subscribe to events, if possible
+    if (di->dev != NULL)
     {
-#endif
-#if USE_PUSH_MODEL
-        hi->subscr_event_id = di->dev->subscribe_event(hi->chn_name,
-                                                       Tango::CHANGE_EVENT,
-                                                       hi->cb,
-                                                       1);
-#else
-        hi->subscr_event_id = di->dev->subscribe_event(hi->chn_name,
-                                                       Tango::CHANGE_EVENT,
-                                                       Tango::ALL_EVENTS,
-                                                       1);
-#endif
-#if DO_CATCH
+        
+        if (create_hwr_subscription(hwr) < 0)
+        {
+            RlsHwrSlot(hwr);
+            errno = EIO;
+            return CDA_DAT_P_ERROR;
+        }
     }
-    catch (CORBA::Exception &e)
-    {
-        if (cda_d_tango_debug)
-            report_exception("subscribe_event()", e);
-        RlsHwrSlot(hwr);
-        errno = EIO;
-        return CDA_DAT_P_ERROR;
-    }
-    catch (...)
-    {
-        if (cda_d_tango_debug)
-            fprintf(stderr, "%s(%s): subscribe_event raised an exception\n", __FUNCTION__, name);
-        RlsHwrSlot(hwr);
-        errno = EIO;
-        return CDA_DAT_P_ERROR;
-    }
-#endif
-    /*!!! Here should request initial read */
 
     AddHwrToSrv(me, hwr);
     cda_dat_p_set_hwr  (ref, hwr);
 
-fprintf(stderr, "sid=%d dpx=%d hwr=%d\n", me->sid, dpx, hwr);
+////fprintf(stderr, "sid=%d dpx=%d hwr=%d\n", me->sid, dpx, hwr);
 //    goto ERREXIT_FREE_DUP_NAME;
     return CDA_DAT_P_NOTREADY;
 
@@ -778,9 +845,11 @@ static int  cda_d_tango_del_srv (cda_srvconn_t  sid, void *pdt_privptr)
 #if !USE_PUSH_MODEL
 
 enum {TANGO_HEARTBEAT_USECS = 100*1000*0 + 5000000*1}; // Use 5s for debugging
+enum {TANGO_RCN_FRQDIV      = 100*0+1};
 
 static int       is_initialized;
 static sl_tid_t  tango_hbt_tid = -1;
+static int       tango_rcn_ctr = 0;
 
 static int  CheckEventsIterator(hwrinfo_t *hi, void *privptr)
 {
@@ -790,7 +859,7 @@ static int  CheckEventsIterator(hwrinfo_t *hi, void *privptr)
     try
     {
 #endif
-        if (hi->cb != NULL)
+        if (di->dev != NULL)
             di->dev->get_events(hi->subscr_event_id, hi->cb);
 #if DO_CATCH
     }
@@ -808,13 +877,45 @@ static int  CheckEventsIterator(hwrinfo_t *hi, void *privptr)
 
     return 0;
 }
+static int  DoSubscribeIterator(hwrinfo_t *hi, void *privptr)
+{
+  dpx_id_t  dpx = ptr2lint(privptr);
+
+    if (hi->dpx == dpx)
+    {
+        create_hwr_subscription(hi - hwrs_list /* "hi2hwr()" */);
+    }
+
+    return 0;
+}
 static void TangoHeartbeatProc(int uniq, void *unsdptr,
                                sl_tid_t tid, void *privptr)
 {
+  dpx_id_t   dpx;
+  dpx_id_t   nx2r;
+  dpxinfo_t *di;
+
     tango_hbt_tid = sl_enq_tout_after(0/*!!!uniq*/, NULL,
                                       TANGO_HEARTBEAT_USECS, TangoHeartbeatProc, NULL);
 
     ForeachHwrSlot(CheckEventsIterator, NULL);
+
+    tango_rcn_ctr++;
+    if (tango_rcn_ctr >= TANGO_RCN_FRQDIV)
+    {
+        tango_rcn_ctr = 0;
+        for (dpx = frs_2rcn;  dpx >= 0;  dpx = nx2r)
+        {
+            di   = AccessDpxSlot(dpx);
+            nx2r = di->nx2r;
+            // "Try to reconnect"
+            if (create_dpx_dev(dpx, di, 1) == 0)
+            {
+                DelDpxFromRcn(dpx);
+                ForeachHwrSlot(DoSubscribeIterator, lint2ptr(dpx));
+            }
+        }
+    }
 }
 
 #endif /* !USE_PUSH_MODEL */
