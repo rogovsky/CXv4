@@ -81,6 +81,31 @@ typedef struct
     int                 lyrinfo_ofs;
 } CxsdDbLayerinfo_t;
 
+typedef struct // Is a slightly modified copy from CxsdDbCpntInfo_t
+{
+    cx_time_t           fresh_age;
+    int                 phys_rd_specified;
+    double              phys_rds[2];
+
+    CxAnyVal_t          q;
+    cxdtype_t           q_dtype;
+
+    CxAnyVal_t          range[2];
+    cxdtype_t           range_dtype;
+
+    int                 return_type;
+
+    /* Strings */
+    int                 ident_ofs;
+    int                 label_ofs;
+    int                 tip_ofs;
+    int                 comment_ofs;
+    int                 geoinfo_ofs;
+    int                 rsrvd6_ofs;
+    int                 units_ofs;
+    int                 dpyfmt_ofs;
+} CxsdDbDcPrInfo_t; // "DcPr" -- Device Channel PRoperties
+
 typedef struct
 {
     /* Tagret reference */
@@ -127,6 +152,7 @@ typedef struct
 {
     int                 name_ofs;    //
     int                 devchan_n;   //
+    int                 dcpr_id;     // if >0 - ID inside db->dcprs[]
 } CxsdDbDcLine_t;
 typedef struct
 {
@@ -152,6 +178,10 @@ typedef struct _CxsdDbInfo_t_struct
 
     int                 numlios;
     CxsdDbLayerinfo_t  *liolist;
+
+    CxsdDbDcPrInfo_t   *dcprs;
+    int                 dcprs_used;
+    int                 dcprs_allocd;
 
     CxsdDbCpntInfo_t   *cpnts;
     int                 cpnts_used;
@@ -191,6 +221,8 @@ int     CxsdDbFindNsp(CxsdDb db, const char *typename);
 
 int     CxsdDbNspAddL(CxsdDb db, CxsdDbDcNsp_t **nsp_p, const char *name);
 int     CxsdDbNspSrch(CxsdDb db, CxsdDbDcNsp_t  *nsp,   const char *name);
+
+int     CxsdDbAddDcPr(CxsdDb db, CxsdDbDcPrInfo_t dcpr_data);
 
 int     CxsdDbAddCpnt(CxsdDb db, CxsdDbCpntInfo_t cpnt_data);
 

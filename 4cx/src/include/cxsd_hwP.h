@@ -90,6 +90,8 @@ typedef struct
     int             max_nelems;        // Max # of units
     size_t          usize;             // Size of 1 unit, =sizeof_cxdtype(dtype)
 
+    int             dcpr_id;
+
     int             chancol;           // !!!"Color" of this channel (default=0)
 
     void           *current_val;       // Pointer to current-value...

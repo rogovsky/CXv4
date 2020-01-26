@@ -1,0 +1,6 @@
+devtype dt_with_props w5d,w5i {
+	ch<0-4>	0 units:EmanoFed range:-100000-+100000
+	chE	5 units:Kukareku range:0-1023
+}
+
+dev test dt_with_props ~ -
