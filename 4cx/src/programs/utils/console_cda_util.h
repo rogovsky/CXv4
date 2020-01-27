@@ -52,6 +52,10 @@ typedef void (*process_one_name_t)(const char    *argv0,
                                    void          *privptr);
 
 
+void console_cda_util_EC_USR_ERR_mode(int is_fatal);
+
+
+
 void PrintDatarefData(FILE *fp, util_refrec_t *urp, int parts);
 int  ParseDatarefSpec(const char    *argv0, 
                       const char    *spec,

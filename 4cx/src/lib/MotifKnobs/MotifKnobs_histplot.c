@@ -1236,8 +1236,7 @@ static void ModeKCB(DataKnob k, double v, void *privptr)
 {
   MotifKnobs_histplot_t *hp  = privptr;
 
-    hp->mode = (int)(round(v));
-    DrawGraph(hp, True);
+    MotifKnobs_SetHistplotMode(hp, (int)(round(v)));
 }
 
 static void OkCB(Widget     w,
@@ -1297,9 +1296,7 @@ int  MotifKnobs_CreateHistplot(MotifKnobs_histplot_t *hp,
 {
   CxPixel        bg  = XhGetColor(XH_COLOR_GRAPH_BG);
   Widget         bottom;
-  DataKnob       k_md;
   Widget         xmod;
-  DataKnob       k_xs;
   Widget         xscl;
 
   XmString       s;
@@ -1368,11 +1365,11 @@ int  MotifKnobs_CreateHistplot(MotifKnobs_histplot_t *hp,
     ////printf("%s: %d*%d\n", __FUNCTION__, def_w, def_h);
     if ((flags & MOTIFKNOBS_HISTPLOT_FLAG_NO_MODE_SWCH) == 0)
     {
-        k_md = CreateSimpleKnob(" rw look=selector label=''"
-                                " items='#T---\t===\t. . .\t***'",
-                                0, hp->form,
-                                ModeKCB, hp);
-        xmod = GetKnobWidget(k_md);
+        hp->k_md = CreateSimpleKnob(" rw look=selector label=''"
+                                    " items='#T---\t===\t. . .\t***'",
+                                    0, hp->form,
+                                    ModeKCB, hp);
+        xmod = GetKnobWidget(hp->k_md);
         XtVaSetValues(xmod, XmNtraversalOn, False, NULL);
 
         if ((flags & MOTIFKNOBS_HISTPLOT_FLAG_HORZ_CTLS) == 0)
@@ -1390,11 +1387,11 @@ int  MotifKnobs_CreateHistplot(MotifKnobs_histplot_t *hp,
 
     if ((flags & MOTIFKNOBS_HISTPLOT_FLAG_NO_XSCL_SWCH) == 0)
     {
-        k_xs = CreateSimpleKnob(" rw look=selector label=''"
-                                " items='#T1:1\t1:10\t1:60'",
-                                0, hp->form,
-                                XScaleKCB, hp);
-        xscl = GetKnobWidget(k_xs);
+        hp->k_xs = CreateSimpleKnob(" rw look=selector label=''"
+                                    " items='#T1:1\t1:10\t1:60'",
+                                    0, hp->form,
+                                    XScaleKCB, hp);
+        xscl = GetKnobWidget(hp->k_xs);
         XtVaSetValues(xscl, XmNtraversalOn, False, NULL);
 
         if ((flags & MOTIFKNOBS_HISTPLOT_FLAG_HORZ_CTLS) == 0)
@@ -1588,6 +1585,19 @@ void MotifKnobs_UpdateHistplotProps(MotifKnobs_histplot_t *hp)
     CalcSetMargins(hp);
     DisplayPlot   (hp);
     DrawAxis      (hp, True);
+}
+
+void MotifKnobs_SetHistplotMode(MotifKnobs_histplot_t *hp, int mode)
+{
+    if (mode != MOTIFKNOBS_HISTPLOT_MODE_LINE  &&
+        mode != MOTIFKNOBS_HISTPLOT_MODE_WIDE  &&
+        mode != MOTIFKNOBS_HISTPLOT_MODE_DOTS  &&
+        mode != MOTIFKNOBS_HISTPLOT_MODE_BLOT)
+        mode = MOTIFKNOBS_HISTPLOT_MODE_LINE;
+
+    hp->mode = mode;
+    if (hp->k_md != NULL) SetSimpleKnobValue(hp->k_md, mode);
+    DrawGraph(hp, True);
 }
 
 int  MotifKnobs_SaveHistplotData   (MotifKnobs_histplot_t *hp, 

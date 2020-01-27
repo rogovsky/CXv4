@@ -253,9 +253,9 @@ int main(int argc, char *argv[])
         {normal_exit = 1; exit(1);}
     ReadHWConfig (argv[0]);
 
-    if (!option_dontdaemonize) Daemonize();
     if (option_norun) {normal_exit = 1; exit(0);}
     if (CxsdActivateFrontends(option_instance) != 0) {normal_exit = 1; exit(1);}
+    if (!option_dontdaemonize) Daemonize();
     CreatePidFile(argv[0]);
     PerformAccess(0, NULL, -1, NULL);
     ActivateHW   (argv[0]);

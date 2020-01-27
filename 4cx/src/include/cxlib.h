@@ -51,6 +51,8 @@ enum {
          CAR_CONNFAIL,        /* Connection failed */
          CAR_ERRCLOSE,        /* Connection was closed on error */
          CAR_CYCLE,           /* Server cycle notification had arrived */
+         CAR_RSRVD4,
+         CAR_MUSTER,          /* List of channels had probably changed; may re-try resolving */
          
          CAR_NEWDATA = 100,   /* Data chunk had arrived */
          CAR_RSLV_RESULT,

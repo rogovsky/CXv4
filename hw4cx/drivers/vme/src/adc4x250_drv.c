@@ -786,7 +786,7 @@ static void FASTADC_IRQ_P (int devid, void *devptr,
   FASTADC_PRIVREC_T   *me = (FASTADC_PRIVREC_T *)devptr;
   uint32               w;
 
-fprintf(stderr, "%s IRQ: n=%d vector=%d\n", strcurtime_msc(), irq_n, vector);
+fprintf(stderr, "%s IRQ[%d]: n=%d vector=%d\n", strcurtime_msc(), devid, irq_n, vector);
     if (vector != me->irq_vect) return;
 fprintf(stderr, "Yes!\n");
 bivme2_io_a32rd32(me->iohandle, ADC4X250_R_INT_STATUS, &w);

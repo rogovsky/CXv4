@@ -17,6 +17,8 @@ typedef struct
     int                 being_processed;
     int                 being_destroyed;
 
+    int                 dlref;        // ==0 -- builtin, >0 -- index in dlopen()'ed-table
+
     /* I/O stuff */
     int                 s;            // Host communication socket
     sl_fdh_t            s_fdh;        // ...its cxscheduler descriptor is used upon handshake only

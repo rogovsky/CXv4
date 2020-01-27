@@ -23,7 +23,7 @@ TYPES_LIST=	cac208 ceac124 cdac20 candac16 canadc40 \
 		\
 		adc200me adc812me dl200me \
 		\
-		adc4x250 adc1000 \
+		adc250 adc4x250 adc1000 \
 		\
 		slbpm ottcam \
 		kshd485 \

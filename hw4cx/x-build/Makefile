@@ -6,17 +6,29 @@ include		$(PRJDIR)/PrjRules.mk
 
 SUBDIRS=
 
-ifeq ":$(OS):$(CPU_X86_COMPAT):" ":LINUX:YES:"
-  MAY_BUILD_PPC860=YES
+# Value derived from ppc860-linux/x_rules.mk
+PPC860_CANARY=$(PRJDIR)/../x-compile/ppc860-linux/tools/bin/ppc-linux-gcc
+ifneq ":$(OS):$(CPU_X86_COMPAT):" ":LINUX:YES:"
+  DUMMY:=	$(warning WARNING: skipping build of ppc860 because platform isn't LINUX-X86)
 else
-  DUMMY:=	$(warning WARNING: Platform isn't LINUX-X86, so skipping build of ppc860)
+  ifeq "$(wildcard $(PPC860_CANARY))" ""
+    DUMMY:=	$(warning WARNING: skipping build of ppc860 because of missing $(PPC860_CANARY))
+  else
+    MAY_BUILD_PPC860=YES
+  endif
 endif
 
+# Value derived from arm-linux/x_rules.mk
+ARM_CANARY=	$(PRJDIR)/../x-compile/arm-linux_1.3/bin/arm-linux-gcc
 OS_GE_2_6_18:=	$(shell uname -r|awk 'BEGIN {FS="[-.]"}{print 2006017-($$1*1000000+$$2*1000+$$3)}'|sed 's/^-.*/YES/')
-ifeq ":$(OS):$(CPU_X86_COMPAT):$(OS_GE_2_6_18):" ":LINUX:YES:YES:"
-  MAY_BUILD_ARM=YES
+ifneq ":$(OS):$(CPU_X86_COMPAT):$(OS_GE_2_6_18):" ":LINUX:YES:YES:"
+  DUMMY:=	$(warning WARNING: skipping build of arm because platform isn't Linux-X86 >=2.6.18)
 else
-  DUMMY:=	$(warning WARNING: Platform isn't Linux-X86 >=2.6.18, so skipping build of arm)
+  ifeq "$(wildcard $(ARM_CANARY))" ""
+    DUMMY:=	$(warning WARNING: skipping build of arm because of missing $(ARM_CANARY))
+  else
+    MAY_BUILD_ARM=YES
+  endif
 endif
 
 ifeq ":$(MAY_BUILD_PPC860):" ":YES:"

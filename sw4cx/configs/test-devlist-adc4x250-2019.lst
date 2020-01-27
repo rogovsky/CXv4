@@ -1,0 +1,15 @@
+include(`adc250.devtype')
+include(`vadc16.devtype')
+
+# ^0x06D5, v0x06D6
+
+#dev _6 adc4x250/remdrv ~ 6,5,1     b:192.168.8.209:8002
+#dev d5 adc4x250/remdrv ~ 0xd5,5,15 b:192.168.8.209:8002
+#dev d6 adc4x250/remdrv ~ 0xd6,5,16 b:192.168.8.209:8002
+dev _6 adc250/remdrv ~ 6,5,1     b:192.168.8.209:8002
+dev d5 adc250/remdrv ~ 0xd5,5,15 b:192.168.8.209:8002
+dev d6 adc250/remdrv ~ 0xd6,5,16 b:192.168.8.209:8002
+##dev a0 vadc16/remdrv ~ 0,5,50    b:192.168.8.209:8002
+##dev a2 vadc16/remdrv ~ 2,5,52    b:192.168.8.209:8002
+#dev x zzz/remdrv r1i 0 b:192.168.8.209:8002
+#dev y zzz/remdrv r1i 0 b:192.168.8.209:8002

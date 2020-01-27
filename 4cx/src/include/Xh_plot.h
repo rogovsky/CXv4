@@ -33,6 +33,8 @@ enum
 
     XH_PLOT_NO_CPANEL_FOLD_MASK = 1 << 16,
     XH_PLOT_NO_SCROLLBAR_MASK   = 1 << 17,
+
+    XH_PLOT_WIDE_MASK           = 1 << 18,
 };
 
 enum

@@ -20,14 +20,18 @@ enum
 /* Driver-provided callbacks */
 
 typedef void (*vme_irq_proc)(int devid, void *devptr,
-                             int irq_n, int vector);
+                             int irq_n, int irq_vect);
 
 
 /* Layer API for drivers */
 
 typedef int  (*VmeAddDevice) (int devid, void *devptr,
                               uint32 base_addr, uint32 space_size, int am,
-                              int irq_n, vme_irq_proc irq_proc);
+                              int irq_n, int irq_vect, vme_irq_proc irq_proc);
+
+typedef int  (*VmeGetDevInfo)(int devid,
+                              uint32 *base_addr_p, uint32 *space_size_p, int *am_p,
+                              int *irq_n_p, int *irq_vect_p);
 
 typedef int  (*VmeAxxWr8)    (int handle, uint32 ofs, uint8    value);
 typedef int  (*VmeAxxRd8)    (int handle, uint32 ofs, uint8   *val_p);
@@ -40,6 +44,8 @@ typedef int  (*VmeAxxRd32)   (int handle, uint32 ofs, uint32  *val_p);
 typedef struct
 {
     VmeAddDevice  add;
+
+    VmeGetDevInfo get_dev_info;
 
     /* I/O */
 

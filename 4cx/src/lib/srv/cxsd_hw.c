@@ -291,6 +291,13 @@ int  CxsdHwSetDb   (CxsdDb db)
   cxsd_hw_chan_t    *chn_p;
   int                nchans;
 
+  int                nsp_kind;
+  int                nsp_id;
+  CxsdDbDcNsp_t     *nsp;
+  int                nsline;
+  int                dcpr_id;
+  CxsdDbDcPrInfo_t  *dcpr_p;
+
   size_t             layers_bufsize;
   size_t             devices_bufsize;
   size_t             channels_bufsize;
@@ -432,6 +439,54 @@ int  CxsdHwSetDb   (CxsdDb db)
                         {
                             chn_p->next_wr_val = cxsd_hw_next_wr_val_buf + next_wr_val_bufsize;
                             next_wr_val_bufsize += csize;
+                        }
+                    }
+
+                /* And fill in properties based on devtypes/channels */
+                if (stage)
+                    for (nsp_kind = 0;  nsp_kind <= 1;  nsp_kind++)
+                    {
+                        /* Note: we use "devtype" namespace first,
+                                 than a "channels" one, so that
+                                 the "channels" has precedence over the "devtype"
+                                 (because it can override the former) */
+                        nsp_id = (nsp_kind == 0)? dev_p->db_ref->type_nsp_id
+                                                : dev_p->db_ref->chan_nsp_id;
+                        if (nsp_id > 0)
+                        {
+                            nsp = cxsd_hw_cur_db->nsps_list[nsp_id];
+                            for (nsline = 0;
+                                 nsline < nsp->items_used;
+                                 nsline++)
+                                if ((dcpr_id = nsp->items[nsline].dcpr_id) > 0)
+                                {
+                                    dcpr_p = cxsd_hw_cur_db->dcprs + dcpr_id;
+                                    chn_p  = cxsd_hw_channels + dev_p->first + nsp->items[nsline].devchan_n;
+
+                                    chn_p->dcpr_id = dcpr_id;
+
+                                    if (dcpr_p->fresh_age.sec >= 0)
+                                        chn_p->fresh_age         = dcpr_p->fresh_age;
+                                    if (dcpr_p->phys_rd_specified)
+                                    {
+                                        chn_p->phys_rd_specified = dcpr_p->phys_rd_specified;
+                                        chn_p->phys_rds[0]       = dcpr_p->phys_rds[0];
+                                        chn_p->phys_rds[1]       = dcpr_p->phys_rds[1];
+                                    }
+                                    if (dcpr_p->q_dtype != CXDTYPE_UNKNOWN)
+                                    {
+                                        chn_p->q_dtype           = dcpr_p->q_dtype;
+                                        chn_p->q                 = dcpr_p->q;
+                                    }
+                                    if (dcpr_p->range_dtype != CXDTYPE_UNKNOWN)
+                                    {
+                                        chn_p->range_dtype       = dcpr_p->range_dtype;
+                                        chn_p->range[0]          = dcpr_p->range[0];
+                                        chn_p->range[1]          = dcpr_p->range[1];
+                                    }
+                                    if (dcpr_p->return_type != IS_AUTOUPDATED_NOT)
+                                        /* NO return_type pre-setting for now */;
+                                }
                         }
                     }
             }
@@ -1257,6 +1312,8 @@ static void FillPropsOfChan(cxsd_cpntid_t  cpid,
   int               units_ofs    = -1;
   int               dpyfmt_ofs   = -1;
 
+  CxsdDbDcPrInfo_t *dcpr_p;
+
     while ((cpid & CXSD_DB_CPOINT_DIFF_MASK) != 0)
     {
         cp  = cxsd_hw_cur_db->cpnts + (cpid & CXSD_DB_CHN_CPT_IDN_MASK);
@@ -1284,6 +1341,19 @@ static void FillPropsOfChan(cxsd_cpntid_t  cpid,
     }
     /* Note: below this point "cpid" is actually a "gcid",
              since it had been unwound to a globalchan in the loop above. */
+
+    if (cxsd_hw_channels[cpid].dcpr_id > 0)
+    {
+        dcpr_p = cxsd_hw_cur_db->dcprs + cxsd_hw_channels[cpid].dcpr_id;
+        if (ident_ofs   < 0) ident_ofs   = dcpr_p->ident_ofs;
+        if (label_ofs   < 0) label_ofs   = dcpr_p->label_ofs;
+        if (tip_ofs     < 0) tip_ofs     = dcpr_p->tip_ofs;
+        if (comment_ofs < 0) comment_ofs = dcpr_p->comment_ofs;
+        if (geoinfo_ofs < 0) geoinfo_ofs = dcpr_p->geoinfo_ofs;
+        if (rsrvd6_ofs  < 0) rsrvd6_ofs  = dcpr_p->rsrvd6_ofs;
+        if (units_ofs   < 0) units_ofs   = dcpr_p->units_ofs;
+        if (dpyfmt_ofs  < 0) dpyfmt_ofs  = dcpr_p->dpyfmt_ofs;
+    }
 
     *gcid_p        = cpid;
 

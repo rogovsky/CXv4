@@ -119,7 +119,7 @@ static psp_paramdescr_t text2histplotopts[] =
     PSP_P_MSTRING("plot16", histplot_privrec_t, plots[MOTIFKNOBS_HISTPLOT_MAX_LINES_PER_BOX > 15? 15 : 0], NULL, 100),
     PSP_P_PLUGIN ("add",    histplot_privrec_t, plots, AddPluginParser, NULL),
 
-    PSP_P_LOOKUP ("mode",   histplot_privrec_t, mode,     MOTIFKNOBS_HISTPLOT_MODE_LINE, mode_lkp),
+    PSP_P_LOOKUP ("mode",   histplot_privrec_t, mode,     -1, mode_lkp),
     PSP_P_FLAG   ("nomode", histplot_privrec_t, no_mode,  1, 0),
     
     PSP_P_FLAG   ("fixed",  histplot_privrec_t, fixed,    1, 0),
@@ -201,6 +201,8 @@ static int CreateHistplotNoop(DataKnob k, CxWidget parent)
     express_hist_interest(k,
                           PlotUpdateProc, me,
                           1);
+
+    if (me->mode >= 0) MotifKnobs_SetHistplotMode(&(me->mkhp), me->mode);
 
     for (n = 0;  n < countof(me->plots);  n++)
         if (me->plots[n] != NULL)

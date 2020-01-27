@@ -4,10 +4,16 @@ SECTION=	Config.mk
 include		$(PRJDIR)/PrjRules.mk
 ######################################################################
 
-ifeq ":$(OS):$(CPU_X86_COMPAT):" ":LINUX:YES:"
-  SUBDIRS=	cm5307_ppc_drvlets
+# Value derived from ppc860-linux/x_rules.mk
+PPC860_CANARY=$(PRJDIR)/../x-compile/ppc860-linux/tools/bin/ppc-linux-gcc
+ifneq ":$(OS):$(CPU_X86_COMPAT):" ":LINUX:YES:"
+  DUMMY:=	$(warning WARNING: skipping build of cm5307_ppc_drvlets because platform isn't LINUX-X86)
 else
-  DUMMY:=	$(warning WARNING: Platform isn't LINUX-X86, so skipping build of cm5307_ppc_drvlets)
+  ifeq "$(wildcard $(PPC860_CANARY))" ""
+    DUMMY:=	$(warning WARNING: skipping build of cm5307_ppc_drvlets because of missing $(PPC860_CANARY))
+  else
+    SUBDIRS=	cm5307_ppc_drvlets
+  endif
 endif
 
 ######################################################################

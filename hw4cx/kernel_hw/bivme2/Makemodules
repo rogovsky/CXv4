@@ -1,0 +1,20 @@
+.EXPORT_ALL_VARIABLES:
+
+OS_BASE = $(PPC860_BASE)/linux
+TOOLS = $(OS_BASE)/tools/bin
+CROSS_COMPILE = $(TOOLS)/ppc-linux-
+
+CC = $(TOOLS)/ppc-linux-gcc
+CPP = $(TOOLS)/ppc-linux-cpp
+AS = $(TOOLS)/ppc-linux-as
+AR = $(TOOLS)/ppc-linux-ar
+NM = $(TOOLS)/ppc-linux-nm
+LD = $(TOOLS)/ppc-linux-ld
+OBJCOPY = $(TOOLS)/ppc-linux-objcopy
+OBJDUMP = $(TOOLS)/ppc-linux-objdump
+RANLIB = $(TOOLS)/ppc-linux-ranlib
+SIZE = $(TOOLS)/ppc-linux-size
+
+INCLUDE = -I$(OS_BASE)/kernel/include -I$(OS_BASE)/kernel/arch/ppc
+CFLAGS = -mcpu=860 -DMAIN -Wall -D__KERNEL__ -DMODULE
+LDFLAGS = -nodefaultlibs -r

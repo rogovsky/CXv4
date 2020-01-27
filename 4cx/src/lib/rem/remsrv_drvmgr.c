@@ -1,3 +1,7 @@
+#ifndef MAY_USE_DLOPEN
+  #define MAY_USE_DLOPEN 1
+#endif /* MAY_USE_DLOPEN */
+
 #include <fcntl.h>
 #include <signal.h>
 #include <ctype.h>
@@ -6,6 +10,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 /*!!!*/#include <netinet/tcp.h>
+#if MAY_USE_DLOPEN
+  #include <dlfcn.h>
+  #include <sys/param.h> /* For PATH_MAX */
+#endif /* MAY_USE_DLOPEN */
 
 #include "misclib.h"
 
@@ -19,12 +27,31 @@ static short  srv_port      = REMDRV_DEFAULT_PORT;
 static int    dontdaemonize = 0;
 static int    lsock         = -1;
 static int    csock         = -1;
+#if MAY_USE_DLOPEN
+static const char *argv_params[2] = {[0 ... 1] = NULL};
+#endif /* MAY_USE_DLOPEN */
 
 static remsrv_conscmd_descr_t *specific_cmd_table;
 static remsrv_clninfo_t        specific_clninfo;
 static const char             *specific_prompt_name;
 static const char             *specific_issue_name;
 
+
+/*###  #######################################################*/
+
+#if MAY_USE_DLOPEN
+
+typedef struct
+{
+    const char       *name;  // Points to modrec->mr.name
+    void             *handle;
+    int               ref_count;
+    CxsdDriverModRec *modrec;
+} dl_drv_info_t;
+
+static dl_drv_info_t dltable[100];
+
+#endif /* MAY_USE_DLOPEN */
 
 /*### devid management #############################################*/
 
@@ -95,6 +122,21 @@ void FreeDevID    (int devid)
     }
 
     dev->in_use = 0;
+
+#if MAY_USE_DLOPEN
+    /* Note: here we heavily use "dev->dlref",
+             relying on *dev NOT being bzero()'ed after "dev->in_use = 0" */
+    if (dev->dlref > 0)
+    {
+        if ((--(dltable[dev->dlref].ref_count)) == 0)
+        {
+            if (dltable[dev->dlref].modrec->mr.term_mod != NULL)
+                dltable[dev->dlref].modrec->mr.term_mod();
+            dlclose(dltable[dev->dlref].handle);
+            bzero(dltable + dev->dlref, sizeof(dltable[0]));
+        }
+    }
+#endif /* MAY_USE_DLOPEN */
 }
 
 
@@ -147,6 +189,183 @@ static void ReadDriverName(int devid, void *unsdptr,
          item++)
         if (strcmp(dev->drvname, (*item)->mr.name) == 0)
             dev->metric = *item;
+
+#if MAY_USE_DLOPEN
+
+#define DOUBLE_REPORT(format, params...)              \
+    do {                                              \
+        remcxsd_debug       (format, ##params);       \
+        remcxsd_report_to_fd(dev->s, REMDRV_C_DEBUGP, \
+                             format, ##params);       \
+    } while (0)
+
+    if (dev->metric == NULL)
+    {
+      int               stage;
+      int               dlref;
+      void             *handle;
+      void             *symptr;
+      char             *errstr;
+      const char       *prefix = argv_params[0];
+      const char       *suffix = argv_params[1];
+      char              namebuf[PATH_MAX];
+      char              symbuf [200];
+      CxsdDriverModRec *modrec;
+      CxsdLayerModRec  *lyrrec;
+
+        for (stage = 0;
+             stage <= 1  &&  dev->metric == NULL;
+             stage++)
+        {
+            // A. Search in the table
+            for (dlref = 1;
+                 dlref < countof(dltable)  &&  dev->metric == NULL;
+                 dlref++)
+                if (dltable[dlref].name != NULL  &&
+                    strcmp(dev->drvname, dltable[dlref].name) == 0)
+                {
+                    dev->dlref = dlref;
+                    dltable[dlref].ref_count++;
+                    dev->metric = dltable[dlref].modrec;
+                }
+
+            // B. On stage 0 - try to load a driver
+            if (dev->metric == NULL  &&  stage == 0)
+            {
+                // 1. Try to load a file
+                // 1a. Prepare name of file to load
+                if (prefix == NULL) prefix = "./";
+                if (suffix == NULL) suffix = "_drv.so";
+                if (dev->drvname[0] != '/')
+                    check_snprintf(namebuf, sizeof(namebuf), "%s%s%s",
+                                   prefix, dev->drvname, suffix);
+                else
+                    strzcpy(namebuf, dev->drvname, sizeof(namebuf));
+                // 1b. Load it
+                dlerror();  // Clear existing error
+                handle = dlopen(namebuf, RTLD_NOW);
+                errstr = dlerror();
+                if (handle == NULL)
+                {
+                    DOUBLE_REPORT("[%d] failed to load driver \"%s\": %s",
+                                  devid, dev->drvname, errstr);
+                    goto LOAD_FAILURE;
+                }
+
+                // 2. Get pointer to modrec
+                check_snprintf(symbuf, sizeof(symbuf),
+                               "%s%s", dev->drvname, CXSD_DRIVER_MODREC_SUFFIX_STR);
+                symptr = dlsym(handle, symbuf);
+                if (symptr == NULL)
+                {
+                    DOUBLE_REPORT("[%d] driver \"%s\" is loadable but lacks the \"%s\" symbol",
+                                  devid, dev->drvname, symbuf);
+                    dlclose(handle);
+                    goto LOAD_FAILURE;
+                }
+
+                // 3. Find a free cell in dltable[]
+                for (dlref = 1;  dlref < countof(dltable);  dlref++)
+                    if (dltable[dlref].name == NULL) break;
+                if (dlref >= countof(dltable))
+                {
+                    DOUBLE_REPORT("[%d] driver \"%s\" was successfully loaded but dltable[] is overflown",
+                                  devid, dev->drvname);
+                    dlclose(handle);
+                    goto LOAD_FAILURE;
+                }
+
+                modrec = symptr;
+
+                // 4. Check compatibility:
+                // 4a. With a magic
+                if (modrec->mr.magicnumber != CXSD_DRIVER_MODREC_MAGIC)
+                {
+                    DOUBLE_REPORT("[%d] driver \"%s\" magicnumber=0x%x, mismatch with 0x%x",
+                                  devid, modrec->mr.magicnumber, CXSD_DRIVER_MODREC_MAGIC);
+                    dlclose(handle);
+                    goto LOAD_FAILURE;
+                }
+                // 4b. With a driver API
+                if (!CX_VERSION_IS_COMPATIBLE(modrec->mr.version, CXSD_DRIVER_MODREC_VERSION))
+                {
+                    DOUBLE_REPORT("[%d] driver \"%s\" version=%d.%d.%d.%d, incompatible with %d.%d.%d.%d",
+                                  devid,
+                                  CX_MAJOR_OF(modrec->mr.version),
+                                  CX_MINOR_OF(modrec->mr.version),
+                                  CX_PATCH_OF(modrec->mr.version),
+                                  CX_SNAP_OF (modrec->mr.version),
+                                  CX_MAJOR_OF(CXSD_DRIVER_MODREC_VERSION),
+                                  CX_MINOR_OF(CXSD_DRIVER_MODREC_VERSION),
+                                  CX_PATCH_OF(CXSD_DRIVER_MODREC_VERSION),
+                                  CX_SNAP_OF (CXSD_DRIVER_MODREC_VERSION));
+                    dlclose(handle);
+                    goto LOAD_FAILURE;
+                }
+                // 4c. With a layer (if a layer is requested)
+                if (modrec->layer != NULL  &&  modrec->layer[0] != '\0')
+                {
+                    if (-dev->lyrid >= remcxsd_numlyrs)
+                    {
+                        DOUBLE_REPORT("[%d] driver \"%s\" requires a layer while none present",
+                                      devid, dev->drvname);
+                        dlclose(handle);
+                        goto LOAD_FAILURE;
+                    }
+                    lyrrec = remcxsd_layers[-dev->lyrid];
+
+                    // A type
+                    if (lyrrec->api_name == NULL  ||
+                        strcasecmp(lyrrec->api_name, modrec->layer) != 0)
+                    {
+                        DOUBLE_REPORT("[%d] driver \"%s\" requires a layer of type \"%s\" while builtin is \"%s\"",
+                                      devid, dev->drvname, modrec->layer, lyrrec->api_name != NULL? lyrrec->api_name : "(nil)");
+                        dlclose(handle);
+                        goto LOAD_FAILURE;
+                    }
+                    // And a version
+                    if (!CX_VERSION_IS_COMPATIBLE(modrec->layerver, lyrrec->api_version))
+                    {
+                        DOUBLE_REPORT("[%d] driver \"%s\" requires a layer of type \"%s\" version=%d.%d.%d.%d incompatible with builtin %d.%d.%d.%d",
+                                      devid, dev->drvname, modrec->layer,
+                                      CX_MAJOR_OF(modrec->layerver),
+                                      CX_MINOR_OF(modrec->layerver),
+                                      CX_PATCH_OF(modrec->layerver),
+                                      CX_SNAP_OF (modrec->layerver),
+                                      CX_MAJOR_OF(lyrrec->api_version),
+                                      CX_MINOR_OF(lyrrec->api_version),
+                                      CX_PATCH_OF(lyrrec->api_version),
+                                      CX_SNAP_OF (lyrrec->api_version));
+                        dlclose(handle);
+                        goto LOAD_FAILURE;
+                    }
+                }
+
+                // 5. Fill in dltable[] data
+                dltable[dlref].name      = modrec->mr.name;
+                dltable[dlref].handle    = handle;
+                dltable[dlref].ref_count = 0;
+                dltable[dlref].modrec    = modrec;
+
+                // 6. Init the module if required
+                if (modrec->mr.init_mod != NULL  &&
+                    (r = modrec->mr.init_mod()) != 0)
+                {
+                    DOUBLE_REPORT("[%d] driver \"%s\" was successfully loaded but init_mod()=%d",
+                                  devid, dev->drvname, r);
+                    bzero(dltable + dlref, sizeof(dltable[0]));
+                    dlclose(handle);
+                    goto LOAD_FAILURE;
+                }
+            }
+        }
+    }
+ LOAD_FAILURE:;
+
+#undef DOUBLE_REPORT
+
+#endif /* MAY_USE_DLOPEN */
+
     remcxsd_debug("[%d] request for driver \"%s\" -- %s",
                   devid, dev->drvname, dev->metric != NULL? "found" : "not-found");
     if (dev->metric == NULL)
@@ -588,7 +807,15 @@ static void RemSrvAcceptConsConnection(int uniq, void *unsdptr,
 
 static void ShowHelp(void)
 {
-    fprintf(stderr, "Usage: %s [-d] [-e CONSOLE_COMMAND] [port]\n", argv0);
+    fprintf(stderr, "Usage: %s [-d] [-e CONSOLE_COMMAND] [PORT]"
+#if MAY_USE_DLOPEN
+            " [PREFIX [SUFFIX]]"
+#endif /* MAY_USE_DLOPEN */
+            "\n", argv0);
+    fprintf(stderr, "    Default PORT is %d\n", REMDRV_DEFAULT_PORT);
+#if MAY_USE_DLOPEN
+    fprintf(stderr, "    PREFIX and SUFFIX are used when dlopen()'ing drivers\n");
+#endif /* MAY_USE_DLOPEN */
     fprintf(stderr, "    '-d' switch prevents daemonization\n");
     exit(1);
 }
@@ -619,10 +846,20 @@ static void main_do_printf(void *context, const char *format, ...)
     va_end(ap);
 }
 
+static int only_digits(const char *s)
+{
+    for (;  *s != '\0';  s++)
+        if (!isdigit(*s)) return 0;
+
+    return 1;
+}
 static void ParseCommandLine(int argc, char *argv[])
 {
   int             argn;
   char            c;
+#if MAY_USE_DLOPEN
+  int             pidx = 0;
+#endif /* MAY_USE_DLOPEN */
     
     for (argn = 1;  argn < argc;  argn++)
     {
@@ -658,14 +895,28 @@ static void ParseCommandLine(int argc, char *argv[])
         }
         else
         {
-            srv_port = atoi(argv[argn]);
-            if (srv_port <= 0)
+            if (only_digits(argv[argn]))
             {
-                fprintf(stderr, "%s: bad port spec '%s'\n", argv0, argv[argn]);
-                exit(1);
+                srv_port = atoi(argv[argn]);
+                if (srv_port <= 0)
+                    goto BAD_PORT_SPEC;
+            }
+            else
+            {
+#if MAY_USE_DLOPEN
+                if (pidx < countof(argv_params)) argv_params[pidx++] = argv[argn];
+                else
+#endif /* MAY_USE_DLOPEN */
+                    goto BAD_PORT_SPEC;
             }
         }
     }
+
+    return;
+
+ BAD_PORT_SPEC:
+    fprintf(stderr, "%s: bad port spec '%s'\n", argv0, argv[argn]);
+    exit(1);
 }
 
 static int CreateSocket(const char *which, int port)

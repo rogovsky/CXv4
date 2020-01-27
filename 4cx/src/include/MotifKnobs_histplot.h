@@ -81,9 +81,11 @@ typedef struct MotifKnobs_histplot_t_struct
     GC           chanGC [2][XH_NUM_DISTINCT_LINE_COLORS];
     XFontStruct *axis_finfo;
     XFontStruct *chan_finfo[XH_NUM_DISTINCT_LINE_COLORS];
+    DataKnob     k_md;
+    DataKnob     k_xs;
     int          mode;
     int          x_scale;
-    
+
     int          m_lft;
     int          m_rgt;
     int          m_top;
@@ -123,6 +125,7 @@ int  MotifKnobs_CreateHistplot(MotifKnobs_histplot_t *hp,
 void MotifKnobs_AddToHistplot (MotifKnobs_histplot_t *hp, DataKnob k);
 void MotifKnobs_UpdateHistplotGraph(MotifKnobs_histplot_t *hp);
 void MotifKnobs_UpdateHistplotProps(MotifKnobs_histplot_t *hp);
+void MotifKnobs_SetHistplotMode(MotifKnobs_histplot_t *hp, int mode);
 
 int  MotifKnobs_SaveHistplotData   (MotifKnobs_histplot_t *hp,
                                     const char *filename,

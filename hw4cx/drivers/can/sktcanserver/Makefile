@@ -68,3 +68,4 @@ LOCAL_GNTDFILES+=v4$(CANHAL_PFX)canserver.c canserver_drivers.c $(CANKOZ_DRV_SRC
 #
 v4$(CANHAL_PFX)canserver:	$(LIBREMSRV) \
 				$(LIBUSEFUL) $(LIBCXSCHEDULER) $(LIBMISC)
+v4$(CANHAL_PFX)canserver:	SPECIFIC_LIBS+=$(LIBDL)

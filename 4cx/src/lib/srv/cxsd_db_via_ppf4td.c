@@ -189,6 +189,276 @@ static int ParseMName(const char *argv0, ppf4td_ctx_t *ctx,
 
 //////////////////////////////////////////////////////////////////////
 
+enum
+{
+    SFT_END = 0,
+    SFT_DBSTR,
+    SFT_DOUBLE,
+    SFT_INT,
+    SFT_FLAG,
+    SFT_RANGE,
+    SFT_ANY,
+    SFT_TIME
+};
+
+typedef struct
+{
+    int         type;       // One of SFT_nnn
+    const char *name;       // Key
+    int         offset;     // Offset in data structure
+    int         spc_f_ofs;  // If >0 -- offset of an int to be =1 if this field is specified
+    int         var_int;    // SFT_FLAG: value to set to appropriate int; SFT_RANGE: offset of dtype
+} somefielddescr_t;
+
+#define SFD_DBSTR(   n, sname, field)        {SFT_DBSTR,  n, offsetof(sname, field), -1,                     0}
+#define SFD_DOUBLE  (n, sname, field)        {SFT_DOUBLE, n, offsetof(sname, field), -1,                     0}
+#define SFD_DOUBLE_S(n, sname, field, spc_f) {SFT_DOUBLE, n, offsetof(sname, field), offsetof(sname, spc_f), 0}
+#define SFD_FLAG(    n, sname, field, val)   {SFT_FLAG,   n, offsetof(sname, field), -1,                     val}
+#define SFD_RANGE(   n, sname, field, dt_f)  {SFT_RANGE,  n, offsetof(sname, field), -1,                     offsetof(sname, dt_f)}
+#define SFD_ANY(     n, sname, field, dt_f)  {SFT_ANY,    n, offsetof(sname, field), -1,                     offsetof(sname, dt_f)}
+#define SFD_END()                            {SFT_END,    NULL, 0,                   -1,                     0}
+
+enum
+{
+    ENTITY_PARSE_FLAGS =
+        PPF4TD_FLAG_NOQUOTES |
+        PPF4TD_FLAG_SPCTERM | PPF4TD_FLAG_HSHTERM | PPF4TD_FLAG_EOLTERM |
+        PPF4TD_FLAG_BRCTERM*0,
+    STRING_PARSE_FLAGS =
+        PPF4TD_FLAG_SPCTERM | PPF4TD_FLAG_HSHTERM | PPF4TD_FLAG_EOLTERM |
+        PPF4TD_FLAG_BRCTERM*0
+};
+static inline int isletnum(int c)
+{
+    return isalnum(c)  ||  c == '_'  ||  c == '-';
+}
+static int ParseSomeProps(const char *argv0,  ppf4td_ctx_t *ctx, CxsdDb db,
+                          cxdtype_t dtype,
+                          somefielddescr_t *table, void *data_p)
+{
+  int             fn;  // >= 0 -- index in the table; <0 => switched to "fieldname:"-keyed specification
+  void           *ea;  // Executive address
+  int             idx;
+
+  int             r;
+  int             ch;
+  char            keybuf[30];
+  int             keylen;
+  char            strbuf[1000];
+  int             strofs;
+
+  int             is_a_range;
+  CxAnyVal_t     *a_p;
+  int             subfield;
+  const char     *subfield_name;
+  char           *p;
+  char           *err;
+  long            l_v;
+  long long       q_v;
+  double          d_v;
+
+    fn = 0;
+    while (1)
+    {
+        ppf4td_skip_white(ctx);
+        if (IsAtEOL(ctx)) break;
+
+        idx = -1;
+
+        /* Is following a "fieldname:..."? */
+        if (PeekCh(argv0, ctx, "fieldname", &ch) < 0) return -1;
+        if (isletnum(ch))
+        {
+            for (keylen = 0;  keylen < sizeof(keybuf) - 1;  keylen++)
+            {
+                r = ppf4td_peekc(ctx, &ch);
+                if (r < 0)
+                    return BARK("unexpected error; %s", ppf4td_strerror(errno));
+                if (r > 0  &&  ch == ':')
+                {
+                    /* Yeah, that's a "fieldname:..." */
+                    fn = -1;
+
+                    /*Let's perform the search */
+                    keybuf[keylen] = '\0';
+                    for (idx = 0;  table[idx].name != NULL;  idx++)
+                        if (strcasecmp(table[idx].name, keybuf) == 0)
+                            break;
+
+                    /* Did we find such a field? */
+                    if (table[idx].name == NULL)
+                        return BARK("unknown field \"%s\"", keybuf);
+
+                    /* Skip the ':' */
+                    ppf4td_nextc(ctx, &ch);
+                    keylen = 0;
+
+                    goto END_KEYGET;
+                }
+                if (r == 0  ||  !isletnum(ch)) goto END_KEYGET;
+                /* Consume character */
+                ppf4td_nextc(ctx, &ch);
+                keybuf[keylen] = ch;
+            }
+ END_KEYGET:
+            if (keylen > 0) ppf4td_ungetchars(ctx, keybuf, keylen);
+        }
+
+        /* Wasn't "fieldname:" specified? */
+        if (idx < 0)
+        {
+            /* Are we in random mode, but no "fieldname:" specified? */
+            if (fn < 0)
+                return BARK("unlabeled value after a labeled one");
+
+            /* Have we reached end of table? */
+            if (table[fn].name == NULL)
+                return BARK("all fields are specified, but something left in the line");
+
+            /* Okay, just pick the next field */
+            idx = fn;
+        }
+
+        /* Okay, do parse */
+        ea = ((int8 *)data_p) + table[idx].offset;
+        if (table[idx].type == SFT_DBSTR)
+        {
+            r = ppf4td_get_string(ctx, STRING_PARSE_FLAGS, strbuf, sizeof(strbuf));
+            if (r < 0)
+                return BARK("%s (string) expected; %s",
+                            table[idx].name, ppf4td_strerror(errno));
+
+            strofs = CxsdDbAddStr(db, strbuf);
+            if (strofs < 0)
+                return BARK("can't CxsdDbAddStr(%s)", table[idx].name);
+            *((int *)ea) = strofs;
+        }
+        else if (table[idx].type == SFT_DOUBLE)
+        {
+#if MAY_USE_FLOAT
+            r = ppf4td_get_string(ctx, ENTITY_PARSE_FLAGS, strbuf, sizeof(strbuf));
+            if (r < 0)
+                return BARK("\"%s\" value (float) expected; %s\n",
+                            table[idx].name, ppf4td_strerror(errno));
+
+            d_v = strtod(strbuf, &err);
+            if (err == strbuf  ||  *err != '\0')
+                return BARK("error in \"%s\" float specification \"%s\"",
+                            table[idx].name, strbuf);
+
+            *((double *)ea) = d_v;
+#else
+            return BARK("floats are disabled at compile-time");
+#endif
+        }
+        else if (table[idx].type == SFT_ANY  ||
+                 table[idx].type == SFT_RANGE)
+        {
+            if (reprof_cxdtype(dtype) != CXDTYPE_REPR_INT  &&
+                reprof_cxdtype(dtype) != CXDTYPE_REPR_FLOAT)
+                return BARK("\"%s\" specified for a non-numeric channel", table[idx].name);
+
+            is_a_range = table[idx].type == SFT_RANGE;
+
+            a_p = ea;
+
+            r = ppf4td_get_string(ctx, ENTITY_PARSE_FLAGS, strbuf, sizeof(strbuf));
+            if (r < 0)
+                return BARK("\"%s\" value%s expected; %s\n",
+                            table[idx].name, is_a_range? " (MIN-MAX)" : "", ppf4td_strerror(errno));
+
+            for (subfield = 0, p = strbuf;
+                 subfield <= (is_a_range? 1 : 0);
+                 subfield++)
+            {
+                /* Prepare a name for errors */
+                if      (!is_a_range)     subfield_name = "";
+                else if (subfield == 0)   subfield_name = "-min";
+                else  /* subfield == 1 */ subfield_name = "-max";
+
+                /* A '-' range separator */
+                if (subfield > 0)
+                {
+                    if (*p != '-')
+                        return BARK("'-' expected before \"%s\"%s value",
+                                    table[idx].name, subfield_name);
+                    p++;
+                }
+
+                /* Get a value */
+                if (reprof_cxdtype(dtype) == CXDTYPE_REPR_INT)
+                {
+#if MAY_USE_INT64
+                    if (sizeof_cxdtype(dtype) == sizeof(int64))
+                        q_v = strtoull(p, &err, 0);
+                    else
+#endif /* MAY_USE_INT64 */
+                        l_v = strtoul (p, &err, 0);
+                    if (err == p)
+                        return BARK("error in \"%s\"%s int specification \"%s\"",
+                                    table[idx].name, subfield_name, p);
+
+                    if      (dtype == CXDTYPE_INT8)   a_p[subfield].i8  = l_v;
+                    else if (dtype == CXDTYPE_UINT8)  a_p[subfield].u8  = l_v;
+                    else if (dtype == CXDTYPE_INT16)  a_p[subfield].i16 = l_v;
+                    else if (dtype == CXDTYPE_UINT16) a_p[subfield].u16 = l_v;
+                    else if (dtype == CXDTYPE_INT32)  a_p[subfield].i32 = l_v;
+                    else if (dtype == CXDTYPE_UINT32) a_p[subfield].u32 = l_v;
+#if MAY_USE_INT64
+                    else if (dtype == CXDTYPE_INT64)  a_p[subfield].i64 = q_v;
+                    else if (dtype == CXDTYPE_UINT64) a_p[subfield].u64 = q_v;
+#endif /* MAY_USE_INT64 */
+                    else
+                        return BARK("\"%s\" is %zd-byte int, which is unsupported size",
+                                    table[idx].name, sizeof_cxdtype(dtype));
+                }
+                else
+                {
+#if MAY_USE_FLOAT
+                    d_v = strtod(p, &err);
+                    if (err == p)
+                        return BARK("error in \"%s\"%s float specification \"%s\"",
+                                    table[idx].name, subfield_name, p);
+
+                    if (dtype == CXDTYPE_SINGLE)
+                        a_p[subfield].f32 = d_v;
+                    else
+                        a_p[subfield].f64 = d_v;
+#else
+                    return BARK("floats are disabled at compile-time");
+#endif
+                }
+
+                /* Advance to next subfield */
+                p = err;
+            }
+
+            /* Additional check */
+            if (*p != '\0')
+                return BARK("junk after \"%s\" value in \"%s\"",
+                            table[idx].name, strbuf);
+
+            /* Store dtype */
+            ea = ((int8 *)data_p) + table[idx].var_int;
+            *((cxdtype_t *)ea) = dtype;
+        }
+        else
+            return BARK("%s(): field \"%s\" is of unsupported type %d", __FUNCTION__, table[idx].name, table[idx].type);
+
+        if (table[idx].spc_f_ofs > 0)
+        {
+            ea = ((int8 *)data_p) + table[idx].spc_f_ofs;
+            *((int *)ea) = 1;
+        }
+
+        /* Advance field # if not keyed-parsing */
+        if (fn >= 0) fn++;
+    }
+
+    return 0;
+}
+//////////////////////////////////////////////////////////////////////
+
 typedef struct
 {
     const char  *name;
@@ -220,6 +490,7 @@ static int ParseChangroup(const char *argv0, ppf4td_ctx_t *ctx,
   char       *endptr;
   char        rw_char;
   char        ut_char;
+  char        sg_char;
 
     rec += *n_p;
 
@@ -240,7 +511,15 @@ static int ParseChangroup(const char *argv0, ppf4td_ctx_t *ctx,
     p = endptr;
 
     /* 3. Data type */
+    sg_char = '\0';
     ut_char = tolower(*p++);
+    // An optional '-' or '+' prefix?  Okay, just store and get next char
+    if (ut_char == '-'  ||  ut_char == '+')
+    {
+        sg_char = ut_char;
+        ut_char = tolower(*p++);
+    }
+
     if      (ut_char == 'b') rec->dtype = CXDTYPE_INT8;
     else if (ut_char == 'h') rec->dtype = CXDTYPE_INT16;
     else if (ut_char == 'i') rec->dtype = CXDTYPE_INT32;
@@ -257,6 +536,14 @@ static int ParseChangroup(const char *argv0, ppf4td_ctx_t *ctx,
                     rec->count, *n_p);
     else
         return BARK("invalid channel-data-type in chan-group-%d", *n_p);
+
+    if (sg_char != '\0')
+    {
+        if (reprof_cxdtype(rec->dtype) != CXDTYPE_REPR_INT)
+            return BARK("invalid \"%c%c\" type spec ([un]signedness is for ints only)",
+                        sg_char, ut_char);
+        if (sg_char == '+') rec->dtype |= CXDTYPE_USGN_MASK;
+    }
 
     /* 4. Optional "Max # of units" */
     if (*p == '\0')
@@ -500,9 +787,30 @@ static int dev_parser(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db)
     return 0;
 }
 
+static somefielddescr_t dcpr_fields[] =
+{
+    SFD_DOUBLE_S("r",       CxsdDbDcPrInfo_t, phys_rds[0], phys_rd_specified),
+    SFD_DOUBLE_S("d",       CxsdDbDcPrInfo_t, phys_rds[1], phys_rd_specified),
+    SFD_DBSTR   ("ident",   CxsdDbDcPrInfo_t, ident_ofs),
+    SFD_DBSTR   ("label",   CxsdDbDcPrInfo_t, label_ofs),
+    SFD_DBSTR   ("tip",     CxsdDbDcPrInfo_t, tip_ofs),
+    SFD_DBSTR   ("comment", CxsdDbDcPrInfo_t, comment_ofs),
+    SFD_DBSTR   ("geoinfo", CxsdDbDcPrInfo_t, geoinfo_ofs),
+    SFD_DBSTR   ("rsrvd6",  CxsdDbDcPrInfo_t, rsrvd6_ofs),
+    SFD_DBSTR   ("units",   CxsdDbDcPrInfo_t, units_ofs),
+    SFD_DBSTR   ("dpyfmt",  CxsdDbDcPrInfo_t, dpyfmt_ofs),
+    SFD_RANGE   ("range",   CxsdDbDcPrInfo_t, range,       range_dtype),
+    SFD_ANY     ("quant",   CxsdDbDcPrInfo_t, q,           q_dtype),
+    SFD_FLAG    ("autoupdated_not",     CxsdDbDcPrInfo_t, return_type, IS_AUTOUPDATED_NOT),
+    SFD_FLAG    ("autoupdated_yes",     CxsdDbDcPrInfo_t, return_type, IS_AUTOUPDATED_YES),
+    SFD_FLAG    ("autoupdated_trusted", CxsdDbDcPrInfo_t, return_type, IS_AUTOUPDATED_TRUSTED),
+    SFD_FLAG    ("ignore_upd_cycle",    CxsdDbDcPrInfo_t, return_type, DO_IGNORE_UPD_CYCLE),
+    SFD_END()
+};
 static int ParseChanList(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db,
                          CxsdDbDcNsp_t **nsp_p, int type_nsp_id,
-                         int chan_n_limit)
+                         int chan_n_limit,
+                         int changrpcount, CxsdChanInfoRec changroups[])
 {
   CxsdDbDcNsp_t     *type_nsp = CxsdDbGetNsp(db, type_nsp_id);
 ////  int                chan_n_limit;
@@ -521,6 +829,12 @@ static int ParseChanList(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db,
   char               intbuf[20];
   char               prefix[50];
   char               suffix[50];
+
+  CxsdDbDcPrInfo_t   dcpr_data;
+  int                dcpr_id;
+  int                changrp_n;
+  int                changrp_base;
+  cxdtype_t          dtype;
 
     /* Get names line-by-line */
     while (1)
@@ -645,6 +959,40 @@ static int ParseChanList(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db,
                             refval, chan_n_limit);
         }
 
+        /* Any properties? */
+        ppf4td_skip_white(ctx);
+        dcpr_id = -1;
+        if (!IsAtEOL(ctx))
+        {
+            bzero(&dcpr_data, sizeof(dcpr_data));
+            dcpr_data.fresh_age.sec = -1;
+            dcpr_data.ident_ofs   = -1;
+            dcpr_data.label_ofs   = -1;
+            dcpr_data.tip_ofs     = -1;
+            dcpr_data.comment_ofs = -1;
+            dcpr_data.geoinfo_ofs = -1;
+            dcpr_data.rsrvd6_ofs  = -1;
+            dcpr_data.units_ofs   = -1;
+            dcpr_data.dpyfmt_ofs  = -1;
+
+            for (changrp_base = 0,          changrp_n = 0, dtype = CXDTYPE_UNKNOWN;
+                 changrp_n < changrpcount;
+                 changrp_base += changroups[changrp_n++].count)
+                if (refval >= changrp_base  /* <- a redundant cond */ &&
+                    refval <  changrp_base + changroups[changrp_n].count)
+                {
+                    dtype = changroups[changrp_n++].dtype;
+                    goto DTYPE_FOUND;
+                }
+ DTYPE_FOUND:;
+
+            if (ParseSomeProps(argv0, ctx, db,
+                               dtype,
+                               dcpr_fields, &dcpr_data)) return -1;
+            if ((dcpr_id = CxsdDbAddDcPr(db, dcpr_data)) < 0)
+                return BARK("unable to CxsdDbAddDcPr(): %s", strerror(errno));
+        }
+
         /* Everything got -- okay, record data... */
         if (range_min < 0)
         {
@@ -652,6 +1000,7 @@ static int ParseChanList(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db,
             if (nsline < 0)
                 return BARK("unable to CxsdDbNspAddL(%s): %s", namebuf, strerror(errno));
             (*nsp_p)->items[nsline].devchan_n = refval;
+            (*nsp_p)->items[nsline].dcpr_id   = dcpr_id;
         }
         else
         {
@@ -677,13 +1026,14 @@ static int ParseChanList(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db,
                 if (nsline < 0)
                     return BARK("unable to CxsdDbNspAddL(%s): %s", namebuf, strerror(errno));
                 (*nsp_p)->items[nsline].devchan_n = refval + range_i-range_min;
+                (*nsp_p)->items[nsline].dcpr_id   = dcpr_id;
             }
         }
 
         /* ...and go to next line */
         ppf4td_skip_white(ctx);
         if (!IsAtEOL(ctx))
-            return BARK("EOL expected after channel-reference");
+            return BARK("EOL expected after channel-reference"); /*!!! name!!!*/
         SkipToNextLine(ctx);
     }
  END_PARSE:;
@@ -729,7 +1079,8 @@ static int channels_parser(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db)
         return BARK("unable to malloc() nsp");
     bzero(nsp, sizeof(*nsp));
 
-    r = ParseChanList(argv0, ctx, db, &nsp, db->devlist[devid].type_nsp_id, db->devlist[devid].chancount);
+    r = ParseChanList(argv0, ctx, db, &nsp, db->devlist[devid].type_nsp_id,
+                      db->devlist[devid].chancount, db->devlist[devid].changrpcount, db->devlist[devid].changroups);
     if (r < 0) goto CLEANUP;
 
     if ((db->devlist[devid].chan_nsp_id = CxsdDbAddNsp(db, nsp)) < 0)
@@ -792,7 +1143,8 @@ static int devtype_parser(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db)
     /* ...and fill initial info */
     *nsp = spc;
 
-    r = ParseChanList(argv0, ctx, db, &nsp, -1, spc.chancount);
+    r = ParseChanList(argv0, ctx, db, &nsp, -1,
+                      spc.chancount, spc.changrpcount, spc.changroups);
     if (r < 0) goto CLEANUP;
 
 #if 0
@@ -820,162 +1172,26 @@ static int devtype_parser(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db)
 }
 
 
-typedef struct
+static somefielddescr_t cpnt_fields[] =
 {
-    const char *name;
-    int         offset;
-    int         is_string; // Otherwise -- {r,d}
-} cptfielddescr_t;
-#define CFD_LINE(n, f, is_s) \
-    {n, offsetof(CxsdDbCpntInfo_t, f), is_s}
-
-static cptfielddescr_t cfields[] =
-{
-    CFD_LINE("r",       phys_rds[0], 0),
-    CFD_LINE("d",       phys_rds[1], 0),
-    CFD_LINE("ident",   ident_ofs,   1),
-    CFD_LINE("label",   label_ofs,   1),
-    CFD_LINE("tip",     tip_ofs,     1),
-    CFD_LINE("comment", comment_ofs, 1),
-    CFD_LINE("geoinfo", geoinfo_ofs, 1),
-    CFD_LINE("rsrvd6",  rsrvd6_ofs,  1),
-    CFD_LINE("units",   units_ofs,   1),
-    CFD_LINE("dpyfmt",  dpyfmt_ofs,  1),
-    {NULL, -1, 0}
+    SFD_DOUBLE_S("r",       CxsdDbCpntInfo_t, phys_rds[0], phys_rd_specified),
+    SFD_DOUBLE_S("d",       CxsdDbCpntInfo_t, phys_rds[1], phys_rd_specified),
+    SFD_DBSTR   ("ident",   CxsdDbCpntInfo_t, ident_ofs),
+    SFD_DBSTR   ("label",   CxsdDbCpntInfo_t, label_ofs),
+    SFD_DBSTR   ("tip",     CxsdDbCpntInfo_t, tip_ofs),
+    SFD_DBSTR   ("comment", CxsdDbCpntInfo_t, comment_ofs),
+    SFD_DBSTR   ("geoinfo", CxsdDbCpntInfo_t, geoinfo_ofs),
+    SFD_DBSTR   ("rsrvd6",  CxsdDbCpntInfo_t, rsrvd6_ofs),
+    SFD_DBSTR   ("units",   CxsdDbCpntInfo_t, units_ofs),
+    SFD_DBSTR   ("dpyfmt",  CxsdDbCpntInfo_t, dpyfmt_ofs),
+    SFD_END()
 };
-
-enum
-{
-    ENTITY_PARSE_FLAGS =
-        PPF4TD_FLAG_NOQUOTES |
-        PPF4TD_FLAG_SPCTERM | PPF4TD_FLAG_HSHTERM | PPF4TD_FLAG_EOLTERM |
-        PPF4TD_FLAG_BRCTERM*0,
-    STRING_PARSE_FLAGS =
-        PPF4TD_FLAG_SPCTERM | PPF4TD_FLAG_HSHTERM | PPF4TD_FLAG_EOLTERM |
-        PPF4TD_FLAG_BRCTERM*0
-};
-static inline int isletnum(int c)
-{
-    return isalnum(c)  ||  c == '_'  ||  c == '-';
-}
 static int ParseCpointProps(const char *argv0, ppf4td_ctx_t *ctx, CxsdDb db,
                             CxsdDbCpntInfo_t *cpnt_data_p)
 {
-  int             fn;  // >= 0 -- index in the table; <0 => switched to "fieldname:"-keyed specification
-  void           *ea;  // Executive address
-  int             idx;
-
-  int             r;
-  int             ch;
-  char            keybuf[30];
-  int             keylen;
-  char            strbuf[1000];
-  int             strofs;
-
-  double          v;
-  char           *err;
-
-    fn = 0;
-    while (1)
-    {
-        ppf4td_skip_white(ctx);
-        if (IsAtEOL(ctx)) break;
-
-        idx = -1;
-
-        /* Is following a "fieldname:..."? */
-        if (PeekCh(argv0, ctx, "fieldname", &ch) < 0) return -1;
-        if (isletnum(ch))
-        {
-            for (keylen = 0;  keylen < sizeof(keybuf) - 1;  keylen++)
-            {
-                r = ppf4td_peekc(ctx, &ch);
-                if (r < 0)
-                    return BARK("unexpected error; %s", ppf4td_strerror(errno));
-                if (r > 0  &&  ch == ':')
-                {
-                    /* Yeah, that's a "fieldname:..." */
-                    fn = -1;
-
-                    /*Let's perform the search */
-                    keybuf[keylen] = '\0';
-                    for (idx = 0;  cfields[idx].name != NULL;  idx++)
-                        if (strcasecmp(cfields[idx].name, keybuf) == 0)
-                            break;
-
-                    /* Did we find such a field? */
-                    if (cfields[idx].name == NULL)
-                        return BARK("unknown field \"%s\"", keybuf);
-
-                    /* Skip the ':' */
-                    ppf4td_nextc(ctx, &ch);
-                    keylen = 0;
-
-                    goto END_KEYGET;
-                }
-                if (r == 0  ||  !isletnum(ch)) goto END_KEYGET;
-                /* Consume character */
-                ppf4td_nextc(ctx, &ch);
-                keybuf[keylen] = ch;
-            }
- END_KEYGET:
-            if (keylen > 0) ppf4td_ungetchars(ctx, keybuf, keylen);
-        }
-
-        /* Wasn't "fieldname:" specified? */
-        if (idx < 0)
-        {
-            /* Are we in random mode, but no "fieldname:" specified? */
-            if (fn < 0)
-                return BARK("unlabeled value after a labeled one");
-
-            /* Have we reached end of table? */
-            if (cfields[fn].name == NULL)
-                return BARK("all fields are specified, but something left in the line");
-
-            /* Okay, just pick the next field */
-            idx = fn;
-        }
-
-        /* Okay, do parse */
-        ea = ((int8 *)cpnt_data_p) + cfields[idx].offset;
-        if (cfields[idx].is_string)
-        {
-            r = ppf4td_get_string(ctx, STRING_PARSE_FLAGS, strbuf, sizeof(strbuf));
-            if (r < 0)
-                return BARK("%s (string) expected; %s",
-                            cfields[idx].name, ppf4td_strerror(errno));
-
-            strofs = CxsdDbAddStr(db, strbuf);
-            if (strofs < 0)
-                return BARK("can't CxsdDbAddStr(%s)", cfields[idx].name);
-            *((int *)ea) = strofs;
-        }
-        else
-        {
-#if MAY_USE_FLOAT
-            r = ppf4td_get_string(ctx, ENTITY_PARSE_FLAGS, strbuf, sizeof(strbuf));
-            if (r < 0)
-                return BARK("%s (double) expected; %s\n",
-                            cfields[idx].name, ppf4td_strerror(errno));
-
-            v = strtod(strbuf, &err);
-            if (err == strbuf  ||  *err != '\0')
-                return BARK("error in %s specification \"%s\"",
-                            cfields[idx].name, strbuf);
-
-            *((double *)ea) = v;
-            cpnt_data_p->phys_rd_specified = 1;
-#else
-            return BARK("floats are disabled at compile-time");
-#endif
-        }
-
-        /* Advance field # if not keyed-parsing */
-        if (fn >= 0) fn++;
-    }
-
-    return 0;
+    return ParseSomeProps(argv0, ctx, db,
+                          CXDTYPE_UNKNOWN,
+                          cpnt_fields, cpnt_data_p);
 }
 
 static void DumpStrs(CxsdDb db)

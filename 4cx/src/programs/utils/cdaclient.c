@@ -59,6 +59,7 @@ static int rp2rn(refrec_t *rp)
 static FILE          *outfile         = NULL;
 
 static int            option_noexpand  = 0;
+static int            option_binary    = 0;
 static char          *option_baseref   = NULL;
 static char          *option_defpfx    = NULL;
 static int            option_help      = 0;
@@ -165,6 +166,9 @@ static void ProcessDatarefEvent(int            uniq,
   const char    *dt_s;
   char           dt_buf[100];
 
+  void          *cur_data_p;
+  size_t         cur_data_size;
+
   int            phys_count;
   double        *phys_rds;
   char           rds_str[1000];
@@ -261,22 +265,31 @@ static void ProcessDatarefEvent(int            uniq,
              reason == CDA_REF_R_CURVAL  &&  print_cur_as_new)
     {
         ////fprintf(stderr, "<%s> %d nr=%d nw=%d\n", rp->ur.spec, reason, num2read, num2write);
+if (0)
+{
+    fprintf(stderr, "\tcur_nelems=%d\n", cda_current_nelems_of_ref(rp->ur.ref));
+}
         if      (rp->ur.rd_req)
         {
-            PrintDatarefData(outfile,
-                             &(rp->ur),
-                             (print_time      ? UTIL_PRINT_TIME      : 0) |
-                             (print_refn      ? UTIL_PRINT_REFN      : 0) |
-                             (print_dtype     ? UTIL_PRINT_DTYPE     : 0) |
-                             (print_nelems    ? UTIL_PRINT_NELEMS    : 0) |
-                             (print_name      ? UTIL_PRINT_NAME      : 0) |
-                             (print_parens    ? UTIL_PRINT_PARENS    : 0) |
-                             (print_quotes    ? UTIL_PRINT_QUOTES    : 0) |
-                             (print_unescaped ? UTIL_PRINT_UNESCAPED : 0) |
-                             (option_relative ? UTIL_PRINT_RELATIVE  : 0) |
-                             (print_timestamp ? UTIL_PRINT_TIMESTAMP : 0) |
-                             (print_rflags    ? UTIL_PRINT_RFLAGS    : 0) |
-                             UTIL_PRINT_NEWLINE);
+            if      (option_binary == 0)
+                PrintDatarefData(outfile,
+                                 &(rp->ur),
+                                 (print_time      ? UTIL_PRINT_TIME      : 0) |
+                                 (print_refn      ? UTIL_PRINT_REFN      : 0) |
+                                 (print_dtype     ? UTIL_PRINT_DTYPE     : 0) |
+                                 (print_nelems    ? UTIL_PRINT_NELEMS    : 0) |
+                                 (print_name      ? UTIL_PRINT_NAME      : 0) |
+                                 (print_parens    ? UTIL_PRINT_PARENS    : 0) |
+                                 (print_quotes    ? UTIL_PRINT_QUOTES    : 0) |
+                                 (print_unescaped ? UTIL_PRINT_UNESCAPED : 0) |
+                                 (option_relative ? UTIL_PRINT_RELATIVE  : 0) |
+                                 (print_timestamp ? UTIL_PRINT_TIMESTAMP : 0) |
+                                 (print_rflags    ? UTIL_PRINT_RFLAGS    : 0) |
+                                 UTIL_PRINT_NEWLINE);
+            else if (cda_acc_ref_data(rp->ur.ref,
+                                      &cur_data_p, &cur_data_size) >= 0  &&
+                     cur_data_size > 0)
+                fwrite(cur_data_p, cur_data_size, 1, outfile);
             if (!option_monitor)
             {
                 rp->ur.rd_req = 0;
@@ -669,7 +682,7 @@ int main(int argc, char *argv[])
     BUILTINS_REGISTRATION_CODE
 #endif /* BUILTINS_REGISTRATION_CODE */
 
-    while ((c = getopt(argc, argv, "1b:d:D:f:hmo:rT:w")) != EOF)
+    while ((c = getopt(argc, argv, "1b:Bd:D:f:hmo:rT:w")) != EOF)
         switch (c)
         {
             case '1':
@@ -678,6 +691,10 @@ int main(int argc, char *argv[])
 
             case 'b':
                 option_baseref = optarg;
+                break;
+
+            case 'B':
+                option_binary = 1;
                 break;
 
             case 'd':
@@ -765,6 +782,7 @@ int main(int argc, char *argv[])
                "Options:\n"
                "  -1          -- do NOT expand {} and <> in channel names\n"
                "  -b BASEREF\n"
+               "  -B          -- binary output (dangerous!!! use for 1 chan only)\n"
                "  -D DISPMODE -- display mode control flags ('-hh' for details)\n"
                "  -f FILENAME -- read list of channels from FILENAME (one per line)\n"
                "  -m          -- monitor mode (run infinitely)\n"

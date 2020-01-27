@@ -114,9 +114,13 @@ void StdSimulated_rw_p(int devid, void *devptr __attribute__((unused)),
   struct
   {
       int8         i8;
+      uint8        u8;
       int16        i16;
+      uint16       u16;
       int32        i32;
+      uint32       u32;
       int64        i64;
+      uint64       u64;
 
       float        f32;
       double       f64;
@@ -163,14 +167,18 @@ void StdSimulated_rw_p(int devid, void *devptr __attribute__((unused)),
 #endif
         switch (dt)
         {
-            case CXDTYPE_INT8:   case CXDTYPE_UINT8:  nvp = &v.i8;  break;
-            case CXDTYPE_INT16:  case CXDTYPE_UINT16: nvp = &v.i16; break;
-            case CXDTYPE_INT32:  case CXDTYPE_UINT32: nvp = &v.i32; break;
-            case CXDTYPE_INT64:  case CXDTYPE_UINT64: nvp = &v.i64; break;
-            case CXDTYPE_SINGLE:                      nvp = &v.f32; break;
-            case CXDTYPE_DOUBLE:                      nvp = &v.f64; break;
-            case CXDTYPE_TEXT:                        nvp = &v.t8;  break;
-            case CXDTYPE_UCTEXT:                      nvp = &v.t32; break;
+            case CXDTYPE_INT8:   nvp = &v.i8;  break;
+            case CXDTYPE_UINT8:  nvp = &v.u8;  break;
+            case CXDTYPE_INT16:  nvp = &v.i16; break;
+            case CXDTYPE_UINT16: nvp = &v.u16; break;
+            case CXDTYPE_INT32:  nvp = &v.i32; break;
+            case CXDTYPE_UINT32: nvp = &v.u32; break;
+            case CXDTYPE_INT64:  nvp = &v.i64; break;
+            case CXDTYPE_UINT64: nvp = &v.u64; break;
+            case CXDTYPE_SINGLE: nvp = &v.f32; break;
+            case CXDTYPE_DOUBLE: nvp = &v.f64; break;
+            case CXDTYPE_TEXT:   nvp = &v.t8;  break;
+            case CXDTYPE_UCTEXT: nvp = &v.t32; break;
             default:
                 logline(LOGF_MODULES, LOGL_ERR,
                         "%s(devid=%d/active=%d): unrecognized dtypes[n=%d/chan=%d/global=%d]=%d",
@@ -181,8 +189,43 @@ void StdSimulated_rw_p(int devid, void *devptr __attribute__((unused)),
         timestamp_p = NULL;
         if      (action == DRVA_WRITE  &&  cxsd_hw_channels[gcid].rw)
         {
-            nvp = values[n];
             nel = nelems[n];
+            if  (nel == 1  &&  dt == cxsd_hw_channels[gcid].range_dtype)
+            {
+
+#define DO_FIT_INTO_RANGE(fNN, typeNN)                       \
+    do {                                                     \
+        v.fNN = *((typeNN*)values[n]);                       \
+        if (cxsd_hw_channels[gcid].range[0].fNN <            \
+            cxsd_hw_channels[gcid].range[1].fNN)             \
+        {                                                    \
+            if (v.fNN < cxsd_hw_channels[gcid].range[0].fNN) \
+                v.fNN = cxsd_hw_channels[gcid].range[0].fNN; \
+            if (v.fNN > cxsd_hw_channels[gcid].range[1].fNN) \
+                v.fNN = cxsd_hw_channels[gcid].range[1].fNN; \
+        }                                                    \
+    } while (0)
+
+                // Note: 'nvp' here still points to v.SOMETHING
+                if      (dt == CXDTYPE_INT8)   DO_FIT_INTO_RANGE(i8,  int8);
+                else if (dt == CXDTYPE_UINT8)  DO_FIT_INTO_RANGE(u8,  uint8);
+                else if (dt == CXDTYPE_INT16)  DO_FIT_INTO_RANGE(i16, int16);
+                else if (dt == CXDTYPE_UINT16) DO_FIT_INTO_RANGE(u16, uint16);
+                else if (dt == CXDTYPE_INT32)  DO_FIT_INTO_RANGE(i32, int32);
+                else if (dt == CXDTYPE_UINT32) DO_FIT_INTO_RANGE(u32, uint32);
+#if MAY_USE_INT64
+                else if (dt == CXDTYPE_INT64)  DO_FIT_INTO_RANGE(i64, int64);
+                else if (dt == CXDTYPE_UINT64) DO_FIT_INTO_RANGE(u64, uint64);
+#endif
+#if MAY_USE_FLOAT
+                else if (dt == CXDTYPE_SINGLE) DO_FIT_INTO_RANGE(f32, float32);
+                else if (dt == CXDTYPE_DOUBLE) DO_FIT_INTO_RANGE(f64, float64);
+#endif
+                else // A fallback: use what supplied, without range-checking
+                    nvp = values[n];
+            }
+            else
+                nvp = values[n];
         }
         else if (cxsd_hw_channels[gcid].rw)
         {
@@ -200,15 +243,15 @@ void StdSimulated_rw_p(int devid, void *devptr __attribute__((unused)),
         }
         else   /* Read of a readonly channel */
         {
-            v.i8  = gcid        + cycle;
-            v.i16 = gcid * 10   + cycle;
-            v.i32 = gcid * 1000 + cycle;
+            v.i8  = v.u8  = gcid        + cycle;
+            v.i16 = v.u16 = gcid * 10   + cycle;
+            v.i32 = v.u32 = gcid * 1000 + cycle;
 #if MAY_USE_INT64
-            v.i64 = gcid * 5000 + cycle;
+            v.i64 = v.u64 = gcid * 5000 + cycle;
 #endif
 #if MAY_USE_FLOAT
-            v.f32 = gcid + cycle / 1000;
-            v.f64 = gcid + cycle / 1000;
+            v.f32 =         gcid + cycle / 1000;
+            v.f64 =         gcid + cycle / 1000;
 #endif
             v.t8  = 'a' + ((gcid + cycle) % 26);
             v.t32 = 'A' + ((gcid + cycle) % 26);

@@ -1,0 +1,1567 @@
+make: Entering directory '/home/femanov/cx/4cx/src'
+rm -rf ./../exports
+for i in `cat ./EXPORTSTREE`; do \
+		./scripts/mkdir-p.sh ./../exports/$i;\
+		done
+make: Leaving directory '/home/femanov/cx/4cx/src'
+make: Entering directory '/home/femanov/cx/4cx/src'
+make -C scripts
+make[1]: Entering directory '/home/femanov/cx/4cx/src/scripts'
+make[1]: Nothing to be done for 'firsttarget'.
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/scripts'
+make -C include
+make[1]: Entering directory '/home/femanov/cx/4cx/src/include'
+make -C sysdeps
+make[2]: Entering directory '/home/femanov/cx/4cx/src/include/sysdeps'
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/include/sysdeps'
+make -C pixmaps
+make[2]: Entering directory '/home/femanov/cx/4cx/src/include/pixmaps'
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/include/pixmaps'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/include'
+make -C lib
+make[1]: Entering directory '/home/femanov/cx/4cx/src/lib'
+Makefile:22: WARNING: ../../../cx/src/include/cx.h is absent, so skipping build of v2cx/
+make -C misc
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/misc'
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_printffmt.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_printffmt.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_printffmt.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_multistrings.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_multistrings.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_multistrings.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_urls.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_urls.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_urls.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_iso8601.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_iso8601.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_iso8601.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_sleepbyselect.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_sleepbyselect.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_sleepbyselect.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_growbuf.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_growbuf.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_growbuf.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_state.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_fd_state.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_state.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_flags.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_fd_flags.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_flags.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_read.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_n_read.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_read.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_write.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_n_write.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_write.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'memcasecmp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a memcasecmp.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'memcasecmp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'timeval_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a timeval_utils.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'timeval_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_set_signal.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_set_signal.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_set_signal.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'fps_counter.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a fps_counter.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'fps_counter.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'paramstr_parser.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a paramstr_parser.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'paramstr_parser.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/misc'
+make -C useful
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/useful'
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'fdiolib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a fdiolib.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'fdiolib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'findfilein.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a findfilein.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'findfilein.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a cxldr.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxlogger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a cxlogger.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxlogger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'sendqlib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a sendqlib.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'sendqlib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_pipe.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_pipe.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_pipe.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_plaintext.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_plaintext.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_plaintext.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_m4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_m4.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_m4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_cpp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_cpp.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_cpp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_mem.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_mem.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_mem.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxscheduler.a' seems to have been created in deterministic mode. 'cxscheduler.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxscheduler.a cxscheduler.o
+ranlib libcxscheduler.a
+make[2]: Warning: Archive 'libcxscheduler.a' seems to have been created in deterministic mode. 'cxscheduler.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/useful'
+make -C cxlib
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/cxlib'
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_client.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_utils.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_async.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_async.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_async.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_client.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_utils.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_sync.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_sync.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_sync.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/cxlib'
+make -C cda
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/cda'
+Makefile:10: WARNING: ../../../../cx/src/include/cx.h is absent, so skipping build of cda_d_v2cx.o
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_core.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_core.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_core.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_err.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_plugmgr.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_cx.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_dircn.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_dircn.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_dircn.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_local.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_local.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_local.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_vcas.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_vcas.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_vcas.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_f_fla.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_f_fla.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_f_fla.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda_d_insrv.a' seems to have been created in deterministic mode. 'cda_d_insrv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda_d_insrv.a cda_d_insrv.o
+ranlib libcda_d_insrv.a
+make[2]: Warning: Archive 'libcda_d_insrv.a' seems to have been created in deterministic mode. 'cda_d_insrv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/cda'
+make -C datatree
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/datatree'
+make[2]: Warning: Archive 'libdatatree.a' seems to have been created in deterministic mode. 'datatree.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libdatatree.a datatree.o
+ranlib libdatatree.a
+make[2]: Warning: Archive 'libdatatree.a' seems to have been created in deterministic mode. 'datatree.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/datatree'
+make -C Cdr
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/Cdr'
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_treeproc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_treeproc.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_treeproc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_err.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_plugmgr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_file_ldr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plaintext_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_plaintext_ldr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plaintext_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_file_via_ppf4td.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_via_ppf4td.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/Cdr'
+make -C KnobsCore
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/KnobsCore'
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_knobset.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_knobset.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_knobset.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_simple.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_simple.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_simple.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_misc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_misc.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_misc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_err.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/KnobsCore'
+make -C srv
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/srv'
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_logger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_logger.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_logger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_modmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_modmgr.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_modmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_driver.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_driver.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_driver.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_db.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_db_plugmgr.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_hw.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_hw.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_hw.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_db_via_ppf4td.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_db_file_ldr.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_fe_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_fe_cx.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_fe_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/srv'
+make -C rem
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/rem'
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remdrvlet_main_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remdrvlet_main_v4.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remdrvlet_main_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remcxsd_utils.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remcxsd_driver_v4.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remsrv_drvmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remsrv_drvmgr.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remsrv_drvmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remcxsd_utils.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remcxsd_driver_v4.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/rem'
+make -C pzframe
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/pzframe'
+make[2]: Warning: Archive 'libpzframe_drv.a' seems to have been created in deterministic mode. 'pzframe_drv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_drv.a pzframe_drv.o
+ranlib libpzframe_drv.a
+make[2]: Warning: Archive 'libpzframe_drv.a' seems to have been created in deterministic mode. 'pzframe_drv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'pzframe_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a pzframe_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'pzframe_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'fastadc_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a fastadc_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'fastadc_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'vcamimg_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a vcamimg_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'vcamimg_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'wirebpm_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a wirebpm_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'wirebpm_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/pzframe'
+make -C vdev
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/vdev'
+make[2]: Warning: Archive 'libvdev.a' seems to have been created in deterministic mode. 'vdev.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libvdev.a vdev.o
+ranlib libvdev.a
+make[2]: Warning: Archive 'libvdev.a' seems to have been created in deterministic mode. 'vdev.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/vdev'
+make -C Qcxscheduler
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/Qcxscheduler'
+Makefile:28: WARNING: --------------------------------------------------------
+Makefile:29: WARNING: This is an EXPERIMENTAL version of lib/Qcxscheduler/Makefile
+Makefile:30: WARNING: which employs /usr/bin/qtchooser.
+Makefile:31: WARNING: In case of problems or if Qcxscheduler is NOT needed,
+Makefile:32: WARNING: just specify "NOQT=Y" in command line.
+Makefile:33: WARNING: --------------------------------------------------------
+Makefile:36: INFO: /usr/bin/qtchooser found
+Makefile:38: INFO: Qt versions: 4 5 default qt4-x86_64-linux-gnu qt4 qt5-x86_64-linux-gnu qt5
+Makefile:40: Qt5 found
+Makefile:44: Qt4 found
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/Qcxscheduler'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/lib'
+make -C programs
+make[1]: Entering directory '/home/femanov/cx/4cx/src/programs'
+make -C server
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/server'
+gcc    -o cxsd cxsd.o cxsd_vars.o cxsd_config.o cxsd_publics.o cxsd_builtins.o ../../lib/cda/libcda_d_insrv.a ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/srv/libcxsd_plugins.a ../../lib/srv/libcxsd.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic -lm  -ldl       
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/server'
+make -C drivers
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/drivers'
+gcc    -o test_rem_rd_rw.drvlet test_rem_rd_rw_drv.o ../../lib/rem/libremdrvlet.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g         
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/drivers'
+make -C utils
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/utils'
+gcc    -o drvinfo drvinfo.o drvinfo_publics.o ../../lib/srv/libcxsd.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm        
+gcc    -o ppf4td_test ppf4td_test.o ../../lib/useful/libuseful.a ../../lib/misc/libmisc.a -g         
+gcc    -o cxclient cxclient.o ../../lib/cxlib/libcx_sync.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g         
+gcc    -o cx-chan-search cx-chan-search.o ../../lib/cxlib/libcx_sync.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g         
+gcc    -o cdaclient cdaclient.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+gcc    -o das-experiment das-experiment.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+gcc    -o dataset-save dataset-save.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+gcc    -o pipe2cda pipe2cda.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/utils'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/programs'
+make -C doc
+make[1]: Entering directory '/home/femanov/cx/4cx/src/doc'
+make -C lib
+make[2]: Entering directory '/home/femanov/cx/4cx/src/doc/lib'
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/doc/lib'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/doc'
+make: Leaving directory '/home/femanov/cx/4cx/src'
+make: Entering directory '/home/femanov/cx/4cx/src'
+make -C scripts
+make[1]: Entering directory '/home/femanov/cx/4cx/src/scripts'
+make[1]: Nothing to be done for 'firsttarget'.
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/scripts'
+make -C include
+make[1]: Entering directory '/home/femanov/cx/4cx/src/include'
+make -C sysdeps
+make[2]: Entering directory '/home/femanov/cx/4cx/src/include/sysdeps'
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/include/sysdeps'
+make -C pixmaps
+make[2]: Entering directory '/home/femanov/cx/4cx/src/include/pixmaps'
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/include/pixmaps'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/include'
+make -C lib
+make[1]: Entering directory '/home/femanov/cx/4cx/src/lib'
+Makefile:22: WARNING: ../../../cx/src/include/cx.h is absent, so skipping build of v2cx/
+make -C misc
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/misc'
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_printffmt.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_printffmt.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_printffmt.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_multistrings.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_multistrings.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_multistrings.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_urls.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_urls.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_urls.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_iso8601.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_iso8601.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_iso8601.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_sleepbyselect.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_sleepbyselect.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_sleepbyselect.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_growbuf.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_growbuf.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_growbuf.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_state.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_fd_state.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_state.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_flags.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_fd_flags.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_flags.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_read.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_n_read.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_read.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_write.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_n_write.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_write.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'memcasecmp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a memcasecmp.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'memcasecmp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'timeval_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a timeval_utils.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'timeval_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_set_signal.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_set_signal.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_set_signal.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'fps_counter.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a fps_counter.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'fps_counter.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'paramstr_parser.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a paramstr_parser.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'paramstr_parser.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/misc'
+make -C useful
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/useful'
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'fdiolib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a fdiolib.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'fdiolib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'findfilein.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a findfilein.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'findfilein.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a cxldr.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxlogger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a cxlogger.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxlogger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'sendqlib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a sendqlib.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'sendqlib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_pipe.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_pipe.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_pipe.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_plaintext.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_plaintext.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_plaintext.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_m4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_m4.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_m4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_cpp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_cpp.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_cpp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_mem.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_mem.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_mem.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxscheduler.a' seems to have been created in deterministic mode. 'cxscheduler.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxscheduler.a cxscheduler.o
+ranlib libcxscheduler.a
+make[2]: Warning: Archive 'libcxscheduler.a' seems to have been created in deterministic mode. 'cxscheduler.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/useful'
+make -C cxlib
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/cxlib'
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_client.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_utils.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_async.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_async.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_async.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_client.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_utils.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_sync.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_sync.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_sync.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/cxlib'
+make -C cda
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/cda'
+Makefile:10: WARNING: ../../../../cx/src/include/cx.h is absent, so skipping build of cda_d_v2cx.o
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_core.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_core.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_core.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_err.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_plugmgr.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_cx.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_dircn.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_dircn.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_dircn.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_local.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_local.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_local.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_vcas.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_vcas.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_vcas.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_f_fla.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_f_fla.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_f_fla.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda_d_insrv.a' seems to have been created in deterministic mode. 'cda_d_insrv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda_d_insrv.a cda_d_insrv.o
+ranlib libcda_d_insrv.a
+make[2]: Warning: Archive 'libcda_d_insrv.a' seems to have been created in deterministic mode. 'cda_d_insrv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/cda'
+make -C datatree
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/datatree'
+make[2]: Warning: Archive 'libdatatree.a' seems to have been created in deterministic mode. 'datatree.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libdatatree.a datatree.o
+ranlib libdatatree.a
+make[2]: Warning: Archive 'libdatatree.a' seems to have been created in deterministic mode. 'datatree.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/datatree'
+make -C Cdr
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/Cdr'
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_treeproc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_treeproc.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_treeproc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_err.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_plugmgr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_file_ldr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plaintext_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_plaintext_ldr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plaintext_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_file_via_ppf4td.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_via_ppf4td.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/Cdr'
+make -C KnobsCore
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/KnobsCore'
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_knobset.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_knobset.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_knobset.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_simple.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_simple.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_simple.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_misc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_misc.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_misc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_err.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/KnobsCore'
+make -C srv
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/srv'
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_logger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_logger.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_logger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_modmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_modmgr.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_modmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_driver.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_driver.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_driver.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_db.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_db_plugmgr.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_hw.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_hw.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_hw.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_db_via_ppf4td.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_db_file_ldr.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_fe_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_fe_cx.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_fe_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/srv'
+make -C rem
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/rem'
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remdrvlet_main_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remdrvlet_main_v4.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remdrvlet_main_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remcxsd_utils.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remcxsd_driver_v4.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remsrv_drvmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remsrv_drvmgr.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remsrv_drvmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remcxsd_utils.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remcxsd_driver_v4.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/rem'
+make -C pzframe
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/pzframe'
+make[2]: Warning: Archive 'libpzframe_drv.a' seems to have been created in deterministic mode. 'pzframe_drv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_drv.a pzframe_drv.o
+ranlib libpzframe_drv.a
+make[2]: Warning: Archive 'libpzframe_drv.a' seems to have been created in deterministic mode. 'pzframe_drv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'pzframe_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a pzframe_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'pzframe_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'fastadc_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a fastadc_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'fastadc_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'vcamimg_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a vcamimg_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'vcamimg_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'wirebpm_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a wirebpm_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'wirebpm_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/pzframe'
+make -C vdev
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/vdev'
+make[2]: Warning: Archive 'libvdev.a' seems to have been created in deterministic mode. 'vdev.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libvdev.a vdev.o
+ranlib libvdev.a
+make[2]: Warning: Archive 'libvdev.a' seems to have been created in deterministic mode. 'vdev.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/vdev'
+make -C Qcxscheduler
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/Qcxscheduler'
+Makefile:28: WARNING: --------------------------------------------------------
+Makefile:29: WARNING: This is an EXPERIMENTAL version of lib/Qcxscheduler/Makefile
+Makefile:30: WARNING: which employs /usr/bin/qtchooser.
+Makefile:31: WARNING: In case of problems or if Qcxscheduler is NOT needed,
+Makefile:32: WARNING: just specify "NOQT=Y" in command line.
+Makefile:33: WARNING: --------------------------------------------------------
+Makefile:36: INFO: /usr/bin/qtchooser found
+Makefile:38: INFO: Qt versions: 4 5 default qt4-x86_64-linux-gnu qt4 qt5-x86_64-linux-gnu qt5
+Makefile:40: Qt5 found
+Makefile:44: Qt4 found
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/Qcxscheduler'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/lib'
+make -C programs
+make[1]: Entering directory '/home/femanov/cx/4cx/src/programs'
+make -C server
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/server'
+gcc    -o cxsd cxsd.o cxsd_vars.o cxsd_config.o cxsd_publics.o cxsd_builtins.o ../../lib/cda/libcda_d_insrv.a ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/srv/libcxsd_plugins.a ../../lib/srv/libcxsd.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic -lm  -ldl       
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/server'
+make -C drivers
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/drivers'
+gcc    -o test_rem_rd_rw.drvlet test_rem_rd_rw_drv.o ../../lib/rem/libremdrvlet.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g         
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/drivers'
+make -C utils
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/utils'
+gcc    -o drvinfo drvinfo.o drvinfo_publics.o ../../lib/srv/libcxsd.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm        
+gcc    -o ppf4td_test ppf4td_test.o ../../lib/useful/libuseful.a ../../lib/misc/libmisc.a -g         
+gcc    -o cxclient cxclient.o ../../lib/cxlib/libcx_sync.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g         
+gcc    -o cx-chan-search cx-chan-search.o ../../lib/cxlib/libcx_sync.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g         
+gcc    -o cdaclient cdaclient.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+gcc    -o das-experiment das-experiment.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+gcc    -o dataset-save dataset-save.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+gcc    -o pipe2cda pipe2cda.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/utils'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/programs'
+make -C doc
+make[1]: Entering directory '/home/femanov/cx/4cx/src/doc'
+make -C lib
+make[2]: Entering directory '/home/femanov/cx/4cx/src/doc/lib'
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/doc/lib'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/doc'
+set -e;  for i in scripts include lib programs doc; do make -C $i exports; done
+make[1]: Entering directory '/home/femanov/cx/4cx/src/scripts'
+make[1]: Nothing to be done for 'exports'.
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/scripts'
+make[1]: Entering directory '/home/femanov/cx/4cx/src/include'
+make -C sysdeps
+make[2]: Entering directory '/home/femanov/cx/4cx/src/include/sysdeps'
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/include/sysdeps'
+make -C pixmaps
+make[2]: Entering directory '/home/femanov/cx/4cx/src/include/pixmaps'
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/include/pixmaps'
+cp -Rp misc_types.h misclib.h misc_sepchars.h misc_macros.h fps_counter.h fix_arpa_inet.h cx_module.h cx_version.h paramstr_parser.h fdiolib.h cxscheduler.h cxlogger.h cxldr.h main_builtins.h findfilein.h sendqlib.h ppf4td.h memcasecmp.h timeval_utils.h cx_sysdeps.h endianconv.h cxsd_driver.h cxsd_core_commons.h cxsd_db.h cxsd_dbP.h cxsd_hw.h cxsd_hwP.h cxsd_extension.h cxsd_frontend.h cxsd_logger.h cxsd_modmgr.h cx.h cxlib.h remdrv_proto_v4.h remsrv.h remdrvlet.h remcxsd.h remcxsdP.h cda.h cdaP.h Xh.h XhP.h cx_common_types.h Xh_fallbacks.h Xh_globals.h Xh_viewport.h Xh_plot.h plotdata.h Xh_monoimg.h Cdr.h CdrP.h datatree.h datatreeP.h Chl.h ChlP.h Knobs.h KnobsP.h MotifKnobsP.h MotifKnobs_cda.h MotifKnobs_cda_leds.h MotifKnobs_histplot.h pzframe_data.h  pzframe_gui.h  pzframe_knobplugin.h  pzframe_main.h fastadc_data.h  fastadc_gui.h  fastadc_knobplugin.h  fastadc_main.h vcamimg_data.h  vcamimg_gui.h  vcamimg_knobplugin.h  vcamimg_main.h wirebpm_data.h  wirebpm_gui.h  wirebpm_knobplugin.h  wirebpm_main.h pzframe_cpanel_decor.h pzframe_drv.h vdev.h  ../../exports/include
+set -e;  for i in sysdeps pixmaps; do make -C $i exports; done
+make[2]: Entering directory '/home/femanov/cx/4cx/src/include/sysdeps'
+cp -Rp os_linux.h os_cygwin.h os_interix.h os_openbsd.h os_darwin.h  ../../../exports/include/sysdeps
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/include/sysdeps'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/include/pixmaps'
+cp -Rp cx-starter.xpm btn_getbkgd.xpm btn_help.xpm btn_log.xpm btn_once.xpm btn_open.xpm btn_pause.xpm btn_print.xpm btn_quit.xpm btn_rstbkgd.xpm btn_rstgood.xpm btn_save.xpm btn_setgood.xpm btn_start.xpm btn_mini_help.xpm btn_mini_once.xpm btn_mini_open.xpm btn_mini_pause.xpm btn_mini_quit.xpm btn_mini_rstgood.xpm btn_mini_save.xpm btn_mini_setgood.xpm btn_mini_start.xpm  ../../../exports/include/pixmaps
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/include/pixmaps'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/include'
+make[1]: Entering directory '/home/femanov/cx/4cx/src/lib'
+Makefile:22: WARNING: ../../../cx/src/include/cx.h is absent, so skipping build of v2cx/
+make -C misc
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/misc'
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_printffmt.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_printffmt.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_printffmt.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_multistrings.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_multistrings.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_multistrings.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_urls.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_urls.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_urls.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_iso8601.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_iso8601.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_iso8601.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_sleepbyselect.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_sleepbyselect.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_sleepbyselect.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_growbuf.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_growbuf.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_growbuf.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_state.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_fd_state.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_state.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_flags.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_fd_flags.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_flags.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_read.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_n_read.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_read.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_write.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_n_write.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_write.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'memcasecmp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a memcasecmp.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'memcasecmp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'timeval_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a timeval_utils.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'timeval_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_set_signal.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_set_signal.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_set_signal.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'fps_counter.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a fps_counter.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'fps_counter.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'paramstr_parser.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a paramstr_parser.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'paramstr_parser.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/misc'
+make -C useful
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/useful'
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'fdiolib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a fdiolib.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'fdiolib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'findfilein.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a findfilein.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'findfilein.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a cxldr.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxlogger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a cxlogger.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxlogger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'sendqlib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a sendqlib.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'sendqlib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_pipe.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_pipe.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_pipe.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_plaintext.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_plaintext.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_plaintext.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_m4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_m4.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_m4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_cpp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_cpp.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_cpp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_mem.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_mem.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_mem.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxscheduler.a' seems to have been created in deterministic mode. 'cxscheduler.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxscheduler.a cxscheduler.o
+ranlib libcxscheduler.a
+make[2]: Warning: Archive 'libcxscheduler.a' seems to have been created in deterministic mode. 'cxscheduler.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/useful'
+make -C cxlib
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/cxlib'
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_client.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_utils.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_async.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_async.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_async.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_client.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_utils.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_sync.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_sync.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_sync.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/cxlib'
+make -C cda
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/cda'
+Makefile:10: WARNING: ../../../../cx/src/include/cx.h is absent, so skipping build of cda_d_v2cx.o
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_core.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_core.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_core.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_err.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_plugmgr.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_cx.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_dircn.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_dircn.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_dircn.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_local.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_local.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_local.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_vcas.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_vcas.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_vcas.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_f_fla.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_f_fla.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_f_fla.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda_d_insrv.a' seems to have been created in deterministic mode. 'cda_d_insrv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda_d_insrv.a cda_d_insrv.o
+ranlib libcda_d_insrv.a
+make[2]: Warning: Archive 'libcda_d_insrv.a' seems to have been created in deterministic mode. 'cda_d_insrv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/cda'
+make -C datatree
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/datatree'
+make[2]: Warning: Archive 'libdatatree.a' seems to have been created in deterministic mode. 'datatree.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libdatatree.a datatree.o
+ranlib libdatatree.a
+make[2]: Warning: Archive 'libdatatree.a' seems to have been created in deterministic mode. 'datatree.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/datatree'
+make -C Cdr
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/Cdr'
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_treeproc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_treeproc.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_treeproc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_err.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_plugmgr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_file_ldr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plaintext_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_plaintext_ldr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plaintext_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_file_via_ppf4td.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_via_ppf4td.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/Cdr'
+make -C KnobsCore
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/KnobsCore'
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_knobset.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_knobset.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_knobset.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_simple.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_simple.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_simple.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_misc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_misc.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_misc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_err.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/KnobsCore'
+make -C srv
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/srv'
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_logger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_logger.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_logger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_modmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_modmgr.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_modmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_driver.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_driver.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_driver.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_db.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_db_plugmgr.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_hw.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_hw.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_hw.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_db_via_ppf4td.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_db_file_ldr.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_fe_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_fe_cx.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_fe_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/srv'
+make -C rem
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/rem'
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remdrvlet_main_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remdrvlet_main_v4.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remdrvlet_main_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remcxsd_utils.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remcxsd_driver_v4.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remsrv_drvmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remsrv_drvmgr.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remsrv_drvmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remcxsd_utils.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remcxsd_driver_v4.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/rem'
+make -C pzframe
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/pzframe'
+make[2]: Warning: Archive 'libpzframe_drv.a' seems to have been created in deterministic mode. 'pzframe_drv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_drv.a pzframe_drv.o
+ranlib libpzframe_drv.a
+make[2]: Warning: Archive 'libpzframe_drv.a' seems to have been created in deterministic mode. 'pzframe_drv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'pzframe_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a pzframe_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'pzframe_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'fastadc_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a fastadc_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'fastadc_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'vcamimg_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a vcamimg_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'vcamimg_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'wirebpm_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a wirebpm_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'wirebpm_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/pzframe'
+make -C vdev
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/vdev'
+make[2]: Warning: Archive 'libvdev.a' seems to have been created in deterministic mode. 'vdev.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libvdev.a vdev.o
+ranlib libvdev.a
+make[2]: Warning: Archive 'libvdev.a' seems to have been created in deterministic mode. 'vdev.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/vdev'
+make -C Qcxscheduler
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/Qcxscheduler'
+Makefile:28: WARNING: --------------------------------------------------------
+Makefile:29: WARNING: This is an EXPERIMENTAL version of lib/Qcxscheduler/Makefile
+Makefile:30: WARNING: which employs /usr/bin/qtchooser.
+Makefile:31: WARNING: In case of problems or if Qcxscheduler is NOT needed,
+Makefile:32: WARNING: just specify "NOQT=Y" in command line.
+Makefile:33: WARNING: --------------------------------------------------------
+Makefile:36: INFO: /usr/bin/qtchooser found
+Makefile:38: INFO: Qt versions: 4 5 default qt4-x86_64-linux-gnu qt4 qt5-x86_64-linux-gnu qt5
+Makefile:40: Qt5 found
+Makefile:44: Qt4 found
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/Qcxscheduler'
+set -e;  for i in misc useful cxlib cda datatree Cdr KnobsCore srv rem pzframe vdev  Qcxscheduler; do make -C $i exports; done
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/misc'
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_printffmt.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_printffmt.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_printffmt.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_multistrings.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_multistrings.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_multistrings.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_urls.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_urls.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_urls.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_iso8601.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_iso8601.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_iso8601.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_sleepbyselect.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_sleepbyselect.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_sleepbyselect.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_growbuf.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_growbuf.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_growbuf.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_state.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_fd_state.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_state.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_flags.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_fd_flags.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_fd_flags.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_read.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_n_read.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_read.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_write.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_n_write.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_n_write.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'memcasecmp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a memcasecmp.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'memcasecmp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'timeval_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a timeval_utils.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'timeval_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_set_signal.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a misc_set_signal.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'misc_set_signal.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'fps_counter.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a fps_counter.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'fps_counter.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'paramstr_parser.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libmisc.a paramstr_parser.o
+ranlib libmisc.a
+make[2]: Warning: Archive 'libmisc.a' seems to have been created in deterministic mode. 'paramstr_parser.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+cp -Rp libmisc.a  ../../../exports/lib
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/misc'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/useful'
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'fdiolib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a fdiolib.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'fdiolib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'findfilein.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a findfilein.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'findfilein.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a cxldr.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxlogger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a cxlogger.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'cxlogger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'sendqlib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a sendqlib.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'sendqlib.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_pipe.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_pipe.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_pipe.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_plaintext.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_plaintext.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_plaintext.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_m4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_m4.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_m4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_cpp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_cpp.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_cpp.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_mem.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libuseful.a ppf4td_mem.o
+ranlib libuseful.a
+make[2]: Warning: Archive 'libuseful.a' seems to have been created in deterministic mode. 'ppf4td_mem.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxscheduler.a' seems to have been created in deterministic mode. 'cxscheduler.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxscheduler.a cxscheduler.o
+ranlib libcxscheduler.a
+make[2]: Warning: Archive 'libcxscheduler.a' seems to have been created in deterministic mode. 'cxscheduler.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+cp -Rp libuseful.a libcxscheduler.a  ../../../exports/lib
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/useful'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/cxlib'
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_client.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_utils.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_async.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_async.a cxlib_async.o
+ranlib libcx_async.a
+make[2]: Warning: Archive 'libcx_async.a' seems to have been created in deterministic mode. 'cxlib_async.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_client.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_client.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_utils.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_sync.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcx_sync.a cxlib_sync.o
+ranlib libcx_sync.a
+make[2]: Warning: Archive 'libcx_sync.a' seems to have been created in deterministic mode. 'cxlib_sync.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+cp -Rp libcx_async.a libcx_sync.a  ../../../exports/lib
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/cxlib'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/cda'
+Makefile:10: WARNING: ../../../../cx/src/include/cx.h is absent, so skipping build of cda_d_v2cx.o
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_core.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_core.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_core.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_err.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_plugmgr.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_cx.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_dircn.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_dircn.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_dircn.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_local.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_local.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_local.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_vcas.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_d_vcas.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_d_vcas.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_f_fla.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda.a cda_f_fla.o
+ranlib libcda.a
+make[2]: Warning: Archive 'libcda.a' seems to have been created in deterministic mode. 'cda_f_fla.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcda_d_insrv.a' seems to have been created in deterministic mode. 'cda_d_insrv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcda_d_insrv.a cda_d_insrv.o
+ranlib libcda_d_insrv.a
+make[2]: Warning: Archive 'libcda_d_insrv.a' seems to have been created in deterministic mode. 'cda_d_insrv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+cp -Rp libcda.a libcda_d_insrv.a  ../../../exports/lib
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/cda'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/datatree'
+make[2]: Warning: Archive 'libdatatree.a' seems to have been created in deterministic mode. 'datatree.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libdatatree.a datatree.o
+ranlib libdatatree.a
+make[2]: Warning: Archive 'libdatatree.a' seems to have been created in deterministic mode. 'datatree.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+cp -Rp libdatatree.a  ../../../exports/lib
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/datatree'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/Cdr'
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_treeproc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_treeproc.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_treeproc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_err.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_plugmgr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_file_ldr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plaintext_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_plaintext_ldr.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_plaintext_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_file_via_ppf4td.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_file_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libCdr.a Cdr_via_ppf4td.o
+ranlib libCdr.a
+make[2]: Warning: Archive 'libCdr.a' seems to have been created in deterministic mode. 'Cdr_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+cp -Rp libCdr.a  ../../../exports/lib
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/Cdr'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/KnobsCore'
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_knobset.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_knobset.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_knobset.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_simple.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_simple.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_simple.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_misc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_misc.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_misc.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libKnobsCore.a KnobsCore_err.o
+ranlib libKnobsCore.a
+make[2]: Warning: Archive 'libKnobsCore.a' seems to have been created in deterministic mode. 'KnobsCore_err.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+cp -Rp libKnobsCore.a  ../../../exports/lib
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/KnobsCore'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/srv'
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_logger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_logger.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_logger.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_modmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_modmgr.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_modmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_driver.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_driver.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_driver.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_db.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_db_plugmgr.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_db_plugmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_hw.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd.a cxsd_hw.o
+ranlib libcxsd.a
+make[2]: Warning: Archive 'libcxsd.a' seems to have been created in deterministic mode. 'cxsd_hw.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_db_via_ppf4td.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_via_ppf4td.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_db_file_ldr.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_db_file_ldr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_fe_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libcxsd_plugins.a cxsd_fe_cx.o
+ranlib libcxsd_plugins.a
+make[2]: Warning: Archive 'libcxsd_plugins.a' seems to have been created in deterministic mode. 'cxsd_fe_cx.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+cp -Rp libcxsd.a libcxsd_plugins.a  ../../../exports/lib
+cp -Rp cxsd_fe_starogate.so ../../../exports/lib/server/frontends/
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/srv'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/rem'
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remdrvlet_main_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remdrvlet_main_v4.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remdrvlet_main_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remcxsd_utils.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremdrvlet.a remcxsd_driver_v4.o
+ranlib libremdrvlet.a
+make[2]: Warning: Archive 'libremdrvlet.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remsrv_drvmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remsrv_drvmgr.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remsrv_drvmgr.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remcxsd_utils.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_utils.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libremsrv.a remcxsd_driver_v4.o
+ranlib libremsrv.a
+make[2]: Warning: Archive 'libremsrv.a' seems to have been created in deterministic mode. 'remcxsd_driver_v4.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+cp -Rp libremdrvlet.a libremsrv.a  ../../../exports/lib
+cp -Rp rrund ../../../exports/bin
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/rem'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/pzframe'
+make[2]: Warning: Archive 'libpzframe_drv.a' seems to have been created in deterministic mode. 'pzframe_drv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_drv.a pzframe_drv.o
+ranlib libpzframe_drv.a
+make[2]: Warning: Archive 'libpzframe_drv.a' seems to have been created in deterministic mode. 'pzframe_drv.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'pzframe_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a pzframe_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'pzframe_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'fastadc_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a fastadc_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'fastadc_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'vcamimg_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a vcamimg_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'vcamimg_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'wirebpm_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libpzframe_data.a wirebpm_data.o
+ranlib libpzframe_data.a
+make[2]: Warning: Archive 'libpzframe_data.a' seems to have been created in deterministic mode. 'wirebpm_data.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+cp -Rp libpzframe_drv.a libpzframe_data.a  ../../../exports/lib
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/pzframe'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/vdev'
+make[2]: Warning: Archive 'libvdev.a' seems to have been created in deterministic mode. 'vdev.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+ar rc libvdev.a vdev.o
+ranlib libvdev.a
+make[2]: Warning: Archive 'libvdev.a' seems to have been created in deterministic mode. 'vdev.o' will always be updated. Please consider passing the U flag to ar to avoid the problem.
+cp -Rp libvdev.a  ../../../exports/lib
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/vdev'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/lib/Qcxscheduler'
+Makefile:28: WARNING: --------------------------------------------------------
+Makefile:29: WARNING: This is an EXPERIMENTAL version of lib/Qcxscheduler/Makefile
+Makefile:30: WARNING: which employs /usr/bin/qtchooser.
+Makefile:31: WARNING: In case of problems or if Qcxscheduler is NOT needed,
+Makefile:32: WARNING: just specify "NOQT=Y" in command line.
+Makefile:33: WARNING: --------------------------------------------------------
+Makefile:36: INFO: /usr/bin/qtchooser found
+Makefile:38: INFO: Qt versions: 4 5 default qt4-x86_64-linux-gnu qt4 qt5-x86_64-linux-gnu qt5
+Makefile:40: Qt5 found
+Makefile:44: Qt4 found
+cp -Rp libQt4cxscheduler.a libQt5cxscheduler.a  ../../../exports/lib
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/lib/Qcxscheduler'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/lib'
+make[1]: Entering directory '/home/femanov/cx/4cx/src/programs'
+make -C server
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/server'
+gcc    -o cxsd cxsd.o cxsd_vars.o cxsd_config.o cxsd_publics.o cxsd_builtins.o ../../lib/cda/libcda_d_insrv.a ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/srv/libcxsd_plugins.a ../../lib/srv/libcxsd.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic -lm  -ldl       
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/server'
+make -C drivers
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/drivers'
+gcc    -o test_rem_rd_rw.drvlet test_rem_rd_rw_drv.o ../../lib/rem/libremdrvlet.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g         
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/drivers'
+make -C utils
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/utils'
+gcc    -o drvinfo drvinfo.o drvinfo_publics.o ../../lib/srv/libcxsd.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm        
+gcc    -o ppf4td_test ppf4td_test.o ../../lib/useful/libuseful.a ../../lib/misc/libmisc.a -g         
+gcc    -o cxclient cxclient.o ../../lib/cxlib/libcx_sync.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g         
+gcc    -o cx-chan-search cx-chan-search.o ../../lib/cxlib/libcx_sync.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g         
+gcc    -o cdaclient cdaclient.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+gcc    -o das-experiment das-experiment.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+gcc    -o dataset-save dataset-save.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+gcc    -o pipe2cda pipe2cda.o console_cda_util.o ../../lib/cda/libcda.a ../../lib/cxlib/libcx_async.a ../../lib/useful/libuseful.a ../../lib/useful/libcxscheduler.a ../../lib/misc/libmisc.a -g -Wl,-export-dynamic  -ldl -lm       
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/utils'
+set -e;  for i in server drivers utils ; do make -C $i exports; done
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/server'
+cp -Rp cxsd  ../../../exports/sbin
+cp -Rp cxsd.conf ../../../exports/configs
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/server'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/drivers'
+cp -Rp noop_drv.so remdrv_drv.so test_rd_drv.so test_cda_del_drv.so trig_read_drv.so trig_exec_drv.so mux_write_drv.so mirror_drv.so preset_selector_drv.so arith_drv.so formula_drv.so  ../../../exports/lib/server/drivers
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/drivers'
+make[2]: Entering directory '/home/femanov/cx/4cx/src/programs/utils'
+cp -Rp drvinfo ppf4td_test cxclient cx-chan-search cdaclient das-experiment dataset-save pipe2cda  ../../../exports/bin
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/programs/utils'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/programs'
+make[1]: Entering directory '/home/femanov/cx/4cx/src/doc'
+make -C lib
+make[2]: Entering directory '/home/femanov/cx/4cx/src/doc/lib'
+make[2]: Nothing to be done for 'firsttarget'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/doc/lib'
+set -e;  for i in lib; do make -C $i exports; done
+make[2]: Entering directory '/home/femanov/cx/4cx/src/doc/lib'
+make[2]: Nothing to be done for 'exports'.
+make[2]: Leaving directory '/home/femanov/cx/4cx/src/doc/lib'
+make[1]: Leaving directory '/home/femanov/cx/4cx/src/doc'
+make: Leaving directory '/home/femanov/cx/4cx/src'

@@ -69,4 +69,5 @@ LOCAL_GNTDFILES+=serialserver_drivers.c
 #
 cxv4moxaserver:	$(LIBREMSRV) \
 		$(LIBUSEFUL) $(LIBCXSCHEDULER) $(LIBMISC)
+cxv4moxaserver:	SPECIFIC_LIBS+=$(LIBDL)
 $(SERIAL_TYPE)setupkshd485 $(SERIAL_TYPE)dumpserial:	$(LIBMISC)

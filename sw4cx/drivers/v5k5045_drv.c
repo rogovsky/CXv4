@@ -357,6 +357,16 @@ static vdev_sr_chan_dsc_t state_related_channels[] =
     {-1,                         -1,                     0,                 0},
 };
 
+static void ReturnHVSetRange(privrec_t *me)
+{
+  CxAnyVal_t  minv;
+  CxAnyVal_t  maxv;
+
+    minv.i32 = 0;
+    maxv.i32 = me->out_val_nominal;
+    SetChanRange(me->devid, V5K5045_CHAN_HVSET, 1, minv, maxv, CXDTYPE_INT32);
+}
+
 static int v5k5045_init_d(int devid, void *devptr,
                           int businfocount, int businfo[],
                           const char *auxinfo)
@@ -426,6 +436,7 @@ static int v5k5045_init_d(int devid, void *devptr,
                               V5K5045_CHAN_C_ILK_count, IS_AUTOUPDATED_TRUSTED);
     SetChanReturnType(devid, V5K5045_CHAN_ILK_SLOW_ANY,
                               2,                        IS_AUTOUPDATED_YES);
+    ReturnHVSetRange (me);
 
     return vdev_init(&(me->ctx), devid, devptr, WORK_HEARTBEAT_PERIOD, base);
 }
@@ -567,6 +578,8 @@ static void v5k5045_rw_p(int devid, void *devptr,
                  {
                      SndCVal(me, PKS_SET, val);
                  }
+                 else if (val < me->cur[PKS_SET_CUR].v.i32)
+                     SndCVal(me, PKS_SET, val);
              }
              if (me->out_val_set)
                  ReturnInt32Datum(devid, chn, me->out_val, me->out_val_rflags);
@@ -580,6 +593,7 @@ static void v5k5045_rw_p(int devid, void *devptr,
                 me->out_val_nominal = val;
             }
             ReturnInt32Datum(devid, chn, me->out_val_nominal, 0);
+            ReturnHVSetRange(me);
         }
         else if ((sdp = find_sdp(chn)) != NULL  &&
                  sdp->state >= 0                &&

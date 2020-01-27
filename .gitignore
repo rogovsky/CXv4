@@ -1,0 +1,38 @@
+# cx exports directory 
+exports/
+
+# C generated
+*.so
+*.a
+*.d
+*.o
+
+# Qt cpp files
+moc_*
+
+# executables
+cxsd
+cdaclient
+cx-chan-search
+cxclient
+das-experiment
+dataset-save
+pipe2cda
+drvinfo
+ppf4td_test
+test_rem_rd_rw.drvlet
+
+# more executables
+pult
+liuclient
+pzframeclient
+
+# epics executables
+epics_cdaclient
+epics_das-experiment
+epics_dataset-save
+
+
+
+# somesing else
+DEADJOE
